@@ -1,11 +1,11 @@
 /**
- * Moaath Arena World - Cloudflare Worker (Complete Bridge & Admin Edition)
+ * Moaath Arena World - Cloudflare Worker (Safe CORS + Diagnostics)
  * المسار في GitHub (مستودع moaath-arena): worker/arena_worker.js
  * السياسة الأمنية: 0% ذكاء اصطناعي في المال أو النقاط أو التحويلات أو شام كاش.
  */
 
 const ALLOWED_CASHOUT_TIERS = [100, 200, 500, 1000];
-const CASHOUT_AUDIT_DELAY_MS = 60 * 60 * 1000; // ساعة واحدة للتدقيق الخلفي
+const CASHOUT_AUDIT_DELAY_MS = 60 * 60 * 1000;
 const ROLLING_LEDGER_DAYS = 7;
 const ADMIN_EMAIL = '0965461504@moaath.store';
 
@@ -22,107 +22,141 @@ const SHOP_PRICES = {
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') return corsResponse(null, 204);
-    if (request.method !== 'POST') return jsonResponse({ code: 'ERR_METHOD', message: 'POST only' }, 405);
+    try {
+      if (request.method === 'OPTIONS') return corsResponse(null, 204);
 
-    const url = new URL(request.url);
-    const body = await request.json().catch(() => ({}));
-    const config = (await fbGet(env, 'arena_world/config')) || {};
+      const url = new URL(request.url);
 
-    // ====================================================
-    // أ) نقاط نهاية الإدارة (تعمل حتى أثناء تفعيل زر الطوارئ)
-    // ====================================================
-    if (url.pathname.startsWith('/admin/')) {
-      const storeAuth = await verifyStoreFirebaseToken(env, request);
-      if (!storeAuth || !storeAuth.isAdmin) {
-        return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: 'صلاحية الإدارة مطلوبة.' }, 403);
+      // نقطة فحص سريعة عبر المتصفح: /health
+      if (request.method === 'GET' && url.pathname === '/health') {
+        const hasUrl = Boolean(env.FIREBASE_DB_URL && env.FIREBASE_DB_URL.trim());
+        const hasSecret = Boolean(env.FIREBASE_DB_SECRET && env.FIREBASE_DB_SECRET.trim());
+        let fbTest = 'not_tested';
+        if (hasUrl && hasSecret) {
+          const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
+          const testRes = await fetch(`${baseUrl}/arena_world/config.json?auth=${encodeURIComponent(env.FIREBASE_DB_SECRET.trim())}`);
+          fbTest = testRes.ok ? 'connected_ok' : `firebase_http_${testRes.status}`;
+        }
+        return jsonResponse({ ok: true, hasUrl, hasSecret, fbTest });
       }
+
+      if (request.method !== 'POST') return jsonResponse({ code: 'ERR_METHOD', message: 'POST only' }, 405);
+
+      // التحقق من وجود المتغيرات السرية قبل أي اتصال بـ Firebase
+      if (!env.FIREBASE_DB_URL || !env.FIREBASE_DB_SECRET) {
+        return jsonResponse({
+          code: 'ERR_ENV_MISSING',
+          message: 'متغيرات Firebase السرية (FIREBASE_DB_URL أو FIREBASE_DB_SECRET) غير مضبوطة بالاسم الصحيح في Cloudflare.'
+        }, 500);
+      }
+
+      const body = await request.json().catch(() => ({}));
+      const config = (await fbGet(env, 'arena_world/config')) || {};
+
+      // ====================================================
+      // أ) نقاط نهاية الإدارة (تعمل حتى أثناء تفعيل زر الطوارئ)
+      // ====================================================
+      if (url.pathname.startsWith('/admin/')) {
+        const storeAuth = await verifyStoreFirebaseToken(env, request);
+        if (!storeAuth || !storeAuth.isAdmin) {
+          return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: 'صلاحية الإدارة مطلوبة.' }, 403);
+        }
+        switch (url.pathname) {
+          case '/admin/dashboard':
+            return handleAdminDashboard(env, config);
+          case '/admin/config':
+            return handleAdminUpdateConfig(env, body);
+          case '/admin/cashout/resolve':
+            return handleAdminResolveCashout(env, body);
+          case '/admin/player/unfreeze':
+            return handleAdminUnfreeze(env, body);
+          default:
+            return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
+        }
+      }
+
+      if (config.killSwitch === true) {
+        return jsonResponse({ maintenance: true, message: 'قيد التطوير' }, 503);
+      }
+
+      // ====================================================
+      // ب) نقاط نهاية جسر متجر معاذ
+      // ====================================================
+      if (url.pathname === '/bridge/generate-bind-key') {
+        const storeAuth = await verifyStoreFirebaseToken(env, request);
+        if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
+        return handleGenerateBindKey(env, storeAuth);
+      }
+
+      if (url.pathname === '/bridge/store-to-arena') {
+        const storeAuth = await verifyStoreFirebaseToken(env, request);
+        if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
+        return handleStoreToArenaTransfer(env, storeAuth, body, config);
+      }
+
+      // ====================================================
+      // ج) نقاط نهاية تطبيق عالم التحديات (Arena PWA)
+      // ====================================================
+      if (url.pathname === '/auth/bind') {
+        return handleBindDevice(env, body, config);
+      }
+
+      const authHeader = request.headers.get('Authorization') || '';
+      const token = authHeader.replace('Bearer ', '');
+      const player = await verifyDeviceToken(env, token);
+      if (!player) return jsonResponse({ code: 'ERR_AUTH_01', message: 'جلسة غير صالحة، أعد ربط الجهاز.' }, 401);
+      if (player.frozen) return jsonResponse({ code: 'ERR_FROZEN', message: 'الحساب مجمد للمراجعة الأمنية.' }, 403);
+
       switch (url.pathname) {
-        case '/admin/dashboard':
-          return handleAdminDashboard(env, config);
-        case '/admin/config':
-          return handleAdminUpdateConfig(env, body);
-        case '/admin/cashout/resolve':
-          return handleAdminResolveCashout(env, body);
-        case '/admin/player/unfreeze':
-          return handleAdminUnfreeze(env, body);
+        case '/player/profile':
+          return handleProfile(env, player);
+        case '/character/select':
+          return handleSelectCharacter(env, player, body);
+        case '/shop/buy':
+          return handleShopBuy(env, player, body);
+        case '/session/start':
+          return handleSessionStart(env, player, body, config);
+        case '/session/submit':
+          return handleSessionSubmit(env, player, body, config);
+        case '/pvp/list':
+          return handlePvpList(env);
+        case '/pvp/create':
+          return handlePvpCreate(env, player, body, config);
+        case '/pvp/join':
+          return handlePvpJoin(env, player, body, config);
+        case '/bridge/cashout':
+          return handleCashoutRequest(env, player, body, config);
         default:
-          return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
+          return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
-    }
-
-    // فحص زر الطوارئ (Kill Switch) لجميع الزبائن واللاعبين
-    if (config.killSwitch === true) {
-      return jsonResponse({ maintenance: true, message: 'قيد التطوير' }, 503);
-    }
-
-    // ====================================================
-    // ب) نقاط نهاية جسر متجر معاذ (موثقة بتوكن Firebase للمتجر)
-    // ====================================================
-    if (url.pathname === '/bridge/generate-bind-key') {
-      const storeAuth = await verifyStoreFirebaseToken(env, request);
-      if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
-      return handleGenerateBindKey(env, storeAuth);
-    }
-
-    if (url.pathname === '/bridge/store-to-arena') {
-      const storeAuth = await verifyStoreFirebaseToken(env, request);
-      if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
-      return handleStoreToArenaTransfer(env, storeAuth, body, config);
-    }
-
-    // ====================================================
-    // ج) نقاط نهاية تطبيق عالم التحديات (Arena PWA)
-    // ====================================================
-    if (url.pathname === '/auth/bind') {
-      return handleBindDevice(env, body, config);
-    }
-
-    const authHeader = request.headers.get('Authorization') || '';
-    const token = authHeader.replace('Bearer ', '');
-    const player = await verifyDeviceToken(env, token);
-    if (!player) return jsonResponse({ code: 'ERR_AUTH_01', message: 'جلسة غير صالحة، أعد ربط الجهاز.' }, 401);
-    if (player.frozen) return jsonResponse({ code: 'ERR_FROZEN', message: 'الحساب مجمد للمراجعة الأمنية.' }, 403);
-
-    switch (url.pathname) {
-      case '/player/profile':
-        return handleProfile(env, player);
-      case '/character/select':
-        return handleSelectCharacter(env, player, body);
-      case '/shop/buy':
-        return handleShopBuy(env, player, body);
-      case '/session/start':
-        return handleSessionStart(env, player, body, config);
-      case '/session/submit':
-        return handleSessionSubmit(env, player, body, config);
-      case '/pvp/list':
-        return handlePvpList(env);
-      case '/pvp/create':
-        return handlePvpCreate(env, player, body, config);
-      case '/pvp/join':
-        return handlePvpJoin(env, player, body, config);
-      case '/bridge/cashout':
-        return handleCashoutRequest(env, player, body, config);
-      default:
-        return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
+    } catch (err) {
+      // ضمان إرجاع JSON مع ترويسات CORS دائماً حتى عند حدوث خطأ غير متوقع
+      return jsonResponse({
+        code: 'ERR_WORKER_EX',
+        message: `خطأ داخلي في الخادم: ${err && err.message ? err.message : 'Unknown error'}`
+      }, 500);
     }
   }
 };
 
-// ==========================================
-// التحقق التشفيري من توكن Firebase القادم من متجر معاذ
-// ==========================================
+function normalizeDbUrl(rawUrl) {
+  let u = String(rawUrl || '').trim().replace(/\/+$/, '');
+  if (u && !u.startsWith('http://') && !u.startsWith('https://')) {
+    u = 'https://' + u;
+  }
+  return u;
+}
+
 async function verifyStoreFirebaseToken(env, request) {
   const authHeader = request.headers.get('Authorization') || '';
   const idToken = authHeader.replace('Bearer ', '').trim();
   if (!idToken || idToken.split('.').length !== 3) return null;
 
   try {
-    // Firebase يتحقق تشفيرياً من التوقيع والصلاحية؛ إذا كان مزوراً أو منتهياً يرجع 401
-    const checkRes = await fetch(`${env.FIREBASE_DB_URL}/missingRequests.json?auth=${encodeURIComponent(idToken)}&shallow=true`);
+    const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
+    const checkRes = await fetch(`${baseUrl}/missingRequests.json?auth=${encodeURIComponent(idToken)}&shallow=true`);
     if (!checkRes.ok) return null;
 
-    // بعد مصادقة Firebase على التوكن، نفك حمولته بأمان لاستخراج البريد والهاتف
     const base64Url = idToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const payload = JSON.parse(atob(base64));
@@ -137,21 +171,14 @@ async function verifyStoreFirebaseToken(env, request) {
   }
 }
 
-// ==========================================
-// جسر متجر معاذ: توليد مفتاح الربط + شحن النقاط
-// ==========================================
 async function handleGenerateBindKey(env, { phone }) {
   const storeUser = await fbGet(env, `users/${phone}`);
   const displayName = (storeUser && (storeUser.name || storeUser.displayName)) || `زبون ${phone.slice(-4)}`;
-
   const randPart = () => Math.random().toString(36).substring(2, 6).toUpperCase();
   const bindKey = `MTH-${randPart()}-${randPart()}`;
 
   await fbPatch(env, `arena_world/bind_keys/${bindKey}`, {
-    phone,
-    displayName,
-    used: false,
-    createdAt: Date.now()
+    phone, displayName, used: false, createdAt: Date.now()
   });
 
   return jsonResponse({ ok: true, bindKey, displayName });
@@ -159,91 +186,51 @@ async function handleGenerateBindKey(env, { phone }) {
 
 async function handleStoreToArenaTransfer(env, { phone }, { usdAmount, idempotencyKey }, config) {
   const usd = Number(usdAmount);
-  if (!usd || usd <= 0 || usd > 500) {
-    return jsonResponse({ code: 'ERR_AMT', message: 'مبلغ الشحن غير صالح.' }, 400);
-  }
-  if (!idempotencyKey || idempotencyKey.length < 8) {
-    return jsonResponse({ code: 'ERR_IDEM', message: 'مفتاح منع التكرار مفقود.' }, 400);
-  }
+  if (!usd || usd <= 0 || usd > 500) return jsonResponse({ code: 'ERR_AMT', message: 'مبلغ الشحن غير صالح.' }, 400);
+  if (!idempotencyKey || idempotencyKey.length < 8) return jsonResponse({ code: 'ERR_IDEM', message: 'مفتاح منع التكرار مفقود.' }, 400);
 
-  // قفل منع التكرار (Idempotency Key)
   const existingTx = await fbGet(env, `arena_world/bridge_transfers/${idempotencyKey}`);
-  if (existingTx) {
-    return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
-  }
+  if (existingTx) return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
 
-  // التحقق من رصيد المحفظة مسبقة الدفع في متجر معاذ
   const storeUser = await fbGet(env, `users/${phone}`);
   const currentUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
   if (currentUsd < usd) {
     return jsonResponse({ code: 'ERR_STORE_FUNDS', message: `رصيدك في محفظة المتجر غير كافٍ (${currentUsd.toFixed(2)}$).` }, 400);
   }
 
-  const coinToUsdRate = Number(config.coinToUsdRate || 0.01); // 100 عملة = 1 دولار افتراضياً
+  const coinToUsdRate = Number(config.coinToUsdRate || 0.01);
   const coinsToAdd = Math.floor(usd / coinToUsdRate);
-  if (coinsToAdd <= 0) {
-    return jsonResponse({ code: 'ERR_RATE', message: 'سعر الصرف غير مضبوط بشكل صحيح.' }, 400);
-  }
+  if (coinsToAdd <= 0) return jsonResponse({ code: 'ERR_RATE', message: 'سعر الصرف غير مضبوط.' }, 400);
 
   const now = Date.now();
   const newStoreUsd = Number((currentUsd - usd).toFixed(4));
 
-  // 1. تسجيل العملية أولاً كقفل عدم تكرار
   await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, {
-    phone,
-    direction: 'store_to_arena',
-    usdAmount: usd,
-    pts: coinsToAdd,
-    status: 'processing',
-    createdAt: now
+    phone, direction: 'store_to_arena', usdAmount: usd, pts: coinsToAdd, status: 'processing', createdAt: now
   });
-
-  // 2. خصم الدولار من محفظة متجر معاذ أولاً
   await fbPatch(env, `users/${phone}`, { prepaidBalanceUSD: newStoreUsd });
 
-  // 3. ضمان وجود ملف للاعب في عالم التحديات ثم إضافة النقاط للسجل المتدحرج
   let player = await fbGet(env, `arena_world/players/${phone}`);
   if (!player) {
     player = {
       phone,
       displayName: (storeUser && (storeUser.name || storeUser.displayName)) || `زبون ${phone.slice(-4)}`,
-      activeCharacterId: 'buddy',
-      points: 0,
-      verifiedCheckpointBalance: 0,
-      xp: 0,
-      wins: 0,
-      losses: 0,
-      winStreak: 0,
-      recordsBroken: 0,
-      inventory: {},
-      cosmetics: {},
-      frozen: false,
-      antiCheatFlags: 0
+      activeCharacterId: 'buddy', points: 0, verifiedCheckpointBalance: 0,
+      xp: 0, wins: 0, losses: 0, winStreak: 0, recordsBroken: 0,
+      inventory: {}, cosmetics: {}, frozen: false, antiCheatFlags: 0
     };
     await fbPatch(env, `arena_world/players/${phone}`, player);
   }
 
-  await updatePlayerBalance(env, player, coinsToAdd, {
-    txId: idempotencyKey,
-    type: 'store_topup',
-    delta: coinsToAdd,
-    at: now
-  });
-
+  await updatePlayerBalance(env, player, coinsToAdd, { txId: idempotencyKey, type: 'store_topup', delta: coinsToAdd, at: now });
   await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, { status: 'completed', completedAt: Date.now() });
 
   return jsonResponse({
-    ok: true,
-    addedCoins: coinsToAdd,
-    newArenaBalance: player.points,
-    newStoreUsd,
+    ok: true, addedCoins: coinsToAdd, newArenaBalance: player.points, newStoreUsd,
     message: `تم تحويل ${usd}$ إلى ${coinsToAdd} عملة معاذ بنجاح!`
   });
 }
 
-// ==========================================
-// لوحة الإدارة المدمجة في متجر معاذ
-// ==========================================
 async function handleAdminDashboard(env, config) {
   const [cashouts, alerts, players] = await Promise.all([
     fbGet(env, 'arena_world/pending_cashouts'),
@@ -252,23 +239,13 @@ async function handleAdminDashboard(env, config) {
   ]);
 
   const pendingCashouts = cashouts
-    ? Object.entries(cashouts)
-        .map(([txId, v]) => ({ txId, ...v }))
-        .filter((c) => c.status === 'pending_audit')
-        .sort((a, b) => a.createdAt - b.createdAt)
+    ? Object.entries(cashouts).map(([txId, v]) => ({ txId, ...v })).filter((c) => c.status === 'pending_audit').sort((a, b) => a.createdAt - b.createdAt)
     : [];
-
   const recentAlerts = alerts
-    ? Object.entries(alerts)
-        .map(([id, v]) => ({ id, ...v }))
-        .sort((a, b) => b.at - a.at)
-        .slice(0, 15)
+    ? Object.entries(alerts).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.at - a.at).slice(0, 15)
     : [];
-
   const frozenPlayers = players
-    ? Object.values(players)
-        .filter((p) => p.frozen)
-        .map((p) => ({ phone: p.phone, displayName: p.displayName, points: p.points, flags: p.antiCheatFlags || 0 }))
+    ? Object.values(players).filter((p) => p.frozen).map((p) => ({ phone: p.phone, displayName: p.displayName, points: p.points, flags: p.antiCheatFlags || 0 }))
     : [];
 
   return jsonResponse({
@@ -280,9 +257,7 @@ async function handleAdminDashboard(env, config) {
       pvpHouseEdgePct: Number(config.pvpHouseEdgePct || 10),
       coinToUsdRate: Number(config.coinToUsdRate || 0.01)
     },
-    pendingCashouts,
-    recentAlerts,
-    frozenPlayers
+    pendingCashouts, recentAlerts, frozenPlayers
   });
 }
 
@@ -293,32 +268,24 @@ async function handleAdminUpdateConfig(env, body) {
   if (body.minCashoutPts !== undefined) updates.minCashoutPts = Math.max(100, Number(body.minCashoutPts));
   if (body.pvpHouseEdgePct !== undefined) updates.pvpHouseEdgePct = Math.min(30, Math.max(0, Number(body.pvpHouseEdgePct)));
   if (body.coinToUsdRate !== undefined) updates.coinToUsdRate = Math.max(0.0001, Number(body.coinToUsdRate));
-
   await fbPatch(env, 'arena_world/config', updates);
   return jsonResponse({ ok: true, message: 'تم حفظ إعدادات عالم التحديات بنجاح.' });
 }
 
 async function handleAdminResolveCashout(env, { txId, action }) {
-  if (!txId || !['approve', 'reject'].includes(action)) {
-    return jsonResponse({ code: 'ERR_PARAM', message: 'بيانات غير صالحة.' }, 400);
-  }
-
+  if (!txId || !['approve', 'reject'].includes(action)) return jsonResponse({ code: 'ERR_PARAM', message: 'بيانات غير صالحة.' }, 400);
   const cashout = await fbGet(env, `arena_world/pending_cashouts/${txId}`);
-  if (!cashout || cashout.status !== 'pending_audit') {
-    return jsonResponse({ code: 'ERR_TX_DONE', message: 'هذا الطلب تمت معالجته مسبقاً.' }, 400);
-  }
+  if (!cashout || cashout.status !== 'pending_audit') return jsonResponse({ code: 'ERR_TX_DONE', message: 'هذا الطلب تمت معالجته مسبقاً.' }, 400);
 
   const player = await fbGet(env, `arena_world/players/${cashout.phone}`);
   if (!player) return jsonResponse({ code: 'ERR_NO_PLAYER', message: 'اللاعب غير موجود.' }, 404);
 
   if (action === 'approve') {
-    // إعادة تدقيق السجل المتدحرج كطبقة أمان أخيرة قبل صرف الدولار للمتجر
     const auditOk = await verifyRollingLedger(env, player);
     if (!auditOk) {
       await flagAndFreeze(env, player, 'LEDGER_MISMATCH_ON_ADMIN_APPROVE', { txId });
       return jsonResponse({ code: 'ERR_AUDIT_FAIL', message: 'تحذير: السجل غير متطابق! تم تجميد الحساب تلقائياً.' }, 409);
     }
-
     const storeUser = await fbGet(env, `users/${cashout.phone}`);
     const currentUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
     const newUsd = Number((currentUsd + Number(cashout.usdAmount)).toFixed(4));
@@ -326,23 +293,11 @@ async function handleAdminResolveCashout(env, { txId, action }) {
     await fbPatch(env, `users/${cashout.phone}`, { prepaidBalanceUSD: newUsd });
     await fbPatch(env, `arena_world/pending_cashouts/${txId}`, { status: 'approved', resolvedAt: Date.now() });
     await fbPatch(env, `arena_world/bridge_transfers/${txId}`, {
-      phone: cashout.phone,
-      direction: 'arena_to_store',
-      pts: cashout.pts,
-      usdAmount: cashout.usdAmount,
-      status: 'completed',
-      createdAt: Date.now()
+      phone: cashout.phone, direction: 'arena_to_store', pts: cashout.pts, usdAmount: cashout.usdAmount, status: 'completed', createdAt: Date.now()
     });
-
     return jsonResponse({ ok: true, message: `تم اعتماد التحويل وإضافة ${cashout.usdAmount}$ لرصيد الزبون في المتجر.` });
   } else {
-    // رفض وإرجاع النقاط للاعب
-    await updatePlayerBalance(env, player, Number(cashout.pts), {
-      txId: `ref_${txId}`,
-      type: 'cashout_rejected_refund',
-      delta: Number(cashout.pts),
-      at: Date.now()
-    });
+    await updatePlayerBalance(env, player, Number(cashout.pts), { txId: `ref_${txId}`, type: 'cashout_rejected_refund', delta: Number(cashout.pts), at: Date.now() });
     await fbPatch(env, `arena_world/pending_cashouts/${txId}`, { status: 'rejected', resolvedAt: Date.now() });
     return jsonResponse({ ok: true, message: 'تم رفض الطلب وإعادة النقاط لرصيد اللاعب في العالم.' });
   }
@@ -354,18 +309,13 @@ async function handleAdminUnfreeze(env, { phone }) {
   return jsonResponse({ ok: true, message: `تم فك تجميد الحساب ${phone}.` });
 }
 
-// ==========================================
-// 1. المصادقة والملف الشخصي + فحص VIP من متجر معاذ
-// ==========================================
 async function getPlayerUnlockedVips(env, phone) {
   const storeUser = await fbGet(env, `users/${phone}`);
   const unlocked = [];
   const now = Date.now();
   if (storeUser && storeUser.vipCharacters) {
     for (const [charId, info] of Object.entries(storeUser.vipCharacters)) {
-      if (info === true || (info && (info.permanent === true || Number(info.expiresAt || 0) > now))) {
-        unlocked.push(charId);
-      }
+      if (info === true || (info && (info.permanent === true || Number(info.expiresAt || 0) > now))) unlocked.push(charId);
     }
   }
   return unlocked;
@@ -373,16 +323,11 @@ async function getPlayerUnlockedVips(env, phone) {
 
 async function handleBindDevice(env, { bindKey, deviceId }, config) {
   if (!bindKey || !deviceId) return jsonResponse({ code: 'ERR_BIND_01', message: 'بيانات ناقصة' }, 400);
-
   const keyData = await fbGet(env, `arena_world/bind_keys/${bindKey}`);
-  if (!keyData || keyData.used) {
-    return jsonResponse({ code: 'ERR_BIND_02', message: 'المعرف غير صحيح أو مستخدم مسبقاً.' }, 403);
-  }
+  if (!keyData || keyData.used) return jsonResponse({ code: 'ERR_BIND_02', message: 'المعرف غير صحيح أو مستخدم مسبقاً.' }, 403);
 
   const existingDevice = await fbGet(env, `arena_world/devices/${deviceId}`);
-  if (existingDevice && existingDevice.phone !== keyData.phone) {
-    return jsonResponse({ code: 'ERR_MULTI_ACC', message: 'هذا الجهاز مرتبط بحساب آخر بالفعل.' }, 403);
-  }
+  if (existingDevice && existingDevice.phone !== keyData.phone) return jsonResponse({ code: 'ERR_MULTI_ACC', message: 'هذا الجهاز مرتبط بحساب آخر بالفعل.' }, 403);
 
   const deviceToken = crypto.randomUUID() + '.' + Date.now();
   await fbPatch(env, `arena_world/bind_keys/${bindKey}`, { used: true, usedAt: Date.now() });
@@ -393,70 +338,39 @@ async function handleBindDevice(env, { bindKey, deviceId }, config) {
   if (!existingPlayer) {
     const welcomePts = Number(config.welcomePoints || 0);
     await fbPatch(env, playerPath, {
-      phone: keyData.phone,
-      displayName: keyData.displayName || 'لاعب جديد',
-      activeCharacterId: 'buddy',
-      points: welcomePts,
-      verifiedCheckpointBalance: welcomePts,
-      xp: 0,
-      wins: 0,
-      losses: 0,
-      winStreak: 0,
-      recordsBroken: 0,
-      inventory: {},
-      cosmetics: {},
-      frozen: false,
-      antiCheatFlags: 0,
-      deviceToken
+      phone: keyData.phone, displayName: keyData.displayName || 'لاعب جديد', activeCharacterId: 'buddy',
+      points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
+      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, frozen: false, antiCheatFlags: 0, deviceToken
     });
   } else {
     await fbPatch(env, playerPath, { deviceToken });
   }
-
   return jsonResponse({ ok: true, deviceToken });
 }
 
 async function handleProfile(env, player) {
   const unlockedVips = await getPlayerUnlockedVips(env, player.phone);
   let activeChar = player.activeCharacterId || 'buddy';
-
   if (VIP_CHARS.includes(activeChar) && !unlockedVips.includes(activeChar)) {
     activeChar = 'buddy';
     await fbPatch(env, `arena_world/players/${player.phone}`, { activeCharacterId: 'buddy' });
   }
-
   const records = (await fbGet(env, 'arena_world/admin_records')) || {
     hill_drive: { title: 'قيادة التلال 2D', currentRecord: 350, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 },
     cyber_shooter: { title: 'ميجا شوتر 2D', currentRecord: 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 }
   };
-
   return jsonResponse({
-    displayName: player.displayName,
-    phone: player.phone,
-    activeCharacterId: activeChar,
-    unlockedVips,
-    points: player.points,
-    xp: player.xp || 0,
-    wins: player.wins || 0,
-    losses: player.losses || 0,
-    inventory: player.inventory || {},
-    cosmetics: player.cosmetics || {},
-    records
+    displayName: player.displayName, phone: player.phone, activeCharacterId: activeChar, unlockedVips,
+    points: player.points, xp: player.xp || 0, wins: player.wins || 0, losses: player.losses || 0,
+    inventory: player.inventory || {}, cosmetics: player.cosmetics || {}, records
   });
 }
 
-// ==========================================
-// 2. اختيار الشخصية + متجر الأدوات التكتيكية
-// ==========================================
 async function handleSelectCharacter(env, player, { characterId }) {
-  if (!BASIC_CHARS.includes(characterId) && !VIP_CHARS.includes(characterId)) {
-    return jsonResponse({ code: 'ERR_CHAR', message: 'شخصية غير معروفة.' }, 400);
-  }
+  if (!BASIC_CHARS.includes(characterId) && !VIP_CHARS.includes(characterId)) return jsonResponse({ code: 'ERR_CHAR', message: 'شخصية غير معروفة.' }, 400);
   if (VIP_CHARS.includes(characterId)) {
     const unlockedVips = await getPlayerUnlockedVips(env, player.phone);
-    if (!unlockedVips.includes(characterId)) {
-      return jsonResponse({ code: 'ERR_VIP_LOCKED', message: 'هذه الشخصية مخصصة لـ VIP، يمكنك فتحها من متجر معاذ.' }, 403);
-    }
+    if (!unlockedVips.includes(characterId)) return jsonResponse({ code: 'ERR_VIP_LOCKED', message: 'هذه الشخصية مخصصة لـ VIP، يمكنك فتحها من متجر معاذ.' }, 403);
   }
   await fbPatch(env, `arena_world/players/${player.phone}`, { activeCharacterId: characterId });
   return jsonResponse({ ok: true, activeCharacterId: characterId });
@@ -465,59 +379,34 @@ async function handleSelectCharacter(env, player, { characterId }) {
 async function handleShopBuy(env, player, { itemId }) {
   const item = SHOP_PRICES[itemId];
   if (!item) return jsonResponse({ code: 'ERR_ITEM', message: 'الغرض غير موجود في المتجر.' }, 400);
-
   if (item.type === 'cosmetic') {
-    if ((player.xp || 0) < item.reqXp) {
-      return jsonResponse({ code: 'ERR_XP_LOW', message: `تحتاج إلى ${item.reqXp} XP لفتح هذا القالب.` }, 400);
-    }
+    if ((player.xp || 0) < item.reqXp) return jsonResponse({ code: 'ERR_XP_LOW', message: `تحتاج إلى ${item.reqXp} XP لفتح هذا القالب.` }, 400);
     const cosmetics = player.cosmetics || {};
     cosmetics[itemId] = true;
     await fbPatch(env, `arena_world/players/${player.phone}`, { cosmetics });
     return jsonResponse({ ok: true, message: 'تم فتح القالب الفاخر بنجاح!' });
   }
-
   let finalPrice = item.price;
-  if (player.activeCharacterId === 'saver') {
-    finalPrice = Math.max(1, Math.floor(item.price * 0.95));
-  }
-
-  if (player.points < finalPrice) {
-    return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
-  }
+  if (player.activeCharacterId === 'saver') finalPrice = Math.max(1, Math.floor(item.price * 0.95));
+  if (player.points < finalPrice) return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
 
   const txId = `shop_${crypto.randomUUID().slice(0, 8)}`;
-  await updatePlayerBalance(env, player, -finalPrice, {
-    txId,
-    type: `shop_buy_${itemId}`,
-    delta: -finalPrice,
-    at: Date.now()
-  });
-
+  await updatePlayerBalance(env, player, -finalPrice, { txId, type: `shop_buy_${itemId}`, delta: -finalPrice, at: Date.now() });
   const inv = player.inventory || {};
   inv[itemId] = (inv[itemId] || 0) + 1;
   await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv });
-
   return jsonResponse({ ok: true, finalPrice, inventory: inv, message: `تم الشراء بنجاح مقابل ${finalPrice} عملة!` });
 }
 
-// ==========================================
-// 3. الجلسات + منع الغش + PvP + السجل المتدحرج
-// ==========================================
 async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem }, config) {
-  if (!['hill_drive', 'cyber_shooter'].includes(gameId)) {
-    return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
-  }
-
+  if (!['hill_drive', 'cyber_shooter'].includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
   const playMode = mode || 'record';
   let cost = Number(stakePts) || 10;
   if (playMode === 'record') {
     const rec = await fbGet(env, `arena_world/admin_records/${gameId}`);
     cost = rec ? Number(rec.entryCostPts || 10) : 10;
   }
-
-  if (cost < 0 || player.points < cost) {
-    return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
-  }
+  if (cost < 0 || player.points < cost) return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
 
   let activeItem = null;
   if (useItem && SHOP_PRICES[useItem] && SHOP_PRICES[useItem].type === 'tactical') {
@@ -534,59 +423,31 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
   const now = Date.now();
   const seed = Math.floor(Math.random() * 999999);
 
-  await updatePlayerBalance(env, player, -cost, {
-    txId: sessionId,
-    type: `entry_${playMode}`,
-    delta: -cost,
-    at: now
-  });
+  await updatePlayerBalance(env, player, -cost, { txId: sessionId, type: `entry_${playMode}`, delta: -cost, at: now });
 
   if (playMode === 'record' && cost > 0) {
     const rec = (await fbGet(env, `arena_world/admin_records/${gameId}`)) || {
       title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : 'ميجا شوتر 2D',
-      currentRecord: gameId === 'hill_drive' ? 350 : 500,
-      holderName: 'إدارة العالم',
-      entryCostPts: cost,
-      jackpotPts: 100
+      currentRecord: gameId === 'hill_drive' ? 350 : 500, holderName: 'إدارة العالم', entryCostPts: cost, jackpotPts: 100
     };
-    const jackpotAdd = Math.floor(cost * 0.6);
-    await fbPatch(env, `arena_world/admin_records/${gameId}`, {
-      ...rec,
-      jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd
-    });
+    await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + Math.floor(cost * 0.6) });
   }
 
   await fbPatch(env, `arena_world/sessions/${sessionId}`, {
-    phone: player.phone,
-    gameId,
-    mode: playMode,
-    stakePts: cost,
-    pvpMatchId: pvpMatchId || null,
-    characterId: lockedCharId,
-    activeItem,
-    seed,
-    startedAt: now,
-    expiresAt: now + 10 * 60 * 1000,
-    consumed: false
+    phone: player.phone, gameId, mode: playMode, stakePts: cost, pvpMatchId: pvpMatchId || null,
+    characterId: lockedCharId, activeItem, seed, startedAt: now, expiresAt: now + 10 * 60 * 1000, consumed: false
   });
-
   return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, startedAt: now });
 }
 
 async function handleSessionSubmit(env, player, { sessionId, score, telemetry }, config) {
-  if (!sessionId || typeof score !== 'number' || !telemetry) {
-    return jsonResponse({ code: 'ERR_SUBMIT_01', message: 'بيانات النتيجة ناقصة.' }, 400);
-  }
-
+  if (!sessionId || typeof score !== 'number' || !telemetry) return jsonResponse({ code: 'ERR_SUBMIT_01', message: 'بيانات النتيجة ناقصة.' }, 400);
   const session = await fbGet(env, `arena_world/sessions/${sessionId}`);
-  if (!session || session.phone !== player.phone) {
-    return jsonResponse({ code: 'ERR_SES_INVALID', message: 'جلسة غير صالحة.' }, 403);
-  }
+  if (!session || session.phone !== player.phone) return jsonResponse({ code: 'ERR_SES_INVALID', message: 'جلسة غير صالحة.' }, 403);
   if (session.consumed) {
     await flagAndFreeze(env, player, 'REPLAY_ATTACK_ATTEMPT', { sessionId });
     return jsonResponse({ code: 'ERR_REPLAY', message: 'محاولة إعادة إرسال نتيجة مكررة! تم تجميد الحساب.' }, 403);
   }
-
   await fbPatch(env, `arena_world/sessions/${sessionId}`, { consumed: true, submittedAt: Date.now() });
 
   const check = validateTelemetry(session, score, telemetry);
@@ -600,7 +461,6 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
   let rewardPts = 0;
   let won = false;
   let xpGain = Math.min(50, Math.max(5, Math.floor(score / 25)));
-
   if (charId === 'anime_zain') xpGain *= 2;
   if (session.activeItem === 'double_xp') xpGain *= 2;
   if (charId === 'anime_ryu') xpGain = Math.floor(xpGain * 1.2);
@@ -616,9 +476,7 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
       if (charId === 'coach_sakhr') baseJackpot += Math.min(20, Math.floor(baseJackpot * 0.1));
       rewardPts = baseJackpot;
       await updatePlayerBalance(env, player, rewardPts, { txId: `win_rec_${sessionId}`, type: 'record_broken', delta: rewardPts, at: now });
-      await fbPatch(env, `arena_world/admin_records/${session.gameId}`, {
-        currentRecord: score, holderName: player.displayName, holderPhone: player.phone, jackpotPts: 50
-      });
+      await fbPatch(env, `arena_world/admin_records/${session.gameId}`, { currentRecord: score, holderName: player.displayName, holderPhone: player.phone, jackpotPts: 50 });
       await fbPatch(env, `arena_world/players/${player.phone}`, { recordsBroken: (player.recordsBroken || 0) + 1 });
       outcomeMsg = `🔥 مبروك! كسرت الرقم القياسي وربحت الجائزة الكبرى (${rewardPts} عملة معاذ)!`;
     } else {
@@ -643,17 +501,12 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
       if (charId === 'princess_layla') houseEdgePct = Math.max(5, houseEdgePct - 2);
       const fee = Math.floor(pot * (houseEdgePct / 100));
       const prize = pot - fee;
-
       const rec = await fbGet(env, `arena_world/admin_records/${match.gameId}`);
-      if (rec) {
-        await fbPatch(env, `arena_world/admin_records/${match.gameId}`, { jackpotPts: Number(rec.jackpotPts || 100) + Math.floor(fee / 2) });
-      }
+      if (rec) await fbPatch(env, `arena_world/admin_records/${match.gameId}`, { jackpotPts: Number(rec.jackpotPts || 100) + Math.floor(fee / 2) });
 
       let winnerPhone = null;
       if (score > match.creatorScore) {
-        won = true;
-        winnerPhone = player.phone;
-        rewardPts = prize;
+        won = true; winnerPhone = player.phone; rewardPts = prize;
         await updatePlayerBalance(env, player, prize, { txId: `pvp_win_${match.matchId}`, type: 'pvp_win', delta: prize, at: now });
         await fbPatch(env, `arena_world/players/${player.phone}`, { wins: (player.wins || 0) + 1, winStreak: (player.winStreak || 0) + 1 });
         outcomeMsg = `🏆 فزت بالتحدي! (${score} مقابل ${match.creatorScore}) وربحت ${prize} عملة معاذ!`;
@@ -673,10 +526,8 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
         if (creator) await updatePlayerBalance(env, creator, refund, { txId: `pvp_draw_${match.matchId}`, type: 'pvp_draw', delta: refund, at: now });
         outcomeMsg = `تعادل (${score} مقابل ${match.creatorScore})! أُعيد ${refund} عملة لكل لاعب.`;
       }
-
       await fbPatch(env, `arena_world/pvp_matches/${match.matchId}`, {
-        opponentPhone: player.phone, opponentName: player.displayName, opponentScore: score,
-        winnerPhone, status: 'completed', completedAt: now
+        opponentPhone: player.phone, opponentName: player.displayName, opponentScore: score, winnerPhone, status: 'completed', completedAt: now
       });
     }
   }
@@ -794,16 +645,22 @@ async function verifyDeviceToken(env, token) {
 }
 
 async function fbGet(env, path) {
-  const res = await fetch(`${env.FIREBASE_DB_URL}/${path}.json?auth=${env.FIREBASE_DB_SECRET}`);
+  const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
+  const secret = encodeURIComponent(String(env.FIREBASE_DB_SECRET || '').trim());
+  const res = await fetch(`${baseUrl}/${path}.json?auth=${secret}`);
   return res.ok ? res.json() : null;
 }
 async function fbPatch(env, path, data) {
-  return fetch(`${env.FIREBASE_DB_URL}/${path}.json?auth=${env.FIREBASE_DB_SECRET}`, {
+  const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
+  const secret = encodeURIComponent(String(env.FIREBASE_DB_SECRET || '').trim());
+  return fetch(`${baseUrl}/${path}.json?auth=${secret}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
   });
 }
 async function fbDelete(env, path) {
-  return fetch(`${env.FIREBASE_DB_URL}/${path}.json?auth=${env.FIREBASE_DB_SECRET}`, { method: 'DELETE' });
+  const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
+  const secret = encodeURIComponent(String(env.FIREBASE_DB_SECRET || '').trim());
+  return fetch(`${baseUrl}/${path}.json?auth=${secret}`, { method: 'DELETE' });
 }
 function jsonResponse(data, status = 200) {
   return corsResponse(JSON.stringify(data), status, { 'Content-Type': 'application/json' });
@@ -813,7 +670,7 @@ function corsResponse(body, status = 200, extraHeaders = {}) {
     status,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       ...extraHeaders
     }
