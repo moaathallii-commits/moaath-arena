@@ -188,29 +188,58 @@ async function handleGenerateBindKey(env, { phone }) {
   return jsonResponse({ ok: true, bindKey, displayName });
 }
 
-async function handleStoreToArenaTransfer(env, { phone }, { usdAmount, idempotencyKey }, config) {
-  const usd = Number(usdAmount);
-  if (!usd || usd <= 0 || usd > 500) return jsonResponse({ code: 'ERR_AMT', message: 'مبلغ الشحن غير صالح.' }, 400);
-  if (!idempotencyKey || idempotencyKey.length < 8) return jsonResponse({ code: 'ERR_IDEM', message: 'مفتاح منع التكرار مفقود.' }, 400);
+async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount, idempotencyKey }, config) {
+  const sypRate = Number(config.usdToSypRate || config.sypPerUsd || 15000);
+  const syp = sypAmount !== undefined
+    ? Number(sypAmount)
+    : Math.round(Number(usdAmount || 0) * sypRate);
+
+  if (!syp || syp <= 0 || syp > 50000000) {
+    return jsonResponse({ code: 'ERR_AMT', message: 'مبلغ الشحن بالليرة السورية غير صالح.' }, 400);
+  }
+  if (!idempotencyKey || idempotencyKey.length < 8) {
+    return jsonResponse({ code: 'ERR_IDEM', message: 'مفتاح منع التكرار مفقود.' }, 400);
+  }
 
   const existingTx = await fbGet(env, `arena_world/bridge_transfers/${idempotencyKey}`);
-  if (existingTx) return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
+  if (existingTx) {
+    return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
+  }
 
   const storeUser = await fbGet(env, `users/${phone}`);
   const currentUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
-  if (currentUsd < usd) {
-    return jsonResponse({ code: 'ERR_STORE_FUNDS', message: `رصيدك في محفظة المتجر غير كافٍ (${currentUsd.toFixed(2)}$).` }, 400);
+  const usdEquivalent = Number((syp / sypRate).toFixed(4));
+
+  if (currentUsd < usdEquivalent) {
+    const availableSyp = Math.floor(currentUsd * sypRate);
+    return jsonResponse({
+      code: 'ERR_STORE_FUNDS',
+      message: `رصيدك في محفظة المتجر غير كافٍ (${availableSyp.toLocaleString('ar-SY')} ل.س تقريباً).`
+    }, 400);
   }
 
+  // حساب العملات: إما مباشرة عبر buyRateSYP (سعر العملة الواحدة بالليرة) أو عبر الدولار
+  const coinBuyRateSYP = Number(config.buyRateSYP || 0);
   const coinToUsdRate = Number(config.coinToUsdRate || 0.01);
-  const coinsToAdd = Math.floor(usd / coinToUsdRate);
-  if (coinsToAdd <= 0) return jsonResponse({ code: 'ERR_RATE', message: 'سعر الصرف غير مضبوط.' }, 400);
+  const coinsToAdd = coinBuyRateSYP > 0
+    ? Math.floor(syp / coinBuyRateSYP)
+    : Math.floor(usdEquivalent / coinToUsdRate);
+
+  if (coinsToAdd <= 0) {
+    return jsonResponse({ code: 'ERR_RATE', message: 'المبلغ أقل من قيمة عملة واحدة أو سعر الصرف غير مضبوط.' }, 400);
+  }
 
   const now = Date.now();
-  const newStoreUsd = Number((currentUsd - usd).toFixed(4));
+  const newStoreUsd = Number(Math.max(0, currentUsd - usdEquivalent).toFixed(4));
 
   await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, {
-    phone, direction: 'store_to_arena', usdAmount: usd, pts: coinsToAdd, status: 'processing', createdAt: now
+    phone,
+    direction: 'store_to_arena',
+    sypAmount: syp,
+    usdEquivalent,
+    pts: coinsToAdd,
+    status: 'processing',
+    createdAt: now
   });
   await fbPatch(env, `users/${phone}`, { prepaidBalanceUSD: newStoreUsd });
 
@@ -219,19 +248,40 @@ async function handleStoreToArenaTransfer(env, { phone }, { usdAmount, idempoten
     player = {
       phone,
       displayName: (storeUser && (storeUser.name || storeUser.displayName)) || `زبون ${phone.slice(-4)}`,
-      activeCharacterId: 'buddy', points: 0, verifiedCheckpointBalance: 0,
-      xp: 0, wins: 0, losses: 0, winStreak: 0, recordsBroken: 0,
-      inventory: {}, cosmetics: {}, frozen: false, antiCheatFlags: 0
+      activeCharacterId: 'buddy',
+      points: 0,
+      verifiedCheckpointBalance: 0,
+      xp: 0,
+      wins: 0,
+      losses: 0,
+      winStreak: 0,
+      recordsBroken: 0,
+      inventory: {},
+      cosmetics: {},
+      frozen: false,
+      antiCheatFlags: 0
     };
     await fbPatch(env, `arena_world/players/${phone}`, player);
   }
 
-  await updatePlayerBalance(env, player, coinsToAdd, { txId: idempotencyKey, type: 'store_topup', delta: coinsToAdd, at: now });
-  await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, { status: 'completed', completedAt: Date.now() });
+  await updatePlayerBalance(env, player, coinsToAdd, {
+    txId: idempotencyKey,
+    type: 'store_topup_syp',
+    delta: coinsToAdd,
+    at: now
+  });
+  await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, {
+    status: 'completed',
+    completedAt: Date.now()
+  });
 
   return jsonResponse({
-    ok: true, addedCoins: coinsToAdd, newArenaBalance: player.points, newStoreUsd,
-    message: `تم تحويل ${usd}$ إلى ${coinsToAdd} عملة معاذ بنجاح!`
+    ok: true,
+    addedCoins: coinsToAdd,
+    sypAmount: syp,
+    newArenaBalance: player.points,
+    newStoreSyp: Math.floor(newStoreUsd * sypRate),
+    message: `تم تحويل ${syp.toLocaleString('ar-SY')} ل.س إلى ${coinsToAdd} عملة معاذ بنجاح!`
   });
 }
 
