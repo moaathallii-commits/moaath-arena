@@ -1,18 +1,31 @@
-const CACHE_NAME = 'moaath-arena-core-v1.0.0';
+/**
+ * Moaath Arena World - Service Worker (Smart Auto-Update)
+ * المسار في GitHub: sw.js
+ * لا حاجة لتغيير اسم الإصدار مستقبلاً:
+ * - ملفات الكود (HTML/JS/JSON): الشبكة أولاً مع تحديث الكاش تلقائياً (تظهر التحديثات فوراً، وتعمل بدون إنترنت من الكاش).
+ * - الوسائط الثقيلة (الصور والأصوات): الكاش أولاً لتوفير بيانات الإنترنت على شبكات 3G/4G.
+ * - طلبات الخادم (Cloudflare Worker / Firebase): شبكة مباشرة دائماً لمنع الغش.
+ */
+
+const CACHE_NAME = 'moaath-arena-smart-cache';
+
 const CORE_ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './js/game_hill_drive.js',
+  './js/game_cyber_shooter.js'
 ];
 
-// تثبيت النواة الأساسية فقط للتحميل السريع على شبكات 3G
+// 1. التثبيت: حفظ الملفات الأساسية فوراً
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
 });
 
-// تنظيف الكاش القديم عند تفعيل نسخة جديدة
+// 2. التفعيل: تنظيف أي كاش قديم باسم مختلف والسيطرة على الصفحات
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -22,31 +35,45 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// استراتيجية: الكاش أولاً للملفات الثابتة، والشبكة دائماً لطلبات الـ Worker
+// 3. إدارة الطلبات بذكاء بدون الحاجة لتغيير رقم الإصدار
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
-  // لا تخزن طلبات الخادم الطرفي أو Firebase أبداً (لضمان منع الغش)
+  // استثناء تام لطلبات الخادم الطرفي وFirebase (أمان ومنع غش)
   if (url.hostname.includes('workers.dev') || url.hostname.includes('firebaseio.com')) {
     return;
   }
 
+  // الوسائط (أصوات MP3 وصور): الكاش أولاً لتوفير الإنترنت
+  const isMedia = /\.(mp3|wav|ogg|png|jpg|jpeg|webp|svg|ico)$/i.test(url.pathname);
+  if (isMedia) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // ملفات الكود (HTML, JS, CSS, JSON): الشبكة أولاً لتحديث الكود تلقائياً، والكاش عند انقطاع الإنترنت
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        if (event.request.method === 'GET' && response.status === 200) {
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
-    })
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
-});
-
-// استقبال أمر التحديث الآمن بين الجولات فقط
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
 });
