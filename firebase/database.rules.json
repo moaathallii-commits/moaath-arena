@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "arena_world": {
+      ".read": false,
+      ".write": false,
+      "config": {
+        "killSwitch": { ".read": true }
+      },
+      "leaderboards": {
+        ".read": true
+      }
+    }
+  }
+}
