@@ -1,0 +1,25 @@
+{
+  "name": "عالم تحديات معاذ | Moaath Arena",
+  "short_name": "عالم التحديات",
+  "description": "منصة التحديات والمسابقات التنافسية المرتبطة بمتجر معاذ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1120",
+  "theme_color": "#d4af37",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "./assets/icons/coin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icons/coin-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
