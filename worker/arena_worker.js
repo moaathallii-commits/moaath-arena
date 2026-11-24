@@ -159,7 +159,9 @@ async function verifyStoreFirebaseToken(env, request) {
 
     const base64Url = idToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    const payload = JSON.parse(atob(padded));
     const email = (payload.email || '').toLowerCase();
     if (!email.endsWith('@moaath.store')) return null;
 
