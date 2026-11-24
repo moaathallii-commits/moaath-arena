@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>عالم تحديات معاذ | Moaath Arena</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b1120" />
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --bg-card: #151f32;
+      --gold: #d4af37;
+      --gold-light: #f3d576;
+      --silver: #cbd5e1;
+      --blue-accent: #1d4ed8;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg-dark); color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+    .hidden { display: none !important; }
+
+    /* الشريط العلوي */
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--gold-light); }
+    .wallet-badge {
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid var(--gold);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .offline-banner {
+      background: #991b1b;
+      color: #fff;
+      text-align: center;
+      padding: 6px;
+      font-size: 0.85rem;
+    }
+
+    /* البطاقات والأزرار */
+    main { flex: 1; padding: 16px; max-width: 600px; width: 100%; margin: 0 auto; }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(203, 213, 225, 0.15);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-gold { background: linear-gradient(135deg, var(--gold), #b48a1e); color: #0b1120; }
+    .btn-outline { background: transparent; border: 1px solid var(--silver); color: var(--silver); margin-top: 8px; }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      background: #0b1120;
+      color: #fff;
+      font-size: 1rem;
+      margin: 12px 0;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    /* شاشات التغطية (الطوارئ + مؤقت 5 ثواني) */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(11, 17, 32, 0.96);
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center; padding: 24px; z-index: 999;
+    }
+    .countdown-num { font-size: 5rem; font-weight: 900; color: var(--gold-light); margin: 16px 0; }
+    .error-code { font-family: monospace; background: #000; color: #f87171; padding: 6px 12px; border-radius: 6px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- شريط انقطاع الإنترنت -->
+  <div id="offlineBanner" class="offline-banner hidden">
+    أنت بدون إنترنت حالياً — النقاط مجمدة وسيتم التحقق منها فور عودة الاتصال.
+  </div>
+
+  <!-- الشريط العلوي -->
+  <header>
+    <div class="brand">
+      <span>🏆 عالم تحديات معاذ</span>
+    </div>
+    <div class="wallet-badge">
+      <span id="coinsDisplay">0</span>
+      <span>عملة معاذ</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- شاشة تسجيل الدخول لأول مرة (مفتاح الربط) -->
+    <section id="loginScreen" class="card">
+      <h2 style="color: var(--gold-light); margin-bottom: 8px;">تفعيل حسابك في العالم</h2>
+      <p style="color: var(--silver); font-size: 0.9rem; line-height: 1.6;">
+        انسخ <strong>معرف اللاعب السري</strong> من إعدادات حسابك في «متجر معاذ» وألصقه هنا لربط جهازك بأمان.
+      </p>
+      <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" />
+      <button class="btn btn-gold" onclick="ArenaApp.bindDevice()">ربط الجهاز والدخول</button>
+    </section>
+
+    <!-- الشاشة الرئيسية بعد الدخول -->
+    <section id="lobbyScreen" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h3 id="playerName">اللاعب</h3>
+            <small style="color: var(--silver);">XP: <span id="xpDisplay">0</span></small>
+          </div>
+          <label style="font-size: 0.8rem; color: var(--silver);">
+            <input type="checkbox" id="dataSaverToggle" style="width:auto; margin:0 4px;" /> توفير البيانات
+          </label>
+        </div>
+        <button class="btn btn-gold" onclick="ArenaApp.triggerCountdown('demo_game', 10)">
+          بدء تحدي تجريبي (10 عملات)
+        </button>
+        <button class="btn btn-outline" onclick="ArenaApp.requestCashout(100)">
+          سحب 100 عملة إلى متجر معاذ
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- شاشة مؤقت 5 ثوانٍ الإلزامي قبل الجولة -->
+  <div id="countdownOverlay" class="overlay hidden">
+    <h2 style="color: var(--danger);">تنبيه هام قبل البدء!</h2>
+    <p style="color: var(--silver); max-width: 320px; margin-top: 8px; line-height: 1.5;">
+      تأكد من استقرار الإنترنت. بعد انتهاء العد التنازلي <strong>لا يمكنك التراجع أبداً</strong>، وانقطاع الاتصال يُحسب خسارة.
+    </p>
+    <div id="countdownNumber" class="countdown-num">5</div>
+    <button id="cancelMatchBtn" class="btn btn-outline" style="max-width: 240px;" onclick="ArenaApp.cancelCountdown()">
+      تراجع الآن
+    </button>
+  </div>
+
+  <!-- شاشة زر الطوارئ (Kill Switch) -->
+  <div id="maintenanceOverlay" class="overlay hidden">
+    <h1 style="color: var(--gold-light); margin-bottom: 12px;">⚙️ قيد التطوير</h1>
+    <p style="color: var(--silver); max-width: 320px;">
+      عالم التحديات في وضع الصيانة والتحديث حالياً لضمان أفضل تجربة. أرصدتك محفوظة بالكامل.
+    </p>
+  </div>
+
+  <!-- نافذة عرض رمز الخطأ -->
+  <div id="errorOverlay" class="overlay hidden">
+    <h3 style="color: var(--danger);">حدث خطأ تقني</h3>
+    <p id="errorMsg" style="color: var(--silver); margin-top: 8px;"></p>
+    <div id="errorCodeBox" class="error-code">ERR_UNKNOWN</div>
+    <button class="btn btn-outline" style="max-width: 200px; margin-top: 16px;" onclick="document.getElementById('errorOverlay').classList.add('hidden')">إغلاق</button>
+  </div>
+
+  <script>
+    const WORKER_URL = 'https://YOUR_WORKER_SUBDOMAIN.workers.dev'; // عدّل هذا الرابط بعد رفع الـ Worker
+
+    const ArenaApp = {
+      token: localStorage.getItem('arena_device_token'),
+      countdownTimer: null,
+
+      init() {
+        this.registerSW();
+        this.bindNetworkEvents();
+        if (this.token) {
+          this.syncProfile();
+        }
+      },
+
+      registerSW() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+      },
+
+      bindNetworkEvents() {
+        const updateStatus = () => {
+          document.getElementById('offlineBanner').classList.toggle('hidden', navigator.onLine);
+        };
+        window.addEventListener('online', () => { updateStatus(); if (this.token) this.syncProfile(); });
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
+      },
+
+      showError(code, msg) {
+        document.getElementById('errorCodeBox').textContent = code;
+        document.getElementById('errorMsg').textContent = msg;
+        document.getElementById('errorOverlay').classList.remove('hidden');
+      },
+
+      async api(path, body = {}) {
+        if (!navigator.onLine) {
+          this.showError('ERR_OFFLINE', 'لا يمكن تنفيذ هذه العملية بدون اتصال بالإنترنت.');
+          return null;
+        }
+        try {
+          const res = await fetch(`${WORKER_URL}${path}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.token || ''}`
+            },
+            body: JSON.stringify(body)
+          });
+          const data = await res.json();
+          if (data.maintenance) {
+            document.getElementById('maintenanceOverlay').classList.remove('hidden');
+            return null;
+          }
+          if (!res.ok) {
+            this.showError(data.code || 'ERR_SERVER', data.message || 'فشل الاتصال بالخادم');
+            return null;
+          }
+          return data;
+        } catch (e) {
+          this.showError('ERR_NET_01', 'تعذر الوصول للخادم، تأكد من جودة الإنترنت.');
+          return null;
+        }
+      },
+
+      async bindDevice() {
+        const key = document.getElementById('bindKeyInput').value.trim();
+        if (!key) return this.showError('ERR_INPUT', 'الرجاء إدخال معرف اللاعب.');
+        const deviceId = this.getOrCreateDeviceId();
+        const res = await this.api('/auth/bind', { bindKey: key, deviceId });
+        if (res && res.deviceToken) {
+          this.token = res.deviceToken;
+          localStorage.setItem('arena_device_token', res.deviceToken);
+          this.syncProfile();
+        }
+      },
+
+      getOrCreateDeviceId() {
+        let id = localStorage.getItem('arena_device_fp');
+        if (!id) {
+          id = crypto.randomUUID();
+          localStorage.setItem('arena_device_fp', id);
+        }
+        return id;
+      },
+
+      async syncProfile() {
+        const res = await this.api('/player/profile');
+        if (!res) return;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('lobbyScreen').classList.remove('hidden');
+        document.getElementById('playerName').textContent = res.displayName || 'لاعب';
+        document.getElementById('coinsDisplay').textContent = res.points;
+        document.getElementById('xpDisplay').textContent = res.xp;
+      },
+
+      // مؤقت الـ 5 ثوانٍ الإلزامي (لا تراجع بعد انتهائه)
+      triggerCountdown(gameId, stakePts) {
+        let sec = 5;
+        const overlay = document.getElementById('countdownOverlay');
+        const numEl = document.getElementById('countdownNumber');
+        const cancelBtn = document.getElementById('cancelMatchBtn');
+
+        numEl.textContent = sec;
+        cancelBtn.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+
+        this.countdownTimer = setInterval(async () => {
+          sec--;
+          numEl.textContent = sec;
+          if (sec <= 0) {
+            clearInterval(this.countdownTimer);
+            cancelBtn.classList.add('hidden'); // منع التراجع نهائياً
+            numEl.textContent = 'انطلق!';
+            const session = await this.api('/session/start', { gameId, stakePts });
+            overlay.classList.add('hidden');
+            if (session) {
+              alert(`تم بدء الجلسة الموقعة بنجاح! المعرف: ${session.sessionId}`);
+            }
+          }
+        }, 1000);
+      },
+
+      cancelCountdown() {
+        clearInterval(this.countdownTimer);
+        document.getElementById('countdownOverlay').classList.add('hidden');
+      },
+
+      async requestCashout(tierPts) {
+        const res = await this.api('/bridge/cashout', { tierPts });
+        if (res && res.ok) {
+          alert(`تم خصم ${tierPts} عملة. جاري تدقيق السجل في الخلفية، راجع رصيدك في المتجر بعد ساعة.`);
+          this.syncProfile();
+        }
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => ArenaApp.init());
+  </script>
+</body>
+</html>
