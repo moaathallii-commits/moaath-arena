@@ -58,8 +58,8 @@ export default {
       // ====================================================
       if (url.pathname.startsWith('/admin/')) {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth || !storeAuth.isAdmin) {
-          return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: 'صلاحية الإدارة مطلوبة.' }, 403);
+        if (!storeAuth.ok || !storeAuth.isAdmin) {
+          return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: `صلاحية الإدارة مطلوبة. [${storeAuth.reason || 'NOT_ADMIN'}]` }, 403);
         }
         switch (url.pathname) {
           case '/admin/dashboard':
@@ -84,13 +84,13 @@ export default {
       // ====================================================
       if (url.pathname === '/bridge/generate-bind-key') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
+        if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
         return handleGenerateBindKey(env, storeAuth);
       }
 
       if (url.pathname === '/bridge/store-to-arena') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth) return jsonResponse({ code: 'ERR_STORE_AUTH', message: 'الرجاء تسجيل الدخول في متجر معاذ أولاً.' }, 401);
+        if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
         return handleStoreToArenaTransfer(env, storeAuth, body, config);
       }
 
@@ -150,12 +150,13 @@ function normalizeDbUrl(rawUrl) {
 async function verifyStoreFirebaseToken(env, request) {
   const authHeader = request.headers.get('Authorization') || '';
   const idToken = authHeader.replace('Bearer ', '').trim();
-  if (!idToken || idToken.split('.').length !== 3) return null;
+  if (!idToken) return { ok: false, reason: 'NO_TOKEN_SENT' };
+  if (idToken.split('.').length !== 3) return { ok: false, reason: 'BAD_TOKEN_FORMAT' };
 
   try {
     const baseUrl = normalizeDbUrl(env.FIREBASE_DB_URL);
     const checkRes = await fetch(`${baseUrl}/missingRequests.json?auth=${encodeURIComponent(idToken)}&shallow=true`);
-    if (!checkRes.ok) return null;
+    if (!checkRes.ok) return { ok: false, reason: `FB_AUTH_HTTP_${checkRes.status}` };
 
     const base64Url = idToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -163,13 +164,14 @@ async function verifyStoreFirebaseToken(env, request) {
     const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
     const payload = JSON.parse(atob(padded));
     const email = (payload.email || '').toLowerCase();
-    if (!email.endsWith('@moaath.store')) return null;
+    if (!email) return { ok: false, reason: 'NO_EMAIL_IN_TOKEN' };
+    if (!email.endsWith('@moaath.store')) return { ok: false, reason: `WRONG_DOMAIN_${email}` };
 
     const phone = email.split('@')[0];
     const isAdmin = email === ADMIN_EMAIL;
-    return { phone, email, isAdmin };
+    return { ok: true, phone, email, isAdmin };
   } catch (e) {
-    return null;
+    return { ok: false, reason: `EX_${e.message || 'ERR'}` };
   }
 }
 
