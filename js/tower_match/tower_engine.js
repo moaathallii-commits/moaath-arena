@@ -1,47 +1,54 @@
 /**
  * ============================================================================
- * محرك البرج والوقت السريع v2.0 — «برج التحدي اللانهائي»
+ * محرك البرج والوقت السريع v3.0 Ultra — «برج التحدي اللانهائي»
  * المسار: js/tower_match/tower_engine.js
- * التحديثات في v2.0:
- * - وضع الحماس الذهبي (Fever / Overdrive): 3 مطابقات سريعة خلال 4 ثوانٍ = 6 ثوانٍ ×1.5 ضرر ونقاط
- * - قدرات هجومية خاصة للزعماء كل 12 ثانية (أقفال، قلب قطع، استنزاف وقت، جليد)
- * - قطع «المنتجات الذهبية» من متجر معاذ كل 3 طوابق + عقبات جليدية بعد الطابق 10
- * - خلط طارئ للوحة مرة واحدة بالجولة (Emergency Shuffle)
- * - مهام البرج اليومية (Daily Tower Quests) + طور التدريب المجاني + تحدي الزعيم اليومي
- * - دعم الأدوات التكتيكية للبرج (+10 ثوانٍ، قنبلة بداية، شحن مهارة 50%) + شبح المنافس في PvP
+ * إضافات v3.0:
+ * - إيقاف مؤقت تلقائي عند الخروج لتطبيق آخر (واتساب) لحماية وقت اللاعب ومنع الحظر
+ * - عداد تحذير هجمة الزعيم (12ث) + مقاطعة الهجمة وإذهال الزعيم (STUN ×1.5)
+ * - مستويات الحماس المتصاعدة (×1.5 حماس ذهبي → ×2.0 انفجار أقصى Overdrive)
+ * - الضربات الحرجة (CRIT!) + صندوق الغنيمة الخاطف (5 ثوانٍ)
+ * - معدّلات الطوابق العشوائية + مهمة سريعة داخل الطابق + بركات Roguelike بعد كل زعيم
+ * - طور النخبة الصعب (Hardcore Endless) يبدأ من الطابق 10 بمضاعف ×1.5
  * ============================================================================
  */
 (function () {
   const QUESTS_KEY = "moaath_tower_daily_quests_v1";
 
   const PERSONA_SKILLS = {
-    buddy: { id: "buddy", name: "بندق الودود", tier: "standard", passiveLabel: "+2 ثانية وقت بداية", skillName: "دفعة ترحيبية", skillType: "hint_and_time", passive: { startTimeBonus: 2 }, skillPower: { addSec: 3.5, showHint: true } },
-    lolo: { id: "lolo", name: "لولو النشيطة", tier: "standard", passiveLabel: "+8% نقاط إضافية للسرعة", skillName: "ومضة السرعة", skillType: "convert_and_dmg", passive: { scoreMult: 1.08 }, skillPower: { convertTo: "bolt", count: 3, directDmg: 25 } },
-    noor: { id: "noor", name: "نور الهادئة", tier: "standard", passiveLabel: "+0.4 ثانية لكل مطابقة ساعة", skillName: "سكينة الزمن", skillType: "freeze_time", passive: { clockBonusSec: 0.4 }, skillPower: { freezeSec: 5, addSec: 2 } },
-    chef: { id: "chef", name: "الشيف الماهر", tier: "standard", passiveLabel: "+10% ضرر لسيوف الهجوم", skillName: "وصفة الهجوم", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.10 }, skillPower: { convertTo: "sword", count: 4, directDmg: 20 } },
-    pastry: { id: "pastry", name: "صانعة الحلويات", tier: "standard", passiveLabel: "+12% نقاط لعملات معاذ", skillName: "مكافأة الضيافة", skillType: "coin_burst", passive: { coinScoreMult: 1.12 }, skillPower: { bonusScore: 180, addSec: 2 } },
-    athlete: { id: "athlete", name: "البطل الرياضي", tier: "standard", passiveLabel: "+15% ضرر عند الكومبو ×2 وأعلى", skillName: "ضربة الاندفاع", skillType: "blast_row", passive: { comboDmgMult: 1.15 }, skillPower: { directDmg: 45 } },
-    sheikh: { id: "sheikh", name: "شيخ الشباب", tier: "standard", passiveLabel: "+10% شحن أسرع للمهارة", skillName: "فزعة الساحة", skillType: "blast_row", passive: { skillChargeMult: 1.10 }, skillPower: { directDmg: 40, addSec: 1.5 } },
-    saver: { id: "saver", name: "خبير التوفير", tier: "standard", passiveLabel: "حفظ +10% إضافية من النقاط عند انتهاء الوقت", skillName: "صفقة ذكية", skillType: "coin_burst", passive: { safeRetainBonus: 0.10 }, skillPower: { bonusScore: 220 } },
-    homemaker: { id: "homemaker", name: "رفيقة المنزل", tier: "standard", passiveLabel: "+12% ضرر ضد الزعماء", skillName: "ترتيب اللوحة", skillType: "convert_and_dmg", passive: { bossDmgMult: 1.12 }, skillPower: { convertTo: "emerald", count: 4, directDmg: 25 } },
+    buddy: { id: "buddy", name: "بندق الودود", tier: "standard", quote: "يا سلام عليك! كفو!", skillName: "دفعة ترحيبية", skillType: "hint_and_time", passive: { startTimeBonus: 2 }, skillPower: { addSec: 3.5, showHint: true } },
+    lolo: { id: "lolo", name: "لولو النشيطة", tier: "standard", quote: "سرعة البرق! كمّل!", skillName: "ومضة السرعة", skillType: "convert_and_dmg", passive: { scoreMult: 1.08 }, skillPower: { convertTo: "bolt", count: 3, directDmg: 25 } },
+    noor: { id: "noor", name: "نور الهادئة", tier: "standard", quote: "هدوء وتركيز.. ضربة رائعة!", skillName: "سكينة الزمن", skillType: "freeze_time", passive: { clockBonusSec: 0.4 }, skillPower: { freezeSec: 5, addSec: 2 } },
+    chef: { id: "chef", name: "الشيف الماهر", tier: "standard", quote: "وصفة نارية على أصولها!", skillName: "وصفة الهجوم", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.10 }, skillPower: { convertTo: "sword", count: 4, directDmg: 20 } },
+    pastry: { id: "pastry", name: "صانعة الحلويات", tier: "standard", quote: "أحلى كومبو في الساحة!", skillName: "مكافأة الضيافة", skillType: "coin_burst", passive: { coinScoreMult: 1.12 }, skillPower: { bonusScore: 180, addSec: 2 } },
+    athlete: { id: "athlete", name: "البطل الرياضي", tier: "standard", quote: "قوة ولياقة! لا تتوقف!", skillName: "ضربة الاندفاع", skillType: "blast_row", passive: { comboDmgMult: 1.15 }, skillPower: { directDmg: 45 } },
+    sheikh: { id: "sheikh", name: "شيخ الشباب", tier: "standard", quote: "فزعة الأبطال! أبدعت!", skillName: "فزعة الساحة", skillType: "blast_row", passive: { skillChargeMult: 1.10 }, skillPower: { directDmg: 40, addSec: 1.5 } },
+    saver: { id: "saver", name: "خبير التوفير", tier: "standard", quote: "صفقة رابحة 100%!", skillName: "صفقة ذكية", skillType: "coin_burst", passive: { safeRetainBonus: 0.10 }, skillPower: { bonusScore: 220 } },
+    homemaker: { id: "homemaker", name: "رفيقة المنزل", tier: "standard", quote: "ترتيب ونظام ولا أروع!", skillName: "ترتيب اللوحة", skillType: "convert_and_dmg", passive: { bossDmgMult: 1.12 }, skillPower: { convertTo: "emerald", count: 4, directDmg: 25 } },
 
-    coach_sakhr: { id: "coach_sakhr", name: "كابتن صخر", tier: "vip", passiveLabel: "+18% ضرر ضد الزعماء والطوابق", skillName: "زلزال الصخر", skillType: "blast_row", passive: { swordDmgMult: 1.15, bossDmgMult: 1.18 }, skillPower: { directDmg: 85 } },
-    grand_chef: { id: "grand_chef", name: "الشيف الذهبي", tier: "vip", passiveLabel: "+15% ضرر سيوف + 10% نقاط", skillName: "الوليمة الذهبية", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.15, scoreMult: 1.10 }, skillPower: { convertTo: "sword", count: 6, directDmg: 45 } },
-    princess_layla: { id: "princess_layla", name: "الأميرة ليلى", tier: "vip", passiveLabel: "+3 ثوانٍ بداية + تجميد أطول", skillName: "هالة الملوك", skillType: "freeze_time", passive: { startTimeBonus: 3, clockBonusSec: 0.6 }, skillPower: { freezeSec: 7, addSec: 3.5 } },
-    butler_farid: { id: "butler_farid", name: "السيد فريد", tier: "vip", passiveLabel: "+20% نقاط عملات وحماية المخاطرة", skillName: "خزينة الذهب", skillType: "coin_burst", passive: { coinScoreMult: 1.20, safeRetainBonus: 0.15 }, skillPower: { bonusScore: 340, addSec: 2 } },
-    friend_fadi: { id: "friend_fadi", name: "فادي الفرفوش", tier: "vip", passiveLabel: "+20% شحن أسرع للمهارة والكومبو", skillName: "فرفشة الكومبو", skillType: "convert_and_dmg", passive: { skillChargeMult: 1.20, comboDmgMult: 1.15 }, skillPower: { convertTo: "bolt", count: 5, directDmg: 50 } },
-    anime_zain: { id: "anime_zain", name: "كابتن زين", tier: "vip", passiveLabel: "+22% ضرر في سلاسل الكومبو السريعة", skillName: "عاصفة النصر", skillType: "blast_row", passive: { comboDmgMult: 1.22, scoreMult: 1.10 }, skillPower: { directDmg: 90 } },
-    anime_ryu: { id: "anime_ryu", name: "المحقق ريو", tier: "vip", passiveLabel: "كشف أسرع للحركات + 15% ضرر زمرد", skillName: "بصيرة المحقق", skillType: "hint_and_time", passive: { bossDmgMult: 1.15, scoreMult: 1.08 }, skillPower: { addSec: 5, showHint: true, directDmg: 45 } },
-    anime_ritaj: { id: "anime_ritaj", name: "ريتاج", tier: "vip", passiveLabel: "+15% نقاط عامة وحظ مضاعف", skillName: "انفجار البهجة", skillType: "blast_row", passive: { scoreMult: 1.15 }, skillPower: { directDmg: 75, bonusScore: 150 } },
-    friend_saad: { id: "friend_saad", name: "الصديق سعد", tier: "vip", passiveLabel: "توازن شامل (+2ث +10% ضرر +10% نقاط)", skillName: "بركة الثبات", skillType: "freeze_time", passive: { startTimeBonus: 2, swordDmgMult: 1.10, scoreMult: 1.10 }, skillPower: { freezeSec: 6, addSec: 3, directDmg: 40 } }
+    coach_sakhr: { id: "coach_sakhr", name: "كابتن صخر", tier: "vip", quote: "حطّم البرج بقوة الصخر!", skillName: "زلزال الصخر", skillType: "blast_row", passive: { swordDmgMult: 1.15, bossDmgMult: 1.18 }, skillPower: { directDmg: 85 } },
+    grand_chef: { id: "grand_chef", name: "الشيف الذهبي", tier: "vip", quote: "وليمة انتصار ذهبية!", skillName: "الوليمة الذهبية", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.15, scoreMult: 1.10 }, skillPower: { convertTo: "sword", count: 6, directDmg: 45 } },
+    princess_layla: { id: "princess_layla", name: "الأميرة ليلى", tier: "vip", quote: "أداء ملكي لا يُضاهى!", skillName: "هالة الملوك", skillType: "freeze_time", passive: { startTimeBonus: 3, clockBonusSec: 0.6 }, skillPower: { freezeSec: 7, addSec: 3.5 } },
+    butler_farid: { id: "butler_farid", name: "السيد فريد", tier: "vip", quote: "خزينة الذهب تمتليء يا سيدي!", skillName: "خزينة الذهب", skillType: "coin_burst", passive: { coinScoreMult: 1.20, safeRetainBonus: 0.15 }, skillPower: { bonusScore: 340, addSec: 2 } },
+    friend_fadi: { id: "friend_fadi", name: "فادي الفرفوش", tier: "vip", quote: "يا عيني على الفرفشة والكومبو!", skillName: "فرفشة الكومبو", skillType: "convert_and_dmg", passive: { skillChargeMult: 1.20, comboDmgMult: 1.15 }, skillPower: { convertTo: "bolt", count: 5, directDmg: 50 } },
+    anime_zain: { id: "anime_zain", name: "كابتن زين", tier: "vip", quote: "عاصفة النصر لا تُقهر!", skillName: "عاصفة النصر", skillType: "blast_row", passive: { comboDmgMult: 1.22, scoreMult: 1.10 }, skillPower: { directDmg: 90 } },
+    anime_ryu: { id: "anime_ryu", name: "المحقق ريو", tier: "vip", quote: "كل حركة محسوبة بدقة!", skillName: "بصيرة المحقق", skillType: "hint_and_time", passive: { bossDmgMult: 1.15, scoreMult: 1.08 }, skillPower: { addSec: 5, showHint: true, directDmg: 45 } },
+    anime_ritaj: { id: "anime_ritaj", name: "ريتاج", tier: "vip", quote: "انفجار بهجة ونقاط!", skillName: "انفجار البهجة", skillType: "blast_row", passive: { scoreMult: 1.15 }, skillPower: { directDmg: 75, bonusScore: 150 } },
+    friend_saad: { id: "friend_saad", name: "الصديق سعد", tier: "vip", quote: "ثبات وإتقان.. أحسنت!", skillName: "بركة الثبات", skillType: "freeze_time", passive: { startTimeBonus: 2, swordDmgMult: 1.10, scoreMult: 1.10 }, skillPower: { freezeSec: 6, addSec: 3, directDmg: 40 } }
   };
 
-  // --------------------------------------------------------------------------
-  // إدارة مهام البرج اليومية (Daily Tower Quests)
-  // --------------------------------------------------------------------------
-  function getTodayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
+  const FLOOR_MODIFIERS = [
+    { id: "sword_storm", label: "⚔️ عاصفة السيوف: ضرر السيوف ×1.5", swordMult: 1.5 },
+    { id: "time_surge", label: "⏱️ زمن مضاعف: الساعات تمنح وقتاً مضاعفاً", clockMult: 2.0 },
+    { id: "coin_rain", label: "🪙 مطر العملات: نقاط العملات ×1.5", coinMult: 1.5 }
+  ];
+
+  const ROGUELIKE_PERKS = [
+    { id: "perk_sword", title: "⚔️ حد السيف (+20% ضرر السيوف)", desc: "يرفع ضرر جميع السيوف حتى نهاية الجولة." },
+    { id: "perk_clock", title: "⏱️ نبض الزمن (+1.2ث لكل ساعة)", desc: "كل مطابقة ساعة تمنح وقتاً إضافياً." },
+    { id: "perk_skill", title: "⭐ شحن فائق (+25% سرعة المهارة)", desc: "تشحن مهارة شخصيتك بشكل أسرع." }
+  ];
+
+  function getTodayKey() { return new Date().toISOString().slice(0, 10); }
 
   function loadDailyQuests() {
     const today = getTodayKey();
@@ -69,36 +76,26 @@
       if (q.id === "q_boss" && delta.bosses) q.progress += delta.bosses;
       if (q.id === "q_spec" && delta.specials) q.progress += delta.specials;
       if (q.id === "q_combo" && delta.maxCombo >= 3) q.progress = Math.max(q.progress, 1);
-      if (q.progress >= q.target) {
-        q.progress = q.target;
-        q.done = true;
-        newlyCompleted.push(q);
-      }
+      if (q.progress >= q.target) { q.progress = q.target; q.done = true; newlyCompleted.push(q); }
     });
     try { localStorage.setItem(QUESTS_KEY, JSON.stringify(data)); } catch (_) {}
     return { data, newlyCompleted };
   }
 
-  // --------------------------------------------------------------------------
-  // كلاس محرك البرج v2.0
-  // --------------------------------------------------------------------------
   class TowerEngine {
     constructor(config = {}) {
       if (!window.MoaathTowerBoard) throw new Error("MoaathTowerBoard is required.");
-
-      this.mode = config.mode || "record"; // 'record' | 'pvp' | 'practice' | 'daily_boss'
+      this.mode = config.mode || "record"; // 'record' | 'pvp' | 'practice' | 'daily_boss' | 'hardcore'
       this.seed = config.seed || (this.mode === "daily_boss" ? `daily_${getTodayKey()}` : `tower_${Date.now()}`);
       this.sessionId = config.sessionId || null;
       this.personaId = PERSONA_SKILLS[config.personaId] ? config.personaId : "buddy";
       this.persona = PERSONA_SKILLS[this.personaId];
-      this.activeItem = config.activeItem || null; // أداة تكتيكية مفعّلة
-      this.opponentTargetScore = Number(config.opponentTargetScore || 0); // شبح المنافس في PvP
-
+      this.activeItem = config.activeItem || null;
+      this.opponentTargetScore = Number(config.opponentTargetScore || 0);
       this.isBalancedPvp = this.mode === "pvp";
+
       this.board = new window.MoaathTowerBoard.TowerBoard({
-        rows: config.rows || 6,
-        cols: config.cols || 6,
-        seed: this.seed
+        rows: config.rows || 6, cols: config.cols || 6, seed: this.seed
       });
 
       this.listeners = {};
@@ -126,12 +123,12 @@
 
     resetState() {
       this.stopTimer();
-      this.status = "idle";
-      this.floor = 1;
-      this.isBossFloor = false;
+      this.status = "idle"; // idle | playing | paused | boss_decision | ended
+      this.floor = this.mode === "hardcore" ? 10 : 1;
+      this.isBossFloor = this.floor % 5 === 0;
       this.bossTheme = window.MoaathTowerAssets
-        ? window.MoaathTowerAssets.getBossForFloor(1)
-        : { tier: 1, name: "حارس البوابة البرونزية", accent: "#f59e0b" };
+        ? window.MoaathTowerAssets.getBossForFloor(this.floor)
+        : { tier: 1, name: "حارس البوابة البرونزية", accent: "#f59e0b", bgTop: "#1c1917", bgBot: "#451a03" };
 
       this.maxTimeSec = 50;
       const startBonus = this._effPassive("startTimeBonus", 0);
@@ -139,22 +136,31 @@
       this.timeLeftSec = Math.min(this.maxTimeSec, 35 + startBonus + itemTimeBonus);
       this.freezeLeftSec = 0;
 
-      // وضع الحماس الذهبي (Fever Mode)
+      // الحماس المتصاعد (0=عادي، 1=حماس ذهبي ×1.5، 2=انفجار أقصى ×2.0)
+      this.feverTier = 0;
       this.feverLeftSec = 0;
       this._recentMatchTimes = [];
 
-      // هجوم الزعيم كل 12 ثانية
+      // عداد تحذير هجمة الزعيم
+      this.bossAttackMaxSec = 12;
       this.bossAttackCooldownSec = 12;
 
-      // خلط طارئ مرة واحدة في الجولة
-      this.emergencyShufflesLeft = 1;
+      // صندوق الغنيمة الخاطف (يظهر لمدة 5 ثوانٍ)
+      this.flashChestLeftSec = 0;
+      this._chestSpawnCooldown = 14;
 
-      this.guardianMaxHp = this._calcFloorHp(1);
+      // معدّل الطابق والمهمة السريعة داخل الطابق وبركات Roguelike
+      this.floorModifier = null;
+      this.miniObjective = this._makeMiniObjective(this.floor);
+      this.perks = { swordBonus: 0, clockBonus: 0, skillBonus: 0 };
+
+      this.emergencyShufflesLeft = 1;
+      this.guardianMaxHp = this._calcFloorHp(this.floor);
       this.guardianHp = this.guardianMaxHp;
 
       this.score = 0;
       this.bankedSafeScore = 0;
-      this.riskMultiplier = 1.0;
+      this.riskMultiplier = this.mode === "hardcore" ? 1.5 : 1.0;
 
       this.skillCharge = (this.activeItem === "double_xp" || this.activeItem === "tower_skill50") ? 50 : 0;
       this.maxCombo = 0;
@@ -162,14 +168,25 @@
       this.floorsCleared = 0;
       this.bossesDefeated = 0;
       this.specialsDetonated = 0;
-      this.startedAtMs = 0;
       this.elapsedMs = 0;
       this.endReason = null;
 
-      // أداة قنبلة بداية
       if (this.activeItem === "shield_1" || this.activeItem === "tower_bomb") {
         this.board.spawnStartingSpecial("bomb_3x3");
       }
+      if (this.mode === "hardcore") {
+        this.board.applyIceObstacles(3, 2);
+      }
+    }
+
+    _makeMiniObjective(floorNum) {
+      const types = [
+        { type: "sword", label: "طابق 4 سيوف ⚔️", target: 4 },
+        { type: "emerald", label: "طابق 4 زمردات 💎", target: 4 },
+        { type: "coin", label: "طابق 4 عملات 🪙", target: 4 }
+      ];
+      const pick = types[(floorNum - 1) % types.length];
+      return { ...pick, progress: 0, done: false };
     }
 
     _calcFloorHp(floorNum) {
@@ -181,11 +198,25 @@
     start() {
       this.resetState();
       this.status = "playing";
-      this.startedAtMs = Date.now();
-      this._lastTickMs = Date.now();
       this._startTimer();
       this._emit("state", this.getPublicState());
       return this.getPublicState();
+    }
+
+    pause() {
+      if (this.status !== "playing") return false;
+      this.status = "paused";
+      this.stopTimer();
+      this._emit("paused", this.getPublicState());
+      return true;
+    }
+
+    resume() {
+      if (this.status !== "paused") return false;
+      this.status = "playing";
+      this._startTimer();
+      this._emit("resumed", this.getPublicState());
+      return true;
     }
 
     _startTimer() {
@@ -207,6 +238,26 @@
 
       if (this.feverLeftSec > 0) {
         this.feverLeftSec = Math.max(0, this.feverLeftSec - dtSec);
+        if (this.feverLeftSec === 0) this.feverTier = 0;
+      }
+
+      // صندوق الغنيمة الخاطف
+      if (this.flashChestLeftSec > 0) {
+        this.flashChestLeftSec = Math.max(0, this.flashChestLeftSec - dtSec);
+        if (this.flashChestLeftSec === 0) {
+          if (this.board.clearFlashChest()) {
+            this._emit("chestExpired", { boardAfter: this.board.getSnapshot() });
+          }
+        }
+      } else {
+        this._chestSpawnCooldown -= dtSec;
+        if (this._chestSpawnCooldown <= 0) {
+          this._chestSpawnCooldown = 18;
+          if (this.board.spawnFlashChest()) {
+            this.flashChestLeftSec = 5.0;
+            this._emit("chestSpawned", { boardAfter: this.board.getSnapshot(), durationSec: 5 });
+          }
+        }
       }
 
       if (this.freezeLeftSec > 0) {
@@ -216,16 +267,16 @@
         this.timeLeftSec = Math.max(0, this.timeLeftSec - dtSec * drainRate);
       }
 
-      // قدرات الزعماء الهجومية كل 12 ثانية في طابق الزعيم
+      // عداد تحذير وهجمة الزعيم
       if (this.isBossFloor && this.freezeLeftSec <= 0) {
-        this.bossAttackCooldownSec -= dtSec;
+        this.bossAttackCooldownSec = Math.max(0, this.bossAttackCooldownSec - dtSec);
         if (this.bossAttackCooldownSec <= 0) {
-          this.bossAttackCooldownSec = 12;
+          this.bossAttackCooldownSec = this.bossAttackMaxSec;
           this._triggerBossMechanic();
         }
       }
 
-      if (this.timeLeftSec <= 7 && this.timeLeftSec > 0) {
+      if (this.timeLeftSec <= 5 && this.timeLeftSec > 0) {
         this._emit("timeWarning", { timeLeftSec: this.timeLeftSec });
       }
 
@@ -238,42 +289,41 @@
         timeLeftSec: this.timeLeftSec,
         maxTimeSec: this.maxTimeSec,
         freezeLeftSec: this.freezeLeftSec,
-        feverLeftSec: this.feverLeftSec
+        feverLeftSec: this.feverLeftSec,
+        feverTier: this.feverTier,
+        bossAttackCooldownSec: this.bossAttackCooldownSec,
+        bossAttackMaxSec: this.bossAttackMaxSec,
+        isBossFloor: this.isBossFloor
       });
     }
 
     _triggerBossMechanic() {
       const tier = this.bossTheme?.tier || 1;
       let label = "";
-      if (tier === 1) {
-        this.board.applyBossLocks(2);
-        label = "🔒 حارس البوابة أقفل قطعتين!";
-      } else if (tier === 2) {
-        this.board.bossSwapRandomPair();
-        label = "🔀 العملاق السيبراني قلب قطعتين!";
-      } else if (tier === 3) {
-        this.timeLeftSec = Math.max(1, this.timeLeftSec - 2.0);
-        label = "🐉 تنين الزمرد استنزف ثانيتين!";
-      } else {
-        this.board.applyIceObstacles(2, 2);
-        label = "❄️ سيد البرج جمّد قطعتين!";
-      }
-      this._emit("bossAttack", {
-        tier,
-        label,
-        boardAfter: this.board.getSnapshot(),
-        state: this.getPublicState()
-      });
+      if (tier === 1) { this.board.applyBossLocks(2); label = "🔒 حارس البوابة أقفل قطعتين!"; }
+      else if (tier === 2) { this.board.bossSwapRandomPair(); label = "🔀 العملاق السيبراني قلب قطعتين!"; }
+      else if (tier === 3) { this.timeLeftSec = Math.max(1, this.timeLeftSec - 2.0); label = "🐉 تنين الزمرد استنزف ثانيتين!"; }
+      else { this.board.applyIceObstacles(2, 2); label = "❄️ سيد البرج جمّد قطعتين!"; }
+      this._emit("bossAttack", { tier, label, boardAfter: this.board.getSnapshot(), state: this.getPublicState() });
     }
 
     _checkFeverActivation() {
       const now = Date.now();
       this._recentMatchTimes.push(now);
       this._recentMatchTimes = this._recentMatchTimes.filter((t) => now - t <= 4200);
-      if (this._recentMatchTimes.length >= 3 && this.feverLeftSec <= 0) {
-        this.feverLeftSec = 6.0;
+      if (this._recentMatchTimes.length >= 3) {
         this._recentMatchTimes = [];
-        this._emit("feverStart", { durationSec: 6 });
+        if (this.feverTier === 0) {
+          this.feverTier = 1;
+          this.feverLeftSec = 6.0;
+          this._emit("feverStart", { tier: 1, mult: 1.5 });
+        } else if (this.feverTier === 1) {
+          this.feverTier = 2;
+          this.feverLeftSec = 6.0;
+          this._emit("feverStart", { tier: 2, mult: 2.0 });
+        } else {
+          this.feverLeftSec = Math.min(7.0, this.feverLeftSec + 2.0);
+        }
       }
     }
 
@@ -284,43 +334,65 @@
       this.specialsDetonated += t.specialsTriggered || 0;
       this._checkFeverActivation();
 
-      const feverMult = this.feverLeftSec > 0 ? 1.5 : 1.0;
+      const feverMult = this.feverTier === 2 ? 2.0 : (this.feverTier === 1 ? 1.5 : 1.0);
       const comboMult = 1 + (Math.max(1, t.maxCombo) - 1) * 0.35;
       const passiveComboMult = t.maxCombo >= 2 ? this._effPassive("comboDmgMult", 1) : 1;
-      const swordMult = this._effPassive("swordDmgMult", 1);
+      const swordMult = (this._effPassive("swordDmgMult", 1) + this.perks.swordBonus) * (this.floorModifier?.swordMult || 1);
       const bossMult = this.isBossFloor ? this._effPassive("bossDmgMult", 1) : 1;
       const scoreMult = this._effPassive("scoreMult", 1);
-      const coinMult = this._effPassive("coinScoreMult", 1);
-      const chargeMult = this._effPassive("skillChargeMult", 1);
-      const clockExtra = this._effPassive("clockBonusSec", 0);
+      const coinMult = this._effPassive("coinScoreMult", 1) * (this.floorModifier?.coinMult || 1);
+      const chargeMult = this._effPassive("skillChargeMult", 1) + this.perks.skillBonus;
+      const clockExtra = this._effPassive("clockBonusSec", 0) + this.perks.clockBonus;
+      const clockModMult = this.floorModifier?.clockMult || 1;
 
       const byType = t.clearedByType;
+      const isCrit = byType.sword >= 4;
+
+      // مقاطعة هجمة الزعيم (Boss Stun / Counter-Break)
+      let bossStunned = false;
+      if (this.isBossFloor && this.bossAttackCooldownSec <= 4.0 && (t.maxCombo >= 3 || t.specialsTriggered > 0)) {
+        bossStunned = true;
+        this.bossAttackCooldownSec = this.bossAttackMaxSec;
+      }
+
       const rawDmg =
-        byType.sword * 14 * swordMult +
+        byType.sword * 14 * swordMult * (isCrit ? 1.4 : 1) +
         byType.bolt * 12 +
         byType.emerald * (this.isBossFloor ? 16 : 10) +
-        byType.coin * 4 +
-        byType.star * 5 +
-        byType.clock * 4 +
-        t.specialsTriggered * 30 +
-        t.locksBroken * 15 +
-        (t.iceBroken || 0) * 14;
+        byType.coin * 4 + byType.star * 5 + byType.clock * 4 +
+        t.specialsTriggered * 30 + t.locksBroken * 15 + (t.iceBroken || 0) * 14;
 
-      const finalDmg = Math.max(10, Math.round(rawDmg * comboMult * passiveComboMult * bossMult * feverMult));
+      const finalDmg = Math.max(10, Math.round(rawDmg * comboMult * passiveComboMult * bossMult * feverMult * (bossStunned ? 1.5 : 1)));
 
       let addedSec = 0;
-      if (byType.clock > 0) addedSec += byType.clock * (0.9 + clockExtra);
+      if (byType.clock > 0) addedSec += byType.clock * (0.9 + clockExtra) * clockModMult;
       if (t.maxCombo >= 3) addedSec += 1.2;
+      if (t.chestsOpened > 0) {
+        this.flashChestLeftSec = 0;
+        addedSec += 3.0 * t.chestsOpened;
+      }
+
+      // المهمة السريعة داخل الطابق
+      let miniObjCompleted = false;
+      if (this.miniObjective && !this.miniObjective.done) {
+        const gain = byType[this.miniObjective.type] || 0;
+        if (gain > 0) {
+          this.miniObjective.progress = Math.min(this.miniObjective.target, this.miniObjective.progress + gain);
+          if (this.miniObjective.progress >= this.miniObjective.target) {
+            this.miniObjective.done = true;
+            miniObjCompleted = true;
+            addedSec += 4.0;
+            this.skillCharge = 100;
+          }
+        }
+      }
+
       if (addedSec > 0) this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + addedSec);
 
-      const goldenBonus = (t.goldenCollected || 0) * 180;
+      const goldenBonus = (t.goldenCollected || 0) * 180 + (t.chestsOpened || 0) * 250;
       const rawScore =
-        t.clearedCount * 10 +
-        byType.coin * 24 * coinMult +
-        t.specialsTriggered * 60 +
-        t.locksBroken * 35 +
-        (t.iceBroken || 0) * 25 +
-        goldenBonus;
+        t.clearedCount * 10 + byType.coin * 24 * coinMult +
+        t.specialsTriggered * 60 + t.locksBroken * 35 + (t.iceBroken || 0) * 25 + goldenBonus;
 
       const gainedScore = Math.round(rawScore * comboMult * scoreMult * this.riskMultiplier * feverMult);
       this.score += gainedScore;
@@ -332,24 +404,18 @@
 
       this.guardianHp = Math.max(0, this.guardianHp - finalDmg);
 
-      // تحديث المهام اليومية
       if (this.mode !== "practice") {
         const qRes = updateDailyQuests({ specials: t.specialsTriggered || 0, maxCombo: t.maxCombo });
         if (qRes.newlyCompleted.length) this._emit("questDone", qRes.newlyCompleted);
       }
 
       const payload = {
-        swap: res.swap,
-        steps: res.steps,
-        totals: t,
-        damage: finalDmg,
-        addedSec: Number(addedSec.toFixed(1)),
-        gainedScore,
-        goldenCollected: t.goldenCollected || 0,
-        feverActive: this.feverLeftSec > 0,
-        reshuffled: res.reshuffled,
-        boardAfter: res.boardAfter,
-        state: this.getPublicState()
+        swap: res.swap, steps: res.steps, totals: t, damage: finalDmg,
+        addedSec: Number(addedSec.toFixed(1)), gainedScore, isCrit, bossStunned,
+        miniObjCompleted, wildcardSpawned: !!res.wildcardSpawned,
+        goldenCollected: t.goldenCollected || 0, chestsOpened: t.chestsOpened || 0,
+        feverTier: this.feverTier, reshuffled: res.reshuffled,
+        boardAfter: res.boardAfter, state: this.getPublicState()
       };
       this._emit("move", payload);
 
@@ -360,10 +426,7 @@
     performSwap(r1, c1, r2, c2) {
       if (this.status !== "playing") return { valid: false, reason: "not_playing" };
       const res = this.board.trySwap(r1, c1, r2, c2);
-      if (!res.valid) {
-        this._emit("invalidSwap", { r1, c1, r2, c2, reason: res.reason });
-        return res;
-      }
+      if (!res.valid) { this._emit("invalidSwap", { r1, c1, r2, c2, reason: res.reason }); return res; }
       return this._applyMoveResult(res);
     }
 
@@ -385,8 +448,7 @@
     activateSkill() {
       if (this.status !== "playing" || this.skillCharge < 100) return { ok: false };
       this.skillCharge = 0;
-      const p = this.persona;
-      const sp = p.skillPower || {};
+      const p = this.persona, sp = p.skillPower || {};
       let boardUpdate = null, hint = null;
       let directDmg = sp.directDmg || 0, addedSec = sp.addSec || 0, bonusScore = sp.bonusScore || 0;
 
@@ -434,6 +496,7 @@
           bossName: this.bossTheme?.name || "زعيم البرج",
           safeScore: this.bankedSafeScore,
           nextMultiplier: Number((this.riskMultiplier + 0.25).toFixed(2)),
+          perks: ROGUELIKE_PERKS,
           state: this.getPublicState()
         });
         return;
@@ -441,8 +504,11 @@
       this._advanceToNextFloor(false);
     }
 
-    continueClimbing() {
+    continueClimbing(selectedPerkId = null) {
       if (this.status !== "boss_decision") return false;
+      if (selectedPerkId === "perk_sword") this.perks.swordBonus += 0.20;
+      if (selectedPerkId === "perk_clock") this.perks.clockBonus += 1.2;
+      if (selectedPerkId === "perk_skill") this.perks.skillBonus += 0.25;
       this.riskMultiplier = Number((this.riskMultiplier + 0.25).toFixed(2));
       this.status = "playing";
       this._advanceToNextFloor(true);
@@ -451,7 +517,7 @@
     }
 
     retreatSafely() {
-      if (this.status !== "boss_decision" && this.status !== "playing") return false;
+      if (this.status !== "boss_decision" && this.status !== "playing" && this.status !== "paused") return false;
       this._finishGame("safe_retreat");
       return true;
     }
@@ -459,10 +525,21 @@
     _advanceToNextFloor(afterBoss) {
       this.floor++;
       this.isBossFloor = this.floor % 5 === 0;
-      this.bossAttackCooldownSec = 12;
+      this.bossAttackCooldownSec = this.bossAttackMaxSec;
       this.bossTheme = window.MoaathTowerAssets
         ? window.MoaathTowerAssets.getBossForFloor(this.floor)
-        : { tier: 1, name: "حارس البرج", accent: "#f59e0b" };
+        : { tier: 1, name: "حارس البرج", accent: "#f59e0b", bgTop: "#1c1917", bgBot: "#451a03" };
+
+      // معدّل الطابق كل طابقين
+      this.floorModifier = this.floor % 2 === 0
+        ? FLOOR_MODIFIERS[(Math.floor(this.floor / 2) - 1) % FLOOR_MODIFIERS.length]
+        : null;
+      this.miniObjective = this._makeMiniObjective(this.floor);
+
+      // أشكال لوحات متغيرة في الطوابق العليا
+      if (this.floor >= 6 && this.floor % 4 === 2) this.board.applyFloorMask("corners");
+      else if (this.floor >= 8 && this.floor % 4 === 0 && !this.isBossFloor) this.board.applyFloorMask("center");
+      else this.board.applyFloorMask("none");
 
       this.guardianMaxHp = this._calcFloorHp(this.floor);
       this.guardianHp = this.guardianMaxHp;
@@ -470,10 +547,7 @@
       const timeRefill = afterBoss ? 18 : 9;
       this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + timeRefill);
 
-      // قطعة منتج ذهبي من متجر معاذ كل 3 طوابق
       if (this.floor % 3 === 0) this.board.spawnGoldenProductTile();
-
-      // عقبات الجليد المتدرجة بعد الطابق 10
       if (this.floor >= 10 && !this.isBossFloor) {
         this.board.applyIceObstacles(Math.min(4, 1 + Math.floor((this.floor - 10) / 3)), 2);
       }
@@ -481,11 +555,13 @@
       let bossLocks = [];
       if (this.isBossFloor) {
         bossLocks = this.board.applyBossLocks(Math.min(5, 2 + Math.floor(this.floor / 5)));
+        this.board.spawnChainBarrel();
       }
 
       this._emit("floorCleared", {
         newFloor: this.floor, isBossFloor: this.isBossFloor, bossTheme: this.bossTheme,
-        timeRefill, bossLocks, boardAfter: this.board.getSnapshot(), state: this.getPublicState()
+        timeRefill, bossLocks, floorModifier: this.floorModifier,
+        boardAfter: this.board.getSnapshot(), state: this.getPublicState()
       });
     }
 
@@ -510,11 +586,13 @@
         bossTheme: this.bossTheme, guardianHp: this.guardianHp, guardianMaxHp: this.guardianMaxHp,
         timeLeftSec: Number(this.timeLeftSec.toFixed(1)), maxTimeSec: this.maxTimeSec,
         freezeLeftSec: Number(this.freezeLeftSec.toFixed(1)), feverLeftSec: Number(this.feverLeftSec.toFixed(1)),
-        score: this.score, bankedSafeScore: this.bankedSafeScore, riskMultiplier: this.riskMultiplier,
-        skillCharge: this.skillCharge, persona: this.persona, maxCombo: this.maxCombo,
-        totalMoves: this.totalMoves, floorsCleared: this.floorsCleared, bossesDefeated: this.bossesDefeated,
-        emergencyShufflesLeft: this.emergencyShufflesLeft, activeItem: this.activeItem,
-        opponentTargetScore: this.opponentTargetScore
+        feverTier: this.feverTier, bossAttackCooldownSec: Number(this.bossAttackCooldownSec.toFixed(1)),
+        bossAttackMaxSec: this.bossAttackMaxSec, floorModifier: this.floorModifier,
+        miniObjective: this.miniObjective, score: this.score, bankedSafeScore: this.bankedSafeScore,
+        riskMultiplier: this.riskMultiplier, skillCharge: this.skillCharge, persona: this.persona,
+        maxCombo: this.maxCombo, totalMoves: this.totalMoves, floorsCleared: this.floorsCleared,
+        bossesDefeated: this.bossesDefeated, emergencyShufflesLeft: this.emergencyShufflesLeft,
+        activeItem: this.activeItem, opponentTargetScore: this.opponentTargetScore
       };
     }
 
@@ -530,10 +608,5 @@
     destroy() { this.stopTimer(); this.listeners = {}; }
   }
 
-  window.MoaathTowerEngine = {
-    version: "2.0",
-    PERSONA_SKILLS,
-    loadDailyQuests,
-    TowerEngine
-  };
+  window.MoaathTowerEngine = { version: "3.0", PERSONA_SKILLS, loadDailyQuests, TowerEngine };
 })();
