@@ -314,6 +314,14 @@
           <div class="stat-row"><span>الجائزة التراكمية:</span><span class="jackpot-pill" id="rec-shooter-jackpot">100 عملة</span></div>
           <button class="btn btn-gold" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">اكسر الرقم الآن (10 عملات)</button>
         </div>
+
+        <div class="card" style="border-color:var(--gold); box-shadow:0 0 18px rgba(212,175,55,0.18);">
+          <h3>🏰 برج التحدي اللانهائي (شاشة طولية — بيد واحدة)</h3>
+          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-tower-score">1200</strong></div>
+          <div class="stat-row"><span>حامل الرقم:</span><strong id="rec-tower-holder">إدارة العالم</strong></div>
+          <div class="stat-row"><span>الجائزة الكبرى:</span><strong id="rec-tower-jackpot" style="color:var(--success);">120 عملة</strong></div>
+          <button class="btn btn-gold" onclick="ArenaApp.startFlow('tower_match', 'record', 10)">🏰 اصعد البرج الآن (10 عملات)</button>
+        </div>
       </div>
 
       <!-- 2. ساحة PvP -->
@@ -323,6 +331,7 @@
           <select id="pvpGameSelect">
             <option value="hill_drive">🚗 قيادة التلال 2D</option>
             <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
+            <option value="tower_match">🏰 برج التحدي اللانهائي</option>
           </select>
           <input type="number" id="pvpStakeInput" value="20" min="10" step="10" placeholder="قيمة التحدي" />
           <button class="btn btn-blue" onclick="ArenaApp.createPvp()">العب وانشر التحدي</button>
@@ -462,6 +471,10 @@
   <script src="./js/characters_engine.js"></script>
   <script src="./js/game_hill_drive.js"></script>
   <script src="./js/game_cyber_shooter.js"></script>
+  <script src="./js/tower_match/tower_assets.js"></script>
+  <script src="./js/tower_match/tower_board.js"></script>
+  <script src="./js/tower_match/tower_engine.js"></script>
+  <script src="./js/tower_match/tower_ui.js"></script>
 
   <script>
     const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
@@ -590,6 +603,14 @@
           document.getElementById('rec-shooter-score').textContent = res.records.cyber_shooter.currentRecord;
           document.getElementById('rec-shooter-holder').textContent = res.records.cyber_shooter.holderName;
           document.getElementById('rec-shooter-jackpot').textContent = `${res.records.cyber_shooter.jackpotPts} عملة`;
+        }
+        if (res.records && res.records.tower_match) {
+          const ts = document.getElementById('rec-tower-score');
+          const th = document.getElementById('rec-tower-holder');
+          const tj = document.getElementById('rec-tower-jackpot');
+          if (ts) ts.textContent = res.records.tower_match.currentRecord;
+          if (th) th.textContent = res.records.tower_match.holderName;
+          if (tj) tj.textContent = `${res.records.tower_match.jackpotPts} عملة`;
         }
 
         const sel = document.getElementById('tacticalItemSelect');
@@ -916,6 +937,50 @@
       },
 
       async launchGame(gameId, mode, stakePts, session) {
+        if (gameId === 'tower_match' && window.MoaathTowerUI) {
+          const towerMode = (mode === 'pvp_create' || mode === 'pvp_join') ? 'pvp' : 'record';
+          window.MoaathTowerUI.launch({
+            mode: towerMode,
+            seed: session.seed,
+            sessionId: session.sessionId,
+            personaId: session.characterId || (this.profile && this.profile.activeCharacterId) || 'buddy',
+            onComplete: async (summary) => {
+              const durationSec = Math.max(2, Math.round((summary.durationMs || 2000) / 1000));
+              const telemetry = {
+                durationSec,
+                floorsCleared: summary.floorsCleared || 0,
+                totalMoves: summary.totalMoves || 0,
+                bossesDefeated: summary.bossesDefeated || 0,
+                maxCombo: summary.maxCombo || 1,
+                snapshots: [{ t: durationSec, score: summary.score || 0, floor: summary.highestFloor || 1 }]
+              };
+              const res = await this.api('/session/submit', {
+                sessionId: session.sessionId,
+                score: summary.score || 0,
+                telemetry
+              });
+              if (res) {
+                if (window.ArenaVoice && typeof window.ArenaVoice.speak === 'function') {
+                  window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
+                }
+                document.getElementById('resultText').textContent = res.message;
+                const waBtn = document.getElementById('waShareBtn');
+                if (mode === 'pvp_create') {
+                  waBtn.classList.remove('hidden');
+                  waBtn.onclick = () => {
+                    const txt = encodeURIComponent(`أتحداك في برج التحدي اللانهائي على ${stakePts} عملة! وصلت للطابق ${summary.highestFloor} بنتيجة (${summary.score})، هل تستطيع هزيمتي؟`);
+                    window.open(`https://wa.me/?text=${txt}`, '_blank');
+                  };
+                } else {
+                  waBtn.classList.add('hidden');
+                }
+                document.getElementById('resultOverlay').classList.remove('hidden');
+                this.syncProfile();
+              }
+            }
+          });
+          return;
+        }
         const overlay = document.getElementById('gameOverlay');
         const canvas = document.getElementById('gameCanvas');
         overlay.classList.remove('hidden');
@@ -972,7 +1037,7 @@
         box.innerHTML = res.matches.map((m) => `
           <div style="border-top:1px solid rgba(255,255,255,0.1); padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <strong style="color:#fff;">${m.creatorName}</strong> (${m.gameId === 'hill_drive' ? '🚗 قيادة' : '🔫 شوتر'})<br/>
+              <strong style="color:#fff;">${m.creatorName}</strong> (${m.gameId === 'hill_drive' ? '🚗 قيادة' : (m.gameId === 'tower_match' ? '🏰 برج التحدي' : '🔫 شوتر')})<br/>
               <small style="color:var(--gold-light);">الرهان: ${m.stakePts} عملة</small>
             </div>
             <button class="btn btn-gold" style="width:auto; padding:8px 14px; margin:0;" onclick="ArenaApp.startFlow('${m.gameId}', 'pvp_join', ${m.stakePts}, '${m.matchId}')">اقبل التحدي</button>
