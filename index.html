@@ -321,6 +321,10 @@
           <div class="stat-row"><span>حامل الرقم:</span><strong id="rec-tower-holder">إدارة العالم</strong></div>
           <div class="stat-row"><span>الجائزة الكبرى:</span><strong id="rec-tower-jackpot" style="color:var(--success);">120 عملة</strong></div>
           <button class="btn btn-gold" onclick="ArenaApp.startFlow('tower_match', 'record', 10)">🏰 اصعد البرج الآن (10 عملات)</button>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button class="btn btn-outline btn-sm" style="flex:1; margin-top:0;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'practice', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">🎓 تدريب مجاني</button>
+            <button class="btn btn-blue btn-sm" style="flex:1; margin-top:0;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'daily_boss', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">📅 الزعيم اليومي</button>
+          </div>
         </div>
       </div>
 
@@ -944,6 +948,8 @@
             seed: session.seed,
             sessionId: session.sessionId,
             personaId: session.characterId || (this.profile && this.profile.activeCharacterId) || 'buddy',
+            activeItem: session.activeItem || null,
+            opponentTargetScore: (this.profile && this.profile.records && this.profile.records.tower_match && towerMode === 'record') ? this.profile.records.tower_match.currentRecord : 0,
             onComplete: async (summary) => {
               const durationSec = Math.max(2, Math.round((summary.durationMs || 2000) / 1000));
               const telemetry = {
