@@ -398,7 +398,7 @@
             </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('tower_match', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-gold" style="margin:0;" id="btnRecTower" onclick="ArenaApp.startRecordFlow('tower_match')">👑 كسر الرقم (10)</button>
             <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('tower_match')">🏆 البطولة الأسبوعية</button>
           </div>
         </div>
@@ -414,7 +414,7 @@
             </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('hill_drive', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-gold" style="margin:0;" id="btnRecHill" onclick="ArenaApp.startRecordFlow('hill_drive')">👑 كسر الرقم (10)</button>
             <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('hill_drive')">🏆 البطولة الأسبوعية</button>
           </div>
         </div>
@@ -430,7 +430,7 @@
             </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-gold" style="margin:0;" id="btnRecShooter" onclick="ArenaApp.startRecordFlow('cyber_shooter')">👑 كسر الرقم (10)</button>
             <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('cyber_shooter')">🏆 البطولة الأسبوعية</button>
           </div>
         </div>
@@ -616,6 +616,23 @@
 
   <script>
     const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
+    const FALLBACK_FRAMES = [
+      { id: 'frame_01_steel', level: 1, name: 'إطار المبتدئ الفولاذي', file: './assets/frames/frame_01_steel.png', rarity: 'common', anim: 'anim-pulse-soft', price: 15, reqXp: 50 },
+      { id: 'frame_02_bronze', level: 2, name: 'إطار البرونز العتيق', file: './assets/frames/frame_02_bronze.png', rarity: 'common', anim: 'anim-pulse-soft', price: 25, reqXp: 150 },
+      { id: 'frame_03_silver', level: 3, name: 'إطار الفضة اللامعة', file: './assets/frames/frame_03_silver.png', rarity: 'common', anim: 'anim-shine', price: 35, reqXp: 300 },
+      { id: 'frame_04_neon_blue', level: 4, name: 'إطار النيون السماوي', file: './assets/frames/frame_04_neon_blue.png', rarity: 'rare', anim: 'anim-neon', price: 40, reqXp: 0 },
+      { id: 'frame_05_emerald', level: 5, name: 'إطار الزمرد الحيوي', file: './assets/frames/frame_05_emerald.png', rarity: 'rare', anim: 'anim-shine', price: 50, reqXp: 500 },
+      { id: 'frame_06_flame', level: 6, name: 'إطار اللهب البركاني', file: './assets/frames/frame_06_flame.png', rarity: 'rare', anim: 'anim-flame', price: 60, reqXp: 0 },
+      { id: 'frame_07_frost', level: 7, name: 'إطار الجليد الكريستالي', file: './assets/frames/frame_07_frost.png', rarity: 'rare', anim: 'anim-neon', price: 75, reqXp: 750 },
+      { id: 'frame_08_lightning', level: 8, name: 'إطار الصاعقة الذهبية', file: './assets/frames/frame_08_lightning.png', rarity: 'epic', anim: 'anim-electric', price: 90, reqXp: 0 },
+      { id: 'frame_09_amethyst', level: 9, name: 'إطار الأرجوان الغامض', file: './assets/frames/frame_09_amethyst.png', rarity: 'epic', anim: 'anim-aura', price: 110, reqXp: 1100 },
+      { id: 'frame_10_gold_crown', level: 10, name: 'إطار التاج الذهبي', file: './assets/frames/frame_10_gold_crown.png', rarity: 'epic', anim: 'anim-royal', price: 130, reqXp: 1500 },
+      { id: 'frame_11_cyber_diamond', level: 11, name: 'إطار سايبر الماسي', file: './assets/frames/frame_11_cyber_diamond.png', rarity: 'legendary', anim: 'anim-neon', price: 140, reqXp: 0 },
+      { id: 'frame_12_phoenix', level: 12, name: 'إطار أجنحة العنقاء', file: './assets/frames/frame_12_phoenix.png', rarity: 'legendary', anim: 'anim-flame', price: 180, reqXp: 2200 },
+      { id: 'frame_13_dragon', level: 13, name: 'إطار التنين الأسطوري', file: './assets/frames/frame_13_dragon.png', rarity: 'legendary', anim: 'anim-aura', price: 200, reqXp: 0 },
+      { id: 'frame_14_galaxy', level: 14, name: 'إطار المجرة الكونية', file: './assets/frames/frame_14_galaxy.png', rarity: 'mythic', anim: 'anim-galaxy', price: 260, reqXp: 3500 },
+      { id: 'frame_15_emperor', level: 15, name: 'إطار إمبراطور عالم معاذ', file: './assets/frames/frame_15_emperor.png', rarity: 'mythic', anim: 'anim-emperor', price: 350, reqXp: 5000 }
+    ];
     let deferredInstallPrompt = null;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -769,7 +786,7 @@
       },
 
       getFrameMeta(frameId) {
-        const list = (this.profile && this.profile.framesCatalog) || [];
+        const list = (this.profile && Array.isArray(this.profile.framesCatalog) && this.profile.framesCatalog.length) ? this.profile.framesCatalog : FALLBACK_FRAMES;
         return list.find((f) => f.id === frameId) || null;
       },
 
@@ -845,7 +862,7 @@
         if (cImg && window.ArenaVoice) cImg.src = window.ArenaVoice.getCharImgUrl(res.activeCharacterId);
         this.applyEquippedFrameUI();
 
-        const frames = res.framesCatalog || [];
+        const frames = (Array.isArray(res.framesCatalog) && res.framesCatalog.length) ? res.framesCatalog : FALLBACK_FRAMES;
         const nextXpFrame = frames.find((f) => f.reqXp > 0 && f.reqXp > (res.xp || 0));
         if (nextXpFrame) {
           const pct = Math.min(100, Math.round(((res.xp || 0) / nextXpFrame.reqXp) * 100));
@@ -882,6 +899,11 @@
         document.getElementById('passCountSpan').textContent = passCount;
         document.getElementById('usePassRow').classList.toggle('hidden', passCount <= 0);
 
+        const recFee = Number((res.economy && res.economy.recordEntryCostPts) || 10);
+        ['btnRecTower', 'btnRecHill', 'btnRecShooter'].forEach((bId) => {
+          const b = document.getElementById(bId);
+          if (b) b.textContent = `👑 كسر الرقم (${recFee})`;
+        });
         if (window.ArenaVoice) window.ArenaVoice.speak(res.activeCharacterId, 'welcome');
         this.loadWeeklyStatus();
         this.refreshPvpBadge();
@@ -911,6 +933,11 @@
             strip.classList.remove('hidden');
           }
         }
+      },
+
+      startRecordFlow(gameId) {
+        const fee = Number((this.profile && this.profile.economy && this.profile.economy.recordEntryCostPts) || 10);
+        this.startFlow(gameId, 'record', fee);
       },
 
       startWeeklyFlow(gameId) {
@@ -1086,7 +1113,7 @@
         const rarityLabel = { common: 'عادي', rare: 'نادر', epic: 'ملحمي', legendary: 'أسطوري', mythic: 'خرافي' };
 
         if (this.shopTab === 'frames') {
-          const frames = (this.profile && this.profile.framesCatalog) || [];
+          const frames = (this.profile && Array.isArray(this.profile.framesCatalog) && this.profile.framesCatalog.length) ? this.profile.framesCatalog : FALLBACK_FRAMES;
           box.innerHTML = frames.map((f) => {
             const owned = Boolean(cos[f.id]);
             const equipped = activeFrame === f.id;

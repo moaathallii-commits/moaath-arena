@@ -350,7 +350,8 @@ async function handleAdminDashboard(env, config) {
       pvpHouseEdgePct: Number(config.pvpHouseEdgePct || 10),
       coinToUsdRate: Number(config.coinToUsdRate || 0.01),
       buyRateSYP: Number(config.buyRateSYP || 150),
-      usdToSypRate: Number(config.usdToSypRate || 15000)
+      usdToSypRate: Number(config.usdToSypRate || 15000),
+      recordEntryCostPts: Number(config.recordEntryCostPts || 10)
     },
     pendingCashouts, recentAlerts, frozenPlayers,
     weeklyTournaments: await getAllWeeklySummaries(env),
@@ -367,6 +368,7 @@ async function handleAdminUpdateConfig(env, body) {
   if (body.coinToUsdRate !== undefined) updates.coinToUsdRate = Math.max(0.0001, Number(body.coinToUsdRate));
   if (body.buyRateSYP !== undefined) updates.buyRateSYP = Math.max(1, Number(body.buyRateSYP));
   if (body.usdToSypRate !== undefined) updates.usdToSypRate = Math.max(100, Number(body.usdToSypRate));
+  if (body.recordEntryCostPts !== undefined) updates.recordEntryCostPts = Math.max(1, Math.floor(Number(body.recordEntryCostPts)));
   await fbPatch(env, 'arena_world/config', updates);
   return jsonResponse({ ok: true, message: 'تم حفظ إعدادات عالم التحديات بنجاح.' });
 }
@@ -481,7 +483,8 @@ async function handleProfile(env, player, config = {}) {
     economy: {
       buyRateSYP: Number(config.buyRateSYP || 150),
       usdToSypRate: Number(config.usdToSypRate || 15000),
-      coinToUsdRate: Number(config.coinToUsdRate || 0.01)
+      coinToUsdRate: Number(config.coinToUsdRate || 0.01),
+      recordEntryCostPts: Number(config.recordEntryCostPts || 10)
     },
     records
   });
@@ -610,7 +613,7 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
     weeklyCycleId = wt.cycleId;
   } else if (playMode === 'record') {
     const rec = await fbGet(env, `arena_world/admin_records/${gameId}`);
-    cost = rec ? Number(rec.entryCostPts || 10) : 10;
+    cost = Math.max(1, Number(config.recordEntryCostPts || (rec && rec.entryCostPts) || 10));
     if (usePass && (inv.arena_pass || 0) > 0) {
       inv.arena_pass -= 1;
       cost = 0;
@@ -656,7 +659,7 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
       title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : (gameId === 'tower_match' ? 'برج التحدي اللانهائي' : 'ميجا شوتر 2D'),
       currentRecord: gameId === 'hill_drive' ? 350 : (gameId === 'tower_match' ? 1200 : 500), holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: gameId === 'tower_match' ? 120 : 100
     };
-    const jackpotAdd = cost > 0 ? Math.floor(cost * 0.6) : 5;
+    const jackpotAdd = cost > 0 ? Math.floor(cost * 0.80) : 0; // 80% لمكافأة كسر الرقم و20% للإدارة
     await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd });
   }
 
