@@ -19,7 +19,20 @@ const CORE_ASSETS = [
   './js/tower_match/tower_assets.js',
   './js/tower_match/tower_board.js',
   './js/tower_match/tower_engine.js',
-  './js/tower_match/tower_ui.js'
+  './js/tower_match/tower_ui.js',
+  './assets/tower_match/tile_sword.png',
+  './assets/tower_match/tile_clock.png',
+  './assets/tower_match/tile_coin.png',
+  './assets/tower_match/tile_star.png',
+  './assets/tower_match/tile_emerald.png',
+  './assets/tower_match/tile_bolt.png',
+  './assets/tower_match/spec_row_blast.png',
+  './assets/tower_match/spec_bomb_3x3.png',
+  './assets/tower_match/spec_prism_core.png',
+  './assets/tower_match/boss_1_bronze.png',
+  './assets/tower_match/boss_2_cyber.png',
+  './assets/tower_match/boss_3_emerald.png',
+  './assets/tower_match/boss_4_gold.png'
 ];
 
 // 1. التثبيت: حفظ الملفات الأساسية فوراً
