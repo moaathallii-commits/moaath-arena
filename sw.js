@@ -13,8 +13,13 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './js/characters_engine.js',
   './js/game_hill_drive.js',
-  './js/game_cyber_shooter.js'
+  './js/game_cyber_shooter.js',
+  './js/tower_match/tower_assets.js',
+  './js/tower_match/tower_board.js',
+  './js/tower_match/tower_engine.js',
+  './js/tower_match/tower_ui.js'
 ];
 
 // 1. التثبيت: حفظ الملفات الأساسية فوراً
