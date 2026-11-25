@@ -1,5 +1,5 @@
 /**
- * Moaath Arena World - Cloudflare Worker (Safe CORS + Diagnostics)
+ * Moaath Arena World - Cloudflare Worker (Upgraded Shop + SYP Bridge + Safe CORS)
  * المسار في GitHub (مستودع moaath-arena): worker/arena_worker.js
  * السياسة الأمنية: 0% ذكاء اصطناعي في المال أو النقاط أو التحويلات أو شام كاش.
  */
@@ -13,12 +13,29 @@ const BASIC_CHARS = ['buddy', 'lolo', 'noor', 'chef', 'pastry', 'athlete', 'shei
 const VIP_CHARS = ['coach_sakhr', 'grand_chef', 'princess_layla', 'butler_farid', 'friend_fadi', 'anime_zain', 'anime_ryu', 'anime_ritaj', 'friend_saad'];
 
 const SHOP_PRICES = {
-  shield_1: { price: 25, type: 'tactical' },
-  fuel_boost: { price: 20, type: 'tactical' },
-  double_xp: { price: 15, type: 'tactical' },
-  frame_gold: { price: 0, reqXp: 300, type: 'cosmetic' },
-  frame_cyber: { price: 0, reqXp: 800, type: 'cosmetic' }
+  shield_1: { price: 25, type: 'tactical', name: 'درع الحماية' },
+  fuel_boost: { price: 20, type: 'tactical', name: 'خزان وقود إضافي' },
+  double_xp: { price: 15, type: 'tactical', name: 'مضاعف XP' },
+  extra_hp: { price: 25, type: 'tactical', name: 'قلب إضافي (+1 HP)' },
+  fuel_magnet: { price: 20, type: 'tactical', name: 'مغناطيس الوقود' },
+  streak_shield: { price: 30, type: 'passive', name: 'حماية السلسلة' },
+  bundle_starter: { price: 80, type: 'bundle', name: 'باقة المنطلق', grants: { shield_1: 2, fuel_boost: 2 } },
+  arena_pass: { price: 40, type: 'pass', name: 'تذكرة الساحة (5 جولات)', grants: { arena_pass: 5 } },
+  frame_gold: { price: 0, reqXp: 300, type: 'cosmetic', name: 'الإطار الملكي الذهبي' },
+  frame_cyber: { price: 0, reqXp: 800, type: 'cosmetic', name: 'إطار سايبر الماسي' }
 };
+
+const DAILY_DEAL_POOL = ['shield_1', 'fuel_boost', 'double_xp', 'extra_hp', 'fuel_magnet', 'streak_shield'];
+
+function getTodayDailyDeal() {
+  const dayStr = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < dayStr.length; i++) hash = (hash * 31 + dayStr.charCodeAt(i)) % 997;
+  const itemId = DAILY_DEAL_POOL[hash % DAILY_DEAL_POOL.length];
+  const discountPct = 20;
+  const tomorrow = new Date(dayStr + 'T00:00:00Z').getTime() + 24 * 60 * 60 * 1000;
+  return { dayStr, itemId, discountPct, expiresAt: tomorrow };
+}
 
 export default {
   async fetch(request, env) {
@@ -27,7 +44,6 @@ export default {
 
       const url = new URL(request.url);
 
-      // نقطة فحص سريعة عبر المتصفح: /health
       if (request.method === 'GET' && url.pathname === '/health') {
         const hasUrl = Boolean(env.FIREBASE_DB_URL && env.FIREBASE_DB_URL.trim());
         const hasSecret = Boolean(env.FIREBASE_DB_SECRET && env.FIREBASE_DB_SECRET.trim());
@@ -42,7 +58,6 @@ export default {
 
       if (request.method !== 'POST') return jsonResponse({ code: 'ERR_METHOD', message: 'POST only' }, 405);
 
-      // التحقق من وجود المتغيرات السرية قبل أي اتصال بـ Firebase
       if (!env.FIREBASE_DB_URL || !env.FIREBASE_DB_SECRET) {
         return jsonResponse({
           code: 'ERR_ENV_MISSING',
@@ -53,9 +68,7 @@ export default {
       const body = await request.json().catch(() => ({}));
       const config = (await fbGet(env, 'arena_world/config')) || {};
 
-      // ====================================================
-      // أ) نقاط نهاية الإدارة (تعمل حتى أثناء تفعيل زر الطوارئ)
-      // ====================================================
+      // أ) نقاط نهاية الإدارة
       if (url.pathname.startsWith('/admin/')) {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
         if (!storeAuth.ok || !storeAuth.isAdmin) {
@@ -79,9 +92,7 @@ export default {
         return jsonResponse({ maintenance: true, message: 'قيد التطوير' }, 503);
       }
 
-      // ====================================================
       // ب) نقاط نهاية جسر متجر معاذ
-      // ====================================================
       if (url.pathname === '/bridge/generate-bind-key') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
         if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
@@ -94,9 +105,7 @@ export default {
         return handleStoreToArenaTransfer(env, storeAuth, body, config);
       }
 
-      // ====================================================
       // ج) نقاط نهاية تطبيق عالم التحديات (Arena PWA)
-      // ====================================================
       if (url.pathname === '/auth/bind') {
         return handleBindDevice(env, body, config);
       }
@@ -114,6 +123,8 @@ export default {
           return handleSelectCharacter(env, player, body);
         case '/shop/buy':
           return handleShopBuy(env, player, body);
+        case '/cosmetic/equip':
+          return handleEquipCosmetic(env, player, body);
         case '/session/start':
           return handleSessionStart(env, player, body, config);
         case '/session/submit':
@@ -130,7 +141,6 @@ export default {
           return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
     } catch (err) {
-      // ضمان إرجاع JSON مع ترويسات CORS دائماً حتى عند حدوث خطأ غير متوقع
       return jsonResponse({
         code: 'ERR_WORKER_EX',
         message: `خطأ داخلي في الخادم: ${err && err.message ? err.message : 'Unknown error'}`
@@ -141,9 +151,7 @@ export default {
 
 function normalizeDbUrl(rawUrl) {
   let u = String(rawUrl || '').trim().replace(/\/+$/, '');
-  if (u && !u.startsWith('http://') && !u.startsWith('https://')) {
-    u = 'https://' + u;
-  }
+  if (u && !u.startsWith('http://') && !u.startsWith('https://')) u = 'https://' + u;
   return u;
 }
 
@@ -202,9 +210,7 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
   }
 
   const existingTx = await fbGet(env, `arena_world/bridge_transfers/${idempotencyKey}`);
-  if (existingTx) {
-    return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
-  }
+  if (existingTx) return jsonResponse({ code: 'ERR_DUP_TX', message: 'تم تنفيذ هذه العملية مسبقاً.' }, 409);
 
   const storeUser = await fbGet(env, `users/${phone}`);
   const currentUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
@@ -218,7 +224,6 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
     }, 400);
   }
 
-  // حساب العملات: إما مباشرة عبر buyRateSYP (سعر العملة الواحدة بالليرة) أو عبر الدولار
   const coinBuyRateSYP = Number(config.buyRateSYP || 0);
   const coinToUsdRate = Number(config.coinToUsdRate || 0.01);
   const coinsToAdd = coinBuyRateSYP > 0
@@ -233,13 +238,7 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
   const newStoreUsd = Number(Math.max(0, currentUsd - usdEquivalent).toFixed(4));
 
   await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, {
-    phone,
-    direction: 'store_to_arena',
-    sypAmount: syp,
-    usdEquivalent,
-    pts: coinsToAdd,
-    status: 'processing',
-    createdAt: now
+    phone, direction: 'store_to_arena', sypAmount: syp, usdEquivalent, pts: coinsToAdd, status: 'processing', createdAt: now
   });
   await fbPatch(env, `users/${phone}`, { prepaidBalanceUSD: newStoreUsd });
 
@@ -248,38 +247,18 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
     player = {
       phone,
       displayName: (storeUser && (storeUser.name || storeUser.displayName)) || `زبون ${phone.slice(-4)}`,
-      activeCharacterId: 'buddy',
-      points: 0,
-      verifiedCheckpointBalance: 0,
-      xp: 0,
-      wins: 0,
-      losses: 0,
-      winStreak: 0,
-      recordsBroken: 0,
-      inventory: {},
-      cosmetics: {},
-      frozen: false,
-      antiCheatFlags: 0
+      activeCharacterId: 'buddy', activeFrame: '', points: 0, verifiedCheckpointBalance: 0,
+      xp: 0, wins: 0, losses: 0, winStreak: 0, recordsBroken: 0,
+      inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0
     };
     await fbPatch(env, `arena_world/players/${phone}`, player);
   }
 
-  await updatePlayerBalance(env, player, coinsToAdd, {
-    txId: idempotencyKey,
-    type: 'store_topup_syp',
-    delta: coinsToAdd,
-    at: now
-  });
-  await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, {
-    status: 'completed',
-    completedAt: Date.now()
-  });
+  await updatePlayerBalance(env, player, coinsToAdd, { txId: idempotencyKey, type: 'store_topup_syp', delta: coinsToAdd, at: now });
+  await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, { status: 'completed', completedAt: Date.now() });
 
   return jsonResponse({
-    ok: true,
-    addedCoins: coinsToAdd,
-    sypAmount: syp,
-    newArenaBalance: player.points,
+    ok: true, addedCoins: coinsToAdd, sypAmount: syp, newArenaBalance: player.points,
     newStoreSyp: Math.floor(newStoreUsd * sypRate),
     message: `تم تحويل ${syp.toLocaleString('ar-SY')} ل.س إلى ${coinsToAdd} عملة معاذ بنجاح!`
   });
@@ -309,7 +288,9 @@ async function handleAdminDashboard(env, config) {
       welcomePoints: Number(config.welcomePoints || 0),
       minCashoutPts: Number(config.minCashoutPts || 100),
       pvpHouseEdgePct: Number(config.pvpHouseEdgePct || 10),
-      coinToUsdRate: Number(config.coinToUsdRate || 0.01)
+      coinToUsdRate: Number(config.coinToUsdRate || 0.01),
+      buyRateSYP: Number(config.buyRateSYP || 150),
+      usdToSypRate: Number(config.usdToSypRate || 15000)
     },
     pendingCashouts, recentAlerts, frozenPlayers
   });
@@ -322,6 +303,8 @@ async function handleAdminUpdateConfig(env, body) {
   if (body.minCashoutPts !== undefined) updates.minCashoutPts = Math.max(100, Number(body.minCashoutPts));
   if (body.pvpHouseEdgePct !== undefined) updates.pvpHouseEdgePct = Math.min(30, Math.max(0, Number(body.pvpHouseEdgePct)));
   if (body.coinToUsdRate !== undefined) updates.coinToUsdRate = Math.max(0.0001, Number(body.coinToUsdRate));
+  if (body.buyRateSYP !== undefined) updates.buyRateSYP = Math.max(1, Number(body.buyRateSYP));
+  if (body.usdToSypRate !== undefined) updates.usdToSypRate = Math.max(100, Number(body.usdToSypRate));
   await fbPatch(env, 'arena_world/config', updates);
   return jsonResponse({ ok: true, message: 'تم حفظ إعدادات عالم التحديات بنجاح.' });
 }
@@ -392,9 +375,9 @@ async function handleBindDevice(env, { bindKey, deviceId }, config) {
   if (!existingPlayer) {
     const welcomePts = Number(config.welcomePoints || 0);
     await fbPatch(env, playerPath, {
-      phone: keyData.phone, displayName: keyData.displayName || 'لاعب جديد', activeCharacterId: 'buddy',
+      phone: keyData.phone, displayName: keyData.displayName || 'لاعب جديد', activeCharacterId: 'buddy', activeFrame: '',
       points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
-      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, frozen: false, antiCheatFlags: 0, deviceToken
+      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
     });
   } else {
     await fbPatch(env, playerPath, { deviceToken });
@@ -414,9 +397,21 @@ async function handleProfile(env, player) {
     cyber_shooter: { title: 'ميجا شوتر 2D', currentRecord: 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 }
   };
   return jsonResponse({
-    displayName: player.displayName, phone: player.phone, activeCharacterId: activeChar, unlockedVips,
-    points: player.points, xp: player.xp || 0, wins: player.wins || 0, losses: player.losses || 0,
-    inventory: player.inventory || {}, cosmetics: player.cosmetics || {}, records
+    displayName: player.displayName,
+    phone: player.phone,
+    activeCharacterId: activeChar,
+    activeFrame: player.activeFrame || '',
+    unlockedVips,
+    points: player.points,
+    xp: player.xp || 0,
+    wins: player.wins || 0,
+    losses: player.losses || 0,
+    winStreak: player.winStreak || 0,
+    inventory: player.inventory || {},
+    cosmetics: player.cosmetics || {},
+    shopHistory: Array.isArray(player.shopHistory) ? player.shopHistory.slice(0, 5) : [],
+    dailyDeal: getTodayDailyDeal(),
+    records
   });
 }
 
@@ -430,46 +425,96 @@ async function handleSelectCharacter(env, player, { characterId }) {
   return jsonResponse({ ok: true, activeCharacterId: characterId });
 }
 
+async function handleEquipCosmetic(env, player, { frameId }) {
+  const cos = player.cosmetics || {};
+  if (frameId && !cos[frameId]) {
+    return jsonResponse({ code: 'ERR_FRAME_LOCKED', message: 'لم تفتح هذا الإطار بعد.' }, 403);
+  }
+  await fbPatch(env, `arena_world/players/${player.phone}`, { activeFrame: frameId || '' });
+  return jsonResponse({ ok: true, activeFrame: frameId || '', message: frameId ? 'تم تفعيل الإطار على صورتك!' : 'تم إزالة الإطار.' });
+}
+
 async function handleShopBuy(env, player, { itemId }) {
   const item = SHOP_PRICES[itemId];
   if (!item) return jsonResponse({ code: 'ERR_ITEM', message: 'الغرض غير موجود في المتجر.' }, 400);
+
   if (item.type === 'cosmetic') {
     if ((player.xp || 0) < item.reqXp) return jsonResponse({ code: 'ERR_XP_LOW', message: `تحتاج إلى ${item.reqXp} XP لفتح هذا القالب.` }, 400);
     const cosmetics = player.cosmetics || {};
     cosmetics[itemId] = true;
-    await fbPatch(env, `arena_world/players/${player.phone}`, { cosmetics });
-    return jsonResponse({ ok: true, message: 'تم فتح القالب الفاخر بنجاح!' });
+    await fbPatch(env, `arena_world/players/${player.phone}`, { cosmetics, activeFrame: itemId });
+    return jsonResponse({ ok: true, message: `تم فتح وتفعيل ${item.name} مجاناً!` });
   }
-  let finalPrice = item.price;
-  if (player.activeCharacterId === 'saver') finalPrice = Math.max(1, Math.floor(item.price * 0.95));
-  if (player.points < finalPrice) return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
 
+  let finalPrice = item.price;
+  const deal = getTodayDailyDeal();
+  if (deal.itemId === itemId) {
+    finalPrice = Math.max(1, Math.floor(finalPrice * (1 - deal.discountPct / 100)));
+  }
+  if (player.activeCharacterId === 'saver') {
+    finalPrice = Math.max(1, Math.floor(finalPrice * 0.95));
+  }
+  if (player.points < finalPrice) {
+    return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
+  }
+
+  const now = Date.now();
   const txId = `shop_${crypto.randomUUID().slice(0, 8)}`;
-  await updatePlayerBalance(env, player, -finalPrice, { txId, type: `shop_buy_${itemId}`, delta: -finalPrice, at: Date.now() });
+  await updatePlayerBalance(env, player, -finalPrice, { txId, type: `shop_buy_${itemId}`, delta: -finalPrice, at: now });
+
   const inv = player.inventory || {};
-  inv[itemId] = (inv[itemId] || 0) + 1;
-  await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv });
-  return jsonResponse({ ok: true, finalPrice, inventory: inv, message: `تم الشراء بنجاح مقابل ${finalPrice} عملة!` });
+  if (item.grants) {
+    for (const [gId, qty] of Object.entries(item.grants)) {
+      inv[gId] = (inv[gId] || 0) + Number(qty);
+    }
+  } else {
+    inv[itemId] = (inv[itemId] || 0) + 1;
+  }
+
+  const history = Array.isArray(player.shopHistory) ? player.shopHistory : [];
+  history.unshift({ itemId, name: item.name, price: finalPrice, at: now });
+  const trimmedHistory = history.slice(0, 5);
+
+  await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv, shopHistory: trimmedHistory });
+  return jsonResponse({
+    ok: true,
+    finalPrice,
+    inventory: inv,
+    shopHistory: trimmedHistory,
+    message: `تم شراء ${item.name} بنجاح مقابل ${finalPrice} عملة!`
+  });
 }
 
-async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem }, config) {
+async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem, usePass }, config) {
   if (!['hill_drive', 'cyber_shooter'].includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
   const playMode = mode || 'record';
   let cost = Number(stakePts) || 10;
+  let usedPass = false;
+
+  const inv = player.inventory || {};
+
   if (playMode === 'record') {
     const rec = await fbGet(env, `arena_world/admin_records/${gameId}`);
     cost = rec ? Number(rec.entryCostPts || 10) : 10;
+    if (usePass && (inv.arena_pass || 0) > 0) {
+      inv.arena_pass -= 1;
+      cost = 0;
+      usedPass = true;
+    }
   }
+
   if (cost < 0 || player.points < cost) return jsonResponse({ code: 'ERR_FUNDS', message: 'رصيد عملات معاذ غير كافٍ.' }, 400);
 
   let activeItem = null;
   if (useItem && SHOP_PRICES[useItem] && SHOP_PRICES[useItem].type === 'tactical') {
-    const inv = player.inventory || {};
     if ((inv[useItem] || 0) > 0) {
       inv[useItem] = inv[useItem] - 1;
       activeItem = useItem;
-      await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv });
     }
+  }
+
+  if (usedPass || activeItem) {
+    await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv });
   }
 
   const lockedCharId = player.activeCharacterId || 'buddy';
@@ -477,19 +522,22 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
   const now = Date.now();
   const seed = Math.floor(Math.random() * 999999);
 
-  await updatePlayerBalance(env, player, -cost, { txId: sessionId, type: `entry_${playMode}`, delta: -cost, at: now });
+  if (cost > 0) {
+    await updatePlayerBalance(env, player, -cost, { txId: sessionId, type: `entry_${playMode}`, delta: -cost, at: now });
+  }
 
-  if (playMode === 'record' && cost > 0) {
+  if (playMode === 'record') {
     const rec = (await fbGet(env, `arena_world/admin_records/${gameId}`)) || {
       title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : 'ميجا شوتر 2D',
-      currentRecord: gameId === 'hill_drive' ? 350 : 500, holderName: 'إدارة العالم', entryCostPts: cost, jackpotPts: 100
+      currentRecord: gameId === 'hill_drive' ? 350 : 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100
     };
-    await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + Math.floor(cost * 0.6) });
+    const jackpotAdd = cost > 0 ? Math.floor(cost * 0.6) : 5;
+    await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd });
   }
 
   await fbPatch(env, `arena_world/sessions/${sessionId}`, {
     phone: player.phone, gameId, mode: playMode, stakePts: cost, pvpMatchId: pvpMatchId || null,
-    characterId: lockedCharId, activeItem, seed, startedAt: now, expiresAt: now + 10 * 60 * 1000, consumed: false
+    characterId: lockedCharId, activeItem, usedPass, seed, startedAt: now, expiresAt: now + 10 * 60 * 1000, consumed: false
   });
   return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, startedAt: now });
 }
@@ -571,8 +619,18 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
           await updatePlayerBalance(env, creator, prize, { txId: `pvp_win_${match.matchId}`, type: 'pvp_win', delta: prize, at: now });
           await fbPatch(env, `arena_world/players/${creator.phone}`, { wins: (creator.wins || 0) + 1 });
         }
-        await fbPatch(env, `arena_world/players/${player.phone}`, { losses: (player.losses || 0) + 1, winStreak: 0 });
-        outcomeMsg = `خسرت التحدي (${score} مقابل ${match.creatorScore}).`;
+        const inv = player.inventory || {};
+        let newStreak = 0;
+        let streakProtected = false;
+        if ((player.winStreak || 0) > 0 && (inv.streak_shield || 0) > 0) {
+          inv.streak_shield -= 1;
+          newStreak = player.winStreak;
+          streakProtected = true;
+          await fbPatch(env, `arena_world/players/${player.phone}`, { losses: (player.losses || 0) + 1, winStreak: newStreak, inventory: inv });
+        } else {
+          await fbPatch(env, `arena_world/players/${player.phone}`, { losses: (player.losses || 0) + 1, winStreak: 0 });
+        }
+        outcomeMsg = `خسرت التحدي (${score} مقابل ${match.creatorScore}).` + (streakProtected ? ' (🔥 بطاقة حماية السلسلة حفظت سلسلتك!)' : '');
       } else {
         const refund = Math.floor(prize / 2);
         await updatePlayerBalance(env, player, refund, { txId: `pvp_draw_${match.matchId}`, type: 'pvp_draw', delta: refund, at: now });
