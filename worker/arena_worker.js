@@ -394,8 +394,12 @@ async function handleProfile(env, player) {
   }
   const records = (await fbGet(env, 'arena_world/admin_records')) || {
     hill_drive: { title: 'قيادة التلال 2D', currentRecord: 350, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 },
-    cyber_shooter: { title: 'ميجا شوتر 2D', currentRecord: 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 }
+    cyber_shooter: { title: 'ميجا شوتر 2D', currentRecord: 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100 },
+    tower_match: { title: 'برج التحدي اللانهائي', currentRecord: 1200, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 120 }
   };
+  if (!records.tower_match) {
+    records.tower_match = { title: 'برج التحدي اللانهائي', currentRecord: 1200, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 120 };
+  }
   return jsonResponse({
     displayName: player.displayName,
     phone: player.phone,
@@ -486,7 +490,7 @@ async function handleShopBuy(env, player, { itemId }) {
 }
 
 async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem, usePass }, config) {
-  if (!['hill_drive', 'cyber_shooter'].includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
+  if (!['hill_drive', 'cyber_shooter', 'tower_match'].includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
   const playMode = mode || 'record';
   let cost = Number(stakePts) || 10;
   let usedPass = false;
@@ -528,8 +532,8 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
 
   if (playMode === 'record') {
     const rec = (await fbGet(env, `arena_world/admin_records/${gameId}`)) || {
-      title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : 'ميجا شوتر 2D',
-      currentRecord: gameId === 'hill_drive' ? 350 : 500, holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: 100
+      title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : (gameId === 'tower_match' ? 'برج التحدي اللانهائي' : 'ميجا شوتر 2D'),
+      currentRecord: gameId === 'hill_drive' ? 350 : (gameId === 'tower_match' ? 1200 : 500), holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: gameId === 'tower_match' ? 120 : 100
     };
     const jackpotAdd = cost > 0 ? Math.floor(cost * 0.6) : 5;
     await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd });
@@ -664,6 +668,14 @@ function validateTelemetry(session, score, telemetry) {
   if (session.gameId === 'hill_drive' && score > Math.ceil(serverElapsedSec * 45) + 50) return { valid: false, reason: 'HILL_DRIVE_SPEEDHACK' };
   if (session.gameId === 'cyber_shooter' && (score > Math.ceil(serverElapsedSec * 60) + 60 || Number(telemetry.kills || 0) > Math.ceil(serverElapsedSec * 3.5))) {
     return { valid: false, reason: 'SHOOTER_SCORE_ANOMALY' };
+  }
+  if (session.gameId === 'tower_match') {
+    const maxAllowedScore = Math.ceil(serverElapsedSec * 140) + 450;
+    const moves = Number(telemetry.totalMoves || 0);
+    const floors = Number(telemetry.floorsCleared || 0);
+    if (score > maxAllowedScore || moves > Math.ceil(serverElapsedSec * 4) + 6 || floors > Math.ceil(serverElapsedSec * 0.8) + 3) {
+      return { valid: false, reason: 'TOWER_MATCH_SCORE_ANOMALY' };
+    }
   }
   return { valid: true };
 }
