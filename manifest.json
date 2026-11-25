@@ -1,25 +1,28 @@
 {
-  "name": "عالم تحديات معاذ | Moaath Arena",
-  "short_name": "عالم التحديات",
-  "description": "منصة التحديات والمسابقات التنافسية المرتبطة بمتجر معاذ",
+  "name": "عالم تحديات معاذ — برج التحدي اللانهائي",
+  "short_name": "تحديات معاذ",
+  "description": "عالم المسابقات والتحديات المرتبط بمتجر معاذ — لعبة برج التحدي اللانهائي Match-3 وتحديات PvP",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b1120",
-  "theme_color": "#d4af37",
+  "background_color": "#070c18",
+  "theme_color": "#0b1120",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
     {
-      "src": "./assets/icons/coin-192.png",
-      "sizes": "192x192",
+      "src": "./assets/tower_match/boss_4_gold.png",
+      "sizes": "216x216",
       "type": "image/png",
       "purpose": "any maskable"
-    },
+    }
+  ],
+  "shortcuts": [
     {
-      "src": "./assets/icons/coin-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "name": "برج التحدي اللانهائي",
+      "short_name": "برج التحدي",
+      "url": "./index.html#tower_match"
     }
   ]
 }
