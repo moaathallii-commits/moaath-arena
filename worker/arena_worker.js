@@ -594,6 +594,9 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
 
   const check = validateTelemetry(session, score, telemetry);
   if (!check.valid) {
+    if (check.noFreeze) {
+      return jsonResponse({ code: check.reason || 'ERR_SESSION_EXPIRED', message: check.message || 'انتهت صلاحية الجلسة بسبب التوقف الطويل، لم يتم تجميد حسابك.' }, 400);
+    }
     await flagAndFreeze(env, player, check.reason, { sessionId, score, telemetry });
     return jsonResponse({ code: 'ERR_CHEAT', message: 'تم رصد تلاعب في النتيجة وتجميد الحساب وإشعار الإدارة.' }, 403);
   }
@@ -722,19 +725,50 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
 function validateTelemetry(session, score, telemetry) {
   const serverElapsedSec = (Date.now() - session.startedAt) / 1000;
   const clientElapsedSec = Number(telemetry.durationSec || 0);
-  if (serverElapsedSec < 2 || Math.abs(serverElapsedSec - clientElapsedSec) > 15) return { valid: false, reason: 'TIME_TAMPERING_DETECTED' };
-  if (score < 0 || !Array.isArray(telemetry.snapshots) || telemetry.snapshots.length === 0) return { valid: false, reason: 'MISSING_TELEMETRY_SNAPSHOTS' };
-  if (session.gameId === 'hill_drive' && score > Math.ceil(serverElapsedSec * 45) + 50) return { valid: false, reason: 'HILL_DRIVE_SPEEDHACK' };
-  if (session.gameId === 'cyber_shooter' && (score > Math.ceil(serverElapsedSec * 60) + 60 || Number(telemetry.kills || 0) > Math.ceil(serverElapsedSec * 3.5))) {
-    return { valid: false, reason: 'SHOOTER_SCORE_ANOMALY' };
+
+  if (serverElapsedSec < 2) {
+    return { valid: false, reason: 'TIME_TAMPERING_DETECTED' };
   }
+  // إذا غاب اللاعب في الخلفية (مثلاً للرد على واتساب) لأكثر من 30 دقيقة، تُرفض الجلسة دون تجميد الحساب
+  if (serverElapsedSec > 1800) {
+    return { valid: false, noFreeze: true, reason: 'ERR_SESSION_EXPIRED', message: 'انتهت مهلة الجلسة بسبب البقاء طويلاً خارج التطبيق. يمكنك بدء جولة جديدة بأمان.' };
+  }
+  if (score < 0 || !Array.isArray(telemetry.snapshots) || telemetry.snapshots.length === 0) {
+    return { valid: false, reason: 'MISSING_TELEMETRY_SNAPSHOTS' };
+  }
+
   if (session.gameId === 'tower_match') {
-    const maxAllowedScore = Math.ceil(serverElapsedSec * 140) + 450;
+    // في برج التحدي يتوقف عداد العميل أثناء نافذة الزعيم ودليل البداية وشاشة النتيجة،
+    // لذا يُسمح بأن يكون زمن الخادم أكبر من زمن اللعب الفعلي، لكن يُمنع تماماً أن يدّعي العميل زمناً أكبر من زمن الخادم.
+    if (clientElapsedSec < 2 || clientElapsedSec > serverElapsedSec + 10) {
+      return { valid: false, reason: 'TIME_TAMPERING_DETECTED' };
+    }
+    // نعتمد الزمن الفعلي الأصغر لحساب السقف حتى لا يستغل الغشاش التوقف المؤقت لرفع السقف المسموح
+    const effectiveSec = Math.min(serverElapsedSec, Math.max(clientElapsedSec, 2));
     const moves = Number(telemetry.totalMoves || 0);
     const floors = Number(telemetry.floorsCleared || 0);
-    if (score > maxAllowedScore || moves > Math.ceil(serverElapsedSec * 4) + 6 || floors > Math.ceil(serverElapsedSec * 0.8) + 3) {
+    const maxAllowedMoves = Math.ceil(effectiveSec * 4.5) + 8;
+    const maxAllowedFloors = Math.ceil(effectiveSec * 1.1) + 4;
+    const maxAllowedScore = Math.ceil(effectiveSec * 380) + (floors * 650) + 1200;
+
+    if (score > 500 && moves < 2) {
+      return { valid: false, reason: 'TOWER_ZERO_MOVES_CHEAT' };
+    }
+    if (score > maxAllowedScore || moves > maxAllowedMoves || floors > maxAllowedFloors) {
       return { valid: false, reason: 'TOWER_MATCH_SCORE_ANOMALY' };
     }
+    return { valid: true };
+  }
+
+  // يُمنع أن يدّعي العميل زمناً أكبر من زمن الخادم، أما التوقف في الخلفية (واتساب) فلا يُعد غشاً
+  if (clientElapsedSec < 2 || clientElapsedSec > serverElapsedSec + 15) {
+    return { valid: false, reason: 'TIME_TAMPERING_DETECTED' };
+  }
+  if (session.gameId === 'hill_drive' && score > Math.ceil(serverElapsedSec * 45) + 50) {
+    return { valid: false, reason: 'HILL_DRIVE_SPEEDHACK' };
+  }
+  if (session.gameId === 'cyber_shooter' && (score > Math.ceil(serverElapsedSec * 60) + 60 || Number(telemetry.kills || 0) > Math.ceil(serverElapsedSec * 3.5))) {
+    return { valid: false, reason: 'SHOOTER_SCORE_ANOMALY' };
   }
   return { valid: true };
 }
