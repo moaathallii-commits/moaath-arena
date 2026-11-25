@@ -8,78 +8,155 @@
   <meta name="theme-color" content="#0b1120" />
   <style>
     :root {
-      --bg-dark: #0b1120;
-      --bg-card: #151f32;
+      --bg-dark: #070c18;
+      --bg-card: #121c30;
       --gold: #d4af37;
       --gold-light: #f3d576;
       --silver: #cbd5e1;
       --blue: #2563eb;
       --danger: #ef4444;
       --success: #22c55e;
+      --char-aura: #38bdf8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
     body { background: var(--bg-dark); color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
     .hidden { display: none !important; }
 
     header {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      background: linear-gradient(135deg, #0f172a, #16223b);
+      border-bottom: 1px solid var(--char-aura);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
       padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
     }
-    .brand { font-weight: 800; color: var(--gold-light); font-size: 1.05rem; }
+    .brand { font-weight: 900; color: var(--gold-light); font-size: 1rem; }
     .wallet-badge {
       background: rgba(212, 175, 55, 0.15); border: 1px solid var(--gold);
-      padding: 6px 12px; border-radius: 20px; font-weight: bold; color: var(--gold-light);
+      padding: 6px 12px; border-radius: 20px; font-weight: bold; color: var(--gold-light); font-size: 0.9rem;
     }
     .offline-banner { background: #991b1b; color: #fff; text-align: center; padding: 6px; font-size: 0.85rem; }
 
+    /* إشعارات Toast بدلاً من alert */
+    #toastBox {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 1200; background: #0f172a; color: #f8fafc;
+      border: 1px solid var(--char-aura); border-radius: 14px;
+      padding: 10px 16px; font-size: 0.88rem; font-weight: 700;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.55); max-width: 90%; text-align: center;
+    }
+
     main { flex: 1; padding: 14px; max-width: 600px; width: 100%; margin: 0 auto; }
     .card {
-      background: var(--bg-card); border: 1px solid rgba(203, 213, 225, 0.15);
-      border-radius: 16px; padding: 16px; margin-bottom: 14px;
+      background: var(--bg-card); border: 1px solid rgba(203, 213, 225, 0.14);
+      border-radius: 16px; padding: 14px; margin-bottom: 12px;
     }
-    .card h3 { color: var(--gold-light); margin-bottom: 8px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .card h3 { color: var(--gold-light); margin-bottom: 8px; font-size: 1rem; }
+
+    /* شريط المرافق التفاعلي بصورة الشخصية الحقيقية */
+    .companion-bar {
+      display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, #162440, #0c1426);
+      border: 1px solid var(--char-aura); border-radius: 16px; padding: 10px 12px; margin-bottom: 12px;
+      box-shadow: 0 0 16px color-mix(in srgb, var(--char-aura) 22%, transparent);
+    }
+    .companion-avatar {
+      width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--char-aura);
+      background: #0b1120; display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0; overflow: hidden;
+    }
+    .companion-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pop-anim { animation: pop 0.35s ease; }
+    @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    .companion-bubble { font-size: 0.84rem; color: #e2e8f0; line-height: 1.45; margin-top: 2px; }
+
+    /* التبويبات */
+    .tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
     .tab-btn {
-      flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.3);
-      background: #0f172a; color: var(--silver); font-weight: 700; cursor: pointer;
+      flex: 1; min-width: 72px; padding: 9px 6px; border-radius: 10px;
+      border: 1px solid rgba(212, 175, 55, 0.3); background: #0f172a;
+      color: var(--silver); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
     }
     .tab-btn.active { background: var(--gold); color: #0b1120; }
 
-    .btn {
-      width: 100%; padding: 12px; border: none; border-radius: 12px;
-      font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 8px;
+    /* فلترة الشخصيات */
+    .filter-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .filter-pill {
+      flex: 1; padding: 7px; border-radius: 10px; border: 1px solid rgba(203,213,225,0.2);
+      background: #0f172a; color: var(--silver); font-size: 0.78rem; font-weight: 700; cursor: pointer;
     }
-    .btn-gold { background: linear-gradient(135deg, var(--gold), #b48a1e); color: #0b1120; }
+    .filter-pill.active { border-color: var(--char-aura); color: #fff; background: rgba(56,189,248,0.16); }
+
+    /* شبكة الشخصيات الـ 18 بالصور الحقيقية وتأثير 3D */
+    .char-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .char-card {
+      background: #0f172a; border: 1px solid rgba(203, 213, 225, 0.2);
+      border-radius: 14px; padding: 10px; text-align: center; position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .char-card.vip {
+      border: 1px solid var(--gold);
+      background: linear-gradient(155deg, #211c10, #0f172a);
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.2);
+    }
+    .char-card.vip:active { transform: perspective(420px) rotateY(7deg) scale(0.98); }
+    .char-card.selected { border: 2px solid var(--success); }
+    .char-thumb {
+      width: 82px; height: 82px; border-radius: 50%; margin: 6px auto 8px;
+      border: 2px solid var(--gold); overflow: hidden; background: #070c18;
+      display: flex; align-items: center; justify-content: center; font-size: 2rem;
+    }
+    .char-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .char-badge {
+      position: absolute; top: 8px; left: 8px; font-size: 0.68rem; padding: 2px 6px;
+      border-radius: 6px; font-weight: 800;
+    }
+    .badge-vip { background: var(--gold); color: #0b1120; }
+    .badge-basic { background: #334155; color: #fff; }
+
+    .btn {
+      width: 100%; padding: 11px; border: none; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+    .btn-gold { background: linear-gradient(135deg, var(--gold-light), var(--gold)); color: #0b1120; }
     .btn-blue { background: var(--blue); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--silver); color: var(--silver); }
     .btn-wa { background: #16a34a; color: #fff; }
 
     input, select {
-      width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.4);
-      background: #0b1120; color: #fff; font-size: 1rem; margin: 8px 0; text-align: center;
+      width: 100%; padding: 11px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.4);
+      background: #0b1120; color: #fff; font-size: 0.95rem; margin: 6px 0; text-align: center;
     }
-    .stat-row { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--silver); margin: 4px 0; }
+    .stat-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--silver); margin: 4px 0; }
     .jackpot-pill { color: #4ade80; font-weight: 800; }
 
-    /* شاشة اللعب الكاملة */
+    /* شاشة اللعب الأفقية الكاملة مع أزرار شفافة عائمة */
     #gameOverlay {
       position: fixed; inset: 0; background: #000; z-index: 900;
-      display: flex; flex-direction: column;
+      width: 100vw; height: 100vh; overflow: hidden;
     }
-    #gameCanvas { flex: 1; width: 100%; display: block; touch-action: none; }
-    .game-controls {
-      display: flex; gap: 12px; padding: 12px; background: #0f172a;
-      border-top: 1px solid rgba(212, 175, 55, 0.3);
+    #gameCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+    .floating-ctrl {
+      position: absolute; bottom: 20px; width: 92px; height: 92px;
+      border-radius: 50%; border: 2px solid rgba(243, 213, 118, 0.65);
+      background: rgba(15, 23, 42, 0.42); backdrop-filter: blur(4px);
+      color: #fff; font-size: 1.35rem; font-weight: 900;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      touch-action: none; z-index: 910; transition: transform 0.08s ease, background 0.1s ease;
     }
-    .ctrl-btn {
-      flex: 1; padding: 18px; border-radius: 14px; border: 1px solid var(--gold);
-      background: #1e293b; color: #fff; font-size: 1.15rem; font-weight: 800; touch-action: none;
+    .floating-ctrl small { font-size: 0.7rem; font-weight: 700; margin-top: 2px; color: #f3d576; }
+    .floating-ctrl.left { left: 22px; }
+    .floating-ctrl.right { right: 22px; }
+    .floating-ctrl.pressed {
+      background: rgba(212, 175, 55, 0.55); transform: scale(0.93);
+      border-color: #fff;
     }
-    .ctrl-btn:active { background: var(--gold); color: #0b1120; }
+    .rotate-hint {
+      position: absolute; top: 12px; right: 14px; z-index: 915;
+      background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(212,175,55,0.4);
+      color: #f3d576; font-size: 0.74rem; padding: 5px 10px; border-radius: 999px;
+    }
 
     .overlay {
-      position: fixed; inset: 0; background: rgba(11, 17, 32, 0.96);
+      position: fixed; inset: 0; background: rgba(7, 12, 24, 0.96);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       text-align: center; padding: 24px; z-index: 999;
     }
@@ -89,13 +166,15 @@
 </head>
 <body>
 
+  <div id="toastBox" class="hidden"></div>
+
   <div id="offlineBanner" class="offline-banner hidden">
     أنت بدون إنترنت حالياً — النقاط مجمدة وسيتم التحقق منها فور عودة الاتصال.
   </div>
 
   <header>
     <div class="brand">🏆 عالم تحديات معاذ</div>
-    <div class="wallet-badge"><span id="coinsDisplay">0</span> عملة معاذ</div>
+    <div class="wallet-badge"><span id="coinsDisplay">0</span> عملة</div>
   </header>
 
   <main>
@@ -111,47 +190,59 @@
 
     <!-- اللوبي الرئيسي -->
     <section id="lobbyScreen" class="hidden">
-      <div class="card">
-        <div class="stat-row">
-          <strong id="playerName" style="color:#fff; font-size:1.1rem;">اللاعب</strong>
-          <span>XP: <strong id="xpDisplay" style="color:var(--gold-light)">0</strong></span>
+      <div class="companion-bar">
+        <div id="companionAvatar" class="companion-avatar">🎭</div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong id="companionName" style="color:var(--gold-light); font-size:0.92rem;">بندق الودود</strong>
+            <label style="font-size:0.75rem; color:var(--silver);">
+              <input type="checkbox" id="dataSaverToggle" style="width:auto; margin:0 4px;" onchange="ArenaApp.toggleDataSaver(this.checked)" /> توفير البيانات
+            </label>
+          </div>
+          <div id="companionBubble" class="companion-bubble">أهلاً بك في عالم التحديات!</div>
         </div>
+      </div>
+
+      <div class="card" style="padding:10px 14px;">
         <div class="stat-row">
-          <span>الانتصارات: <strong id="winsDisplay">0</strong></span>
-          <span>الخسائر: <strong id="lossesDisplay">0</strong></span>
+          <strong id="playerName" style="color:#fff;">اللاعب</strong>
+          <span>XP: <strong id="xpDisplay" style="color:var(--gold-light)">0</strong> | فوز: <strong id="winsDisplay">0</strong></span>
         </div>
       </div>
 
       <div class="tabs">
-        <button class="tab-btn active" onclick="ArenaApp.switchTab('records', this)">👑 كسر الأرقام</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('pvp', this)">⚔️ ساحة PvP</button>
+        <button class="tab-btn active" onclick="ArenaApp.switchTab('records', this)">👑 الأرقام</button>
+        <button class="tab-btn" onclick="ArenaApp.switchTab('pvp', this)">⚔️ PvP</button>
+        <button class="tab-btn" onclick="ArenaApp.switchTab('chars', this)">🎭 الشخصيات</button>
+        <button class="tab-btn" onclick="ArenaApp.switchTab('shop', this)">🛒 المتجر</button>
         <button class="tab-btn" onclick="ArenaApp.switchTab('wallet', this)">💰 المحفظة</button>
       </div>
 
-      <!-- تبويب 1: كسر الأرقام القياسية -->
+      <!-- 1. كسر الأرقام -->
       <div id="tab-records">
         <div class="card">
-          <h3>🚗 قيادة التلال 2D (Hill Drive)</h3>
-          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-hill-score">350</strong></div>
-          <div class="stat-row"><span>البطل الحالي:</span><strong id="rec-hill-holder">إدارة العالم</strong></div>
-          <div class="stat-row"><span>الجائزة الكبرى التراكمية:</span><span class="jackpot-pill" id="rec-hill-jackpot">100 عملة</span></div>
-          <button class="btn btn-gold" onclick="ArenaApp.startFlow('hill_drive', 'record', 10)">
-            اكسر الرقم الآن (10 عملات)
-          </button>
+          <label style="font-size:0.8rem; color:var(--silver);">أداة تكتيكية للجولة (حد أقصى 1):</label>
+          <select id="tacticalItemSelect"><option value="">بدون أداة تكتيكية</option></select>
         </div>
 
         <div class="card">
-          <h3>🔫 ميجا شوتر 2D (Cyber Shooter)</h3>
+          <h3>🚗 قيادة التلال 2D (شاشة أفقية)</h3>
+          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-hill-score">350</strong></div>
+          <div class="stat-row"><span>البطل:</span><strong id="rec-hill-holder">إدارة العالم</strong></div>
+          <div class="stat-row"><span>الجائزة التراكمية:</span><span class="jackpot-pill" id="rec-hill-jackpot">100 عملة</span></div>
+          <button class="btn btn-gold" onclick="ArenaApp.startFlow('hill_drive', 'record', 10)">اكسر الرقم الآن (10 عملات)</button>
+        </div>
+
+        <div class="card">
+          <h3>🔫 ميجا شوتر 2D (شاشة أفقية)</h3>
           <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-shooter-score">500</strong></div>
-          <div class="stat-row"><span>البطل الحالي:</span><strong id="rec-shooter-holder">إدارة العالم</strong></div>
-          <div class="stat-row"><span>الجائزة الكبرى التراكمية:</span><span class="jackpot-pill" id="rec-shooter-jackpot">100 عملة</span></div>
-          <button class="btn btn-gold" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">
-            اكسر الرقم الآن (10 عملات)
-          </button>
+          <div class="stat-row"><span>البطل:</span><strong id="rec-shooter-holder">إدارة العالم</strong></div>
+          <div class="stat-row"><span>الجائزة التراكمية:</span><span class="jackpot-pill" id="rec-shooter-jackpot">100 عملة</span></div>
+          <button class="btn btn-gold" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">اكسر الرقم الآن (10 عملات)</button>
         </div>
       </div>
 
-      <!-- تبويب 2: تحديات PvP 1 ضد 1 -->
+      <!-- 2. ساحة PvP -->
       <div id="tab-pvp" class="hidden">
         <div class="card">
           <h3>أنشئ تحدياً جديداً (1 ضد 1)</h3>
@@ -159,27 +250,39 @@
             <option value="hill_drive">🚗 قيادة التلال 2D</option>
             <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
           </select>
-          <input type="number" id="pvpStakeInput" value="20" min="10" step="10" placeholder="قيمة التحدي (عملة معاذ)" />
+          <input type="number" id="pvpStakeInput" value="20" min="10" step="10" placeholder="قيمة التحدي" />
           <button class="btn btn-blue" onclick="ArenaApp.createPvp()">العب وانشر التحدي</button>
         </div>
-
         <div class="card">
           <div class="stat-row">
             <h3>تحديات الساحة المفتوحة</h3>
             <button style="background:none;border:none;color:var(--gold-light);cursor:pointer;" onclick="ArenaApp.loadPvpList()">🔄 تحديث</button>
           </div>
-          <div id="pvpListContainer" style="margin-top:8px; color:var(--silver); font-size:0.9rem;">
-            جاري تحميل التحديات...
-          </div>
+          <div id="pvpListContainer" style="margin-top:8px; color:var(--silver); font-size:0.9rem;">جاري التحميل...</div>
         </div>
       </div>
 
-      <!-- تبويب 3: المحفظة والسحب للمتجر -->
+      <!-- 3. الشخصيات الـ 18 -->
+      <div id="tab-chars" class="hidden">
+        <div class="filter-row">
+          <button class="filter-pill active" onclick="ArenaApp.setCharFilter('all', this)">الكل (18)</button>
+          <button class="filter-pill" onclick="ArenaApp.setCharFilter('basic', this)">الأساسية (9)</button>
+          <button class="filter-pill" onclick="ArenaApp.setCharFilter('vip', this)">VIP (9)</button>
+        </div>
+        <div id="charactersGrid" class="char-grid"></div>
+      </div>
+
+      <!-- 4. المتجر -->
+      <div id="tab-shop" class="hidden">
+        <div id="shopContainer"></div>
+      </div>
+
+      <!-- 5. المحفظة -->
       <div id="tab-wallet" class="hidden">
         <div class="card">
-          <h3>سحب عملات معاذ إلى رصيد المتجر</h3>
+          <h3>سحب عملات معاذ إلى متجر معاذ</h3>
           <p style="color:var(--silver); font-size:0.85rem; line-height:1.5; margin-bottom:10px;">
-            تُخصم النقاط فوراً وتُدقق خوارزمياً في السجل المتدحرج خلال ساعة واحدة قبل إضافتها لمحفظتك في متجر معاذ.
+            تُخصم النقاط فوراً وتُدقق خوارزمياً في السجل المتدحرج خلال ساعة واحدة قبل إضافتها لمحفظتك في المتجر.
           </p>
           <button class="btn btn-gold" onclick="ArenaApp.requestCashout(100)">سحب 100 عملة</button>
           <button class="btn btn-outline" onclick="ArenaApp.requestCashout(200)">سحب 200 عملة</button>
@@ -189,26 +292,25 @@
     </section>
   </main>
 
-  <!-- شاشة اللعب الكاملة -->
+  <!-- شاشة اللعب الأفقية الكاملة مع الأزرار الشفافة العائمة -->
   <div id="gameOverlay" class="hidden">
+    <div id="rotateHint" class="rotate-hint hidden">📱 أدر هاتفك أفقياً للرؤية الكاملة</div>
     <canvas id="gameCanvas"></canvas>
-    <div class="game-controls">
-      <button id="btnGameLeft" class="ctrl-btn">يسار</button>
-      <button id="btnGameRight" class="ctrl-btn">يمين</button>
-    </div>
+    <button id="btnGameLeft" class="floating-ctrl left">يسار</button>
+    <button id="btnGameRight" class="floating-ctrl right">يمين</button>
   </div>
 
-  <!-- مؤقت الـ 5 ثوانٍ الإلزامي -->
+  <!-- مؤقت 5 ثوانٍ -->
   <div id="countdownOverlay" class="overlay hidden">
     <h2 style="color: var(--danger);">تنبيه هام قبل البدء!</h2>
     <p style="color: var(--silver); max-width: 320px; margin-top: 8px; line-height: 1.5;">
-      تأكد من استقرار الإنترنت. بعد انتهاء العد التنازلي <strong>لا يمكنك التراجع أبداً</strong>، وانقطاع الاتصال يُحسب خسارة.
+      تأكد من استقرار الإنترنت. بعد انتهاء العد التنازلي <strong>لا يمكنك التراجع أبداً</strong>، وستتحول الشاشة للوضع الأفقي تلقائياً.
     </p>
     <div id="countdownNumber" class="countdown-num">5</div>
     <button id="cancelMatchBtn" class="btn btn-outline" style="max-width: 240px;" onclick="ArenaApp.cancelCountdown()">تراجع الآن</button>
   </div>
 
-  <!-- شاشة النتيجة + مشاركة واتساب -->
+  <!-- شاشة النتيجة -->
   <div id="resultOverlay" class="overlay hidden">
     <h2 style="color: var(--gold-light);">نتيجة الجولة</h2>
     <p id="resultText" style="color: #fff; font-size: 1.05rem; max-width: 340px; margin: 14px 0; line-height: 1.6;"></p>
@@ -230,7 +332,7 @@
     <button class="btn btn-outline" style="max-width: 200px; margin-top: 16px;" onclick="document.getElementById('errorOverlay').classList.add('hidden')">إغلاق</button>
   </div>
 
-  <!-- تحميل محركات الألعاب -->
+  <script src="./js/characters_engine.js"></script>
   <script src="./js/game_hill_drive.js"></script>
   <script src="./js/game_cyber_shooter.js"></script>
 
@@ -239,11 +341,17 @@
 
     const ArenaApp = {
       token: localStorage.getItem('arena_device_token'),
+      profile: null,
+      charFilter: 'all',
       countdownTimer: null,
-      activeSession: null,
+      toastTimer: null,
 
       init() {
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+        const ds = localStorage.getItem('arena_data_saver') === '1';
+        const dsEl = document.getElementById('dataSaverToggle');
+        if (dsEl) dsEl.checked = ds;
+
         const updateNet = () => document.getElementById('offlineBanner').classList.toggle('hidden', navigator.onLine);
         window.addEventListener('online', () => { updateNet(); if (this.token) this.syncProfile(); });
         window.addEventListener('offline', updateNet);
@@ -251,12 +359,33 @@
         if (this.token) this.syncProfile();
       },
 
+      toast(msg) {
+        const box = document.getElementById('toastBox');
+        box.textContent = msg;
+        box.classList.remove('hidden');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => box.classList.add('hidden'), 3200);
+      },
+
+      toggleDataSaver(enabled) {
+        localStorage.setItem('arena_data_saver', enabled ? '1' : '0');
+      },
+
+      setCharFilter(filter, btn) {
+        this.charFilter = filter;
+        document.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        this.renderCharacters();
+      },
+
       switchTab(tab, btn) {
-        ['records', 'pvp', 'wallet'].forEach((t) => document.getElementById(`tab-${t}`).classList.add('hidden'));
+        ['records', 'pvp', 'chars', 'shop', 'wallet'].forEach((t) => document.getElementById(`tab-${t}`).classList.add('hidden'));
         document.getElementById(`tab-${tab}`).classList.remove('hidden');
         document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         if (tab === 'pvp') this.loadPvpList();
+        if (tab === 'chars') this.renderCharacters();
+        if (tab === 'shop') this.renderShop();
       },
 
       showError(code, msg) {
@@ -266,10 +395,7 @@
       },
 
       async api(path, body = {}) {
-        if (!navigator.onLine) {
-          this.showError('ERR_OFFLINE', 'لا يمكن تنفيذ العملية بدون اتصال بالإنترنت.');
-          return null;
-        }
+        if (!navigator.onLine) { this.showError('ERR_OFFLINE', 'لا يمكن تنفيذ العملية بدون إنترنت.'); return null; }
         try {
           const res = await fetch(`${WORKER_URL}${path}`, {
             method: 'POST',
@@ -302,13 +428,13 @@
       async syncProfile() {
         const res = await this.api('/player/profile');
         if (!res) return;
+        this.profile = res;
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('lobbyScreen').classList.remove('hidden');
         document.getElementById('playerName').textContent = res.displayName;
         document.getElementById('coinsDisplay').textContent = res.points;
         document.getElementById('xpDisplay').textContent = res.xp;
         document.getElementById('winsDisplay').textContent = res.wins;
-        document.getElementById('lossesDisplay').textContent = res.losses;
 
         if (res.records && res.records.hill_drive) {
           document.getElementById('rec-hill-score').textContent = res.records.hill_drive.currentRecord;
@@ -320,9 +446,118 @@
           document.getElementById('rec-shooter-holder').textContent = res.records.cyber_shooter.holderName;
           document.getElementById('rec-shooter-jackpot').textContent = `${res.records.cyber_shooter.jackpotPts} عملة`;
         }
+
+        const sel = document.getElementById('tacticalItemSelect');
+        const inv = res.inventory || {};
+        sel.innerHTML = '<option value="">بدون أداة تكتيكية</option>' +
+          window.ARENA_SHOP_ITEMS.filter((i) => i.type === 'tactical' && (inv[i.id] || 0) > 0)
+            .map((i) => `<option value="${i.id}">${i.name} (لديك: ${inv[i.id]})</option>`).join('');
+
+        window.ArenaVoice.speak(res.activeCharacterId, 'welcome');
+      },
+
+      renderCharacters() {
+        const grid = document.getElementById('charactersGrid');
+        const activeId = this.profile ? this.profile.activeCharacterId : 'buddy';
+        const unlockedVips = (this.profile && this.profile.unlockedVips) || [];
+
+        const list = window.ARENA_CHARACTERS.filter((ch) => this.charFilter === 'all' || ch.tier === this.charFilter);
+
+        grid.innerHTML = list.map((ch) => {
+          const isVip = ch.tier === 'vip';
+          const isUnlocked = !isVip || unlockedVips.includes(ch.id);
+          const isSelected = ch.id === activeId;
+          const imgUrl = window.ArenaVoice.getCharImgUrl(ch.id);
+          return `
+            <div class="char-card ${isVip ? 'vip' : ''} ${isSelected ? 'selected' : ''}" style="border-color:${isSelected ? '#22c55e' : (isVip ? '#d4af37' : 'rgba(203,213,225,0.2)')}">
+              <span class="char-badge ${isVip ? 'badge-vip' : 'badge-basic'}">${isVip ? 'VIP' : 'أساسية'}</span>
+              <div class="char-thumb" style="border-color:${ch.color || '#d4af37'}">
+                <img src="${imgUrl}" alt="${ch.name}" loading="lazy" onerror="this.parentElement.textContent='${isVip ? '🌟' : '🎭'}'" />
+              </div>
+              <strong style="color:${isVip ? 'var(--gold-light)' : '#fff'}; font-size:0.9rem;">${ch.name}</strong>
+              <p style="font-size:0.74rem; color:var(--silver); margin:6px 0; min-height:34px;">${ch.skillDesc}</p>
+              ${isSelected
+                ? '<button class="btn btn-outline" style="padding:7px; font-size:0.8rem;" disabled>مفعّلة حالياً</button>'
+                : isUnlocked
+                  ? `<button class="btn btn-gold" style="padding:7px; font-size:0.8rem;" onclick="ArenaApp.selectCharacter('${ch.id}')">اختيار</button>`
+                  : '<button class="btn btn-outline" style="padding:7px; font-size:0.74rem; opacity:0.65;" disabled>🔒 متاح عبر متجر معاذ</button>'
+              }
+            </div>
+          `;
+        }).join('');
+      },
+
+      async selectCharacter(characterId) {
+        const res = await this.api('/character/select', { characterId });
+        if (res && res.ok) {
+          this.profile.activeCharacterId = characterId;
+          this.renderCharacters();
+          window.ArenaVoice.speak(characterId, 'welcome');
+          this.toast('تم تفعيل الشخصية بنجاح!');
+        }
+      },
+
+      renderShop() {
+        const box = document.getElementById('shopContainer');
+        const inv = (this.profile && this.profile.inventory) || {};
+        const cos = (this.profile && this.profile.cosmetics) || {};
+        const isSaver = this.profile && this.profile.activeCharacterId === 'saver';
+
+        box.innerHTML = window.ARENA_SHOP_ITEMS.map((item) => {
+          const price = isSaver && item.price > 0 ? Math.max(1, Math.floor(item.price * 0.95)) : item.price;
+          const owned = item.type === 'cosmetic' ? cos[item.id] : (inv[item.id] || 0);
+          return `
+            <div class="card">
+              <div class="stat-row">
+                <strong style="color:var(--gold-light);">${item.name}</strong>
+                <span>${item.type === 'cosmetic' ? (owned ? '✅ مملوك' : `يتطلب ${item.reqXp} XP`) : `لديك: ${owned}`}</span>
+              </div>
+              <p style="font-size:0.82rem; color:var(--silver); margin:6px 0;">${item.desc}</p>
+              ${item.type === 'cosmetic' && owned
+                ? ''
+                : `<button class="btn btn-gold" onclick="ArenaApp.buyItem('${item.id}')">${item.type === 'cosmetic' ? 'فتح القالب مجاناً' : `شراء (${price} عملة)`}</button>`
+              }
+            </div>
+          `;
+        }).join('');
+      },
+
+      async buyItem(itemId) {
+        const res = await this.api('/shop/buy', { itemId });
+        if (res && res.ok) {
+          this.toast(res.message);
+          await this.syncProfile();
+          this.renderShop();
+        }
+      },
+
+      async enterLandscapeMode() {
+        const overlay = document.getElementById('gameOverlay');
+        const hint = document.getElementById('rotateHint');
+        try {
+          if (overlay.requestFullscreen) await overlay.requestFullscreen();
+          if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape');
+            hint.classList.add('hidden');
+            return;
+          }
+        } catch (e) {}
+        // خطة بديلة إذا كان المتصفح لا يدعم القفل التلقائي
+        if (window.innerHeight > window.innerWidth) hint.classList.remove('hidden');
+      },
+
+      async exitLandscapeMode() {
+        document.getElementById('rotateHint').classList.add('hidden');
+        try {
+          if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+          if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+        } catch (e) {}
       },
 
       startFlow(gameId, mode, stakePts, pvpMatchId = null) {
+        const useItem = document.getElementById('tacticalItemSelect').value || null;
+        if (this.profile) window.ArenaVoice.speak(this.profile.activeCharacterId, 'start');
+
         let sec = 5;
         const overlay = document.getElementById('countdownOverlay');
         const numEl = document.getElementById('countdownNumber');
@@ -341,9 +576,9 @@
             numEl.textContent = 'انطلق!';
 
             let endpoint = '/session/start';
-            let payload = { gameId, mode, stakePts };
-            if (mode === 'pvp_create') { endpoint = '/pvp/create'; payload = { gameId, stakePts }; }
-            if (mode === 'pvp_join') { endpoint = '/pvp/join'; payload = { matchId: pvpMatchId }; }
+            let payload = { gameId, mode, stakePts, useItem };
+            if (mode === 'pvp_create') { endpoint = '/pvp/create'; payload = { gameId, stakePts, useItem }; }
+            if (mode === 'pvp_join') { endpoint = '/pvp/join'; payload = { matchId: pvpMatchId, useItem }; }
 
             const session = await this.api(endpoint, payload);
             overlay.classList.add('hidden');
@@ -359,27 +594,28 @@
         document.getElementById('countdownOverlay').classList.add('hidden');
       },
 
-      launchGame(gameId, mode, stakePts, session) {
-        this.activeSession = { ...session, gameId, mode, stakePts };
+      async launchGame(gameId, mode, stakePts, session) {
         const overlay = document.getElementById('gameOverlay');
         const canvas = document.getElementById('gameCanvas');
         overlay.classList.remove('hidden');
+        await this.enterLandscapeMode();
+
+        const recScore = (this.profile && this.profile.records && this.profile.records[gameId])
+          ? this.profile.records[gameId].currentRecord : 0;
 
         const engine = gameId === 'hill_drive' ? window.HillDriveGame : window.CyberShooterGame;
         engine.start(canvas, session.seed, async (score, telemetry) => {
+          await this.exitLandscapeMode();
           overlay.classList.add('hidden');
-          const res = await this.api('/session/submit', {
-            sessionId: session.sessionId,
-            score,
-            telemetry
-          });
+          const res = await this.api('/session/submit', { sessionId: session.sessionId, score, telemetry });
           if (res) {
+            window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
             document.getElementById('resultText').textContent = res.message;
             const waBtn = document.getElementById('waShareBtn');
             if (mode === 'pvp_create') {
               waBtn.classList.remove('hidden');
               waBtn.onclick = () => {
-                const txt = encodeURIComponent(`أتحداك في عالم تحديات معاذ على ${stakePts} عملة! نتيجتي (${score})، هل تستطيع هزيمتي؟ افتح التطبيق واقبل التحدي!`);
+                const txt = encodeURIComponent(`أتحداك في عالم تحديات معاذ على ${stakePts} عملة! نتيجتي (${score})، هل تستطيع هزيمتي؟`);
                 window.open(`https://wa.me/?text=${txt}`, '_blank');
               };
             } else {
@@ -388,12 +624,14 @@
             document.getElementById('resultOverlay').classList.remove('hidden');
             this.syncProfile();
           }
+        }, {
+          characterId: session.characterId,
+          activeItem: session.activeItem,
+          recordScore: recScore
         });
       },
 
-      closeResult() {
-        document.getElementById('resultOverlay').classList.add('hidden');
-      },
+      closeResult() { document.getElementById('resultOverlay').classList.add('hidden'); },
 
       createPvp() {
         const gameId = document.getElementById('pvpGameSelect').value;
@@ -407,7 +645,7 @@
         box.textContent = 'جاري التحميل...';
         const res = await this.api('/pvp/list');
         if (!res || !res.matches || res.matches.length === 0) {
-          box.textContent = 'لا توجد تحديات مفتوحة حالياً. كن أول من ينشئ تحدياً!';
+          box.textContent = 'لا توجد تحديات مفتوحة حالياً.';
           return;
         }
         box.innerHTML = res.matches.map((m) => `
@@ -424,7 +662,7 @@
       async requestCashout(tierPts) {
         const res = await this.api('/bridge/cashout', { tierPts });
         if (res && res.ok) {
-          alert(`تم خصم ${tierPts} عملة (${res.usdAmount}$). سيتم التحقق من السجل وإضافة الرصيد لمتجر معاذ بعد ساعة.`);
+          this.toast(`تم خصم ${tierPts} عملة (${res.usdAmount}$). سيُراجع السجل خلال ساعة.`);
           this.syncProfile();
         }
       }
