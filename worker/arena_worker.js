@@ -8,6 +8,16 @@ const ALLOWED_CASHOUT_TIERS = [100, 200, 500, 1000];
 const CASHOUT_AUDIT_DELAY_MS = 60 * 60 * 1000;
 const ROLLING_LEDGER_DAYS = 7;
 const ADMIN_EMAIL = '0965461504@moaath.store';
+const WEEKLY_GAMES = ['tower_match', 'hill_drive', 'cyber_shooter'];
+const WEEKLY_GAME_TITLES = {
+  tower_match: 'برج التحدي اللانهائي',
+  hill_drive: 'قيادة التلال 2D',
+  cyber_shooter: 'ميجا شوتر 2D'
+};
+// التوزيع: 10% للإدارة + 40% أول + 20% ثاني + 15% ثالث + 5% رابع + 4% خامس + 3.5% سادس + 2.5% سابع = 100%
+const WEEKLY_ADMIN_PCT = 0.10;
+const WEEKLY_RANK_SPLITS = [0.40, 0.20, 0.15, 0.05, 0.04, 0.035, 0.025];
+
 
 const BASIC_CHARS = ['buddy', 'lolo', 'noor', 'chef', 'pastry', 'athlete', 'sheikh', 'saver', 'homemaker'];
 const VIP_CHARS = ['coach_sakhr', 'grand_chef', 'princess_layla', 'butler_farid', 'friend_fadi', 'anime_zain', 'anime_ryu', 'anime_ritaj', 'friend_saad'];
@@ -83,6 +93,10 @@ export default {
             return handleAdminResolveCashout(env, body);
           case '/admin/player/unfreeze':
             return handleAdminUnfreeze(env, body);
+          case '/admin/weekly/config':
+            return handleAdminWeeklyConfig(env, body);
+          case '/admin/weekly/settle':
+            return handleAdminWeeklySettle(env, body);
           default:
             return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
         }
@@ -129,6 +143,8 @@ export default {
           return handleSessionStart(env, player, body, config);
         case '/session/submit':
           return handleSessionSubmit(env, player, body, config);
+        case '/weekly/status':
+          return handleWeeklyStatus(env, player);
         case '/pvp/list':
           return handlePvpList(env);
         case '/pvp/create':
@@ -292,7 +308,8 @@ async function handleAdminDashboard(env, config) {
       buyRateSYP: Number(config.buyRateSYP || 150),
       usdToSypRate: Number(config.usdToSypRate || 15000)
     },
-    pendingCashouts, recentAlerts, frozenPlayers
+    pendingCashouts, recentAlerts, frozenPlayers,
+    weeklyTournaments: await getAllWeeklySummaries(env)
   });
 }
 
@@ -497,7 +514,16 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
 
   const inv = player.inventory || {};
 
-  if (playMode === 'record') {
+  let weeklyCycleId = null;
+  if (playMode === 'weekly') {
+    const wt = await ensureWeeklyTournament(env, gameId);
+    const nowTs = Date.now();
+    if (wt.settled || nowTs < wt.startAt || nowTs >= wt.endAt) {
+      return jsonResponse({ code: 'ERR_WEEKLY_CLOSED', message: 'البطولة الأسبوعية لهذه اللعبة غير مفتوحة حالياً.' }, 400);
+    }
+    cost = Math.max(1, Number(wt.entryFeePts || 10));
+    weeklyCycleId = wt.cycleId;
+  } else if (playMode === 'record') {
     const rec = await fbGet(env, `arena_world/admin_records/${gameId}`);
     cost = rec ? Number(rec.entryCostPts || 10) : 10;
     if (usePass && (inv.arena_pass || 0) > 0) {
@@ -530,6 +556,16 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
     await updatePlayerBalance(env, player, -cost, { txId: sessionId, type: `entry_${playMode}`, delta: -cost, at: now });
   }
 
+  if (playMode === 'weekly' && cost > 0) {
+    const wtCur = await ensureWeeklyTournament(env, gameId);
+    const nextPool = Number(wtCur.poolPts || 0) + cost;
+    const nextEntriesCount = Number(wtCur.totalRounds || 0) + 1;
+    await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
+      poolPts: nextPool,
+      totalRounds: nextEntriesCount
+    });
+  }
+
   if (playMode === 'record') {
     const rec = (await fbGet(env, `arena_world/admin_records/${gameId}`)) || {
       title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : (gameId === 'tower_match' ? 'برج التحدي اللانهائي' : 'ميجا شوتر 2D'),
@@ -540,7 +576,7 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
   }
 
   await fbPatch(env, `arena_world/sessions/${sessionId}`, {
-    phone: player.phone, gameId, mode: playMode, stakePts: cost, pvpMatchId: pvpMatchId || null,
+    phone: player.phone, gameId, mode: playMode, stakePts: cost, pvpMatchId: pvpMatchId || null, weeklyCycleId,
     characterId: lockedCharId, activeItem, usedPass, seed, startedAt: now, expiresAt: now + 10 * 60 * 1000, consumed: false
   });
   return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, startedAt: now });
@@ -573,6 +609,29 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
   if (charId === 'grand_chef' || charId === 'homemaker') xpGain = Math.floor(xpGain * 1.15);
 
   let outcomeMsg = `تم تسجيل نتيجتك: ${score}`;
+
+  if (session.mode === 'weekly') {
+    const wt = await ensureWeeklyTournament(env, session.gameId);
+    if (wt && !wt.settled && (!session.weeklyCycleId || wt.cycleId === session.weeklyCycleId)) {
+      const prevEntry = await fbGet(env, `arena_world/weekly_tournaments/${session.gameId}/entries/${player.phone}`);
+      const prevBest = prevEntry ? Number(prevEntry.bestScore || 0) : -1;
+      const attempts = (prevEntry ? Number(prevEntry.attempts || 0) : 0) + 1;
+      const isNewBest = score > prevBest;
+      await fbPatch(env, `arena_world/weekly_tournaments/${session.gameId}/entries/${player.phone}`, {
+        phone: player.phone,
+        displayName: player.displayName,
+        bestScore: isNewBest ? score : prevBest,
+        achievedAt: isNewBest ? now : (prevEntry ? prevEntry.achievedAt : now),
+        attempts
+      });
+      won = isNewBest;
+      outcomeMsg = isNewBest
+        ? `🏆 رقم أسبوعي جديد (${score}) في ${WEEKLY_GAME_TITLES[session.gameId] || session.gameId}! تابع ترتيبك في لوحة المتصدرين.`
+        : `تم تسجيل جولتك (${score}). أعلى نتيجة لك هذا الأسبوع لا تزال (${prevBest}).`;
+    } else {
+      outcomeMsg = `تم تسجيل نتيجتك (${score}) بعد إغلاق دورة البطولة الأسبوعية.`;
+    }
+  }
 
   if (session.mode === 'record') {
     const rec = await fbGet(env, `arena_world/admin_records/${session.gameId}`);
@@ -799,4 +858,172 @@ function corsResponse(body, status = 200, extraHeaders = {}) {
       ...extraHeaders
     }
   });
+}
+
+
+// ============================================================================
+// منظومة البطولات الأسبوعية المستقلة لكل لعبة (0% ذكاء اصطناعي — حتمية 100%)
+// ============================================================================
+async function ensureWeeklyTournament(env, gameId) {
+  let wt = await fbGet(env, `arena_world/weekly_tournaments/${gameId}`);
+  const now = Date.now();
+  if (!wt || !wt.cycleId) {
+    const endAt = now + 7 * 24 * 60 * 60 * 1000;
+    wt = {
+      gameId,
+      title: WEEKLY_GAME_TITLES[gameId] || gameId,
+      cycleId: `wk_${gameId}_${now}`,
+      entryFeePts: 10,
+      startAt: now,
+      endAt,
+      poolPts: 0,
+      totalRounds: 0,
+      settled: false,
+      entries: {}
+    };
+    await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, wt);
+  }
+  return wt;
+}
+
+function buildWeeklyLeaderboard(entriesMap, playersMap) {
+  const arr = Object.values(entriesMap || {}).filter((e) => {
+    if (!e || !e.phone) return false;
+    const p = playersMap && playersMap[e.phone];
+    return !(p && p.frozen);
+  });
+  // الترتيب: الأعلى نتيجة، وعند التعادل الأسبق زمنياً
+  arr.sort((a, b) => (Number(b.bestScore || 0) - Number(a.bestScore || 0)) || (Number(a.achievedAt || 0) - Number(b.achievedAt || 0)));
+  return arr;
+}
+
+function computePrizeBreakdown(poolPts) {
+  const pool = Math.max(0, Number(poolPts || 0));
+  const adminShare = Math.floor(pool * WEEKLY_ADMIN_PCT);
+  const rankPrizes = WEEKLY_RANK_SPLITS.map((pct) => Math.floor(pool * pct));
+  return { pool, adminShare, rankPrizes };
+}
+
+async function settleWeeklyTournamentIfDue(env, gameId, force = false) {
+  const wt = await ensureWeeklyTournament(env, gameId);
+  const now = Date.now();
+  if (wt.settled) return { settledNow: false, wt };
+  if (!force && now < Number(wt.endAt || 0)) return { settledNow: false, wt };
+
+  // قفل فوري لمنع التكرار (Idempotent Lock)
+  await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, { settled: true, settledAt: now });
+  wt.settled = true;
+
+  const playersMap = (await fbGet(env, 'arena_world/players')) || {};
+  const board = buildWeeklyLeaderboard(wt.entries, playersMap);
+  const { pool, adminShare, rankPrizes } = computePrizeBreakdown(wt.poolPts);
+
+  let distributed = 0;
+  const winners = [];
+
+  for (let i = 0; i < Math.min(7, board.length); i++) {
+    const entry = board[i];
+    const prize = rankPrizes[i] || 0;
+    if (prize <= 0) continue;
+    const p = playersMap[entry.phone];
+    if (!p || p.frozen) continue;
+
+    await updatePlayerBalance(env, p, prize, {
+      txId: `wk_${wt.cycleId}_r${i + 1}`,
+      type: `weekly_prize_${gameId}_rank_${i + 1}`,
+      delta: prize,
+      at: now
+    });
+    distributed += prize;
+    winners.push({ rank: i + 1, phone: entry.phone, displayName: entry.displayName, score: entry.bestScore, prize });
+  }
+
+  const rolloverOrHouse = Math.max(0, pool - distributed);
+  await fbPatch(env, `arena_world/weekly_history/${wt.cycleId}`, {
+    gameId, cycleId: wt.cycleId, poolPts: pool, adminShare, distributed, rolloverOrHouse, winners, settledAt: now
+  });
+
+  return { settledNow: true, wt, winners, pool, adminShare, distributed };
+}
+
+async function getAllWeeklySummaries(env, currentPhone = null) {
+  const playersMap = (await fbGet(env, 'arena_world/players')) || {};
+  const result = {};
+  for (const gId of WEEKLY_GAMES) {
+    await settleWeeklyTournamentIfDue(env, gId, false);
+    const wt = await ensureWeeklyTournament(env, gId);
+    const board = buildWeeklyLeaderboard(wt.entries, playersMap);
+    const { pool, adminShare, rankPrizes } = computePrizeBreakdown(wt.poolPts);
+
+    const top7 = board.slice(0, 7).map((e, idx) => ({
+      rank: idx + 1,
+      displayName: e.displayName,
+      bestScore: e.bestScore,
+      prizePts: rankPrizes[idx] || 0,
+      isMe: currentPhone ? e.phone === currentPhone : false
+    }));
+
+    let myRank = null, myBest = 0;
+    if (currentPhone) {
+      const idx = board.findIndex((e) => e.phone === currentPhone);
+      if (idx >= 0) { myRank = idx + 1; myBest = board[idx].bestScore; }
+    }
+
+    const now = Date.now();
+    const status = wt.settled ? 'settled' : (now < wt.startAt ? 'scheduled' : (now >= wt.endAt ? 'ended' : 'active'));
+
+    result[gId] = {
+      gameId: gId,
+      title: WEEKLY_GAME_TITLES[gId] || gId,
+      cycleId: wt.cycleId,
+      entryFeePts: Number(wt.entryFeePts || 10),
+      startAt: Number(wt.startAt || 0),
+      endAt: Number(wt.endAt || 0),
+      status,
+      settled: Boolean(wt.settled),
+      poolPts: pool,
+      totalRounds: Number(wt.totalRounds || 0),
+      adminShare,
+      rankPrizes,
+      top7,
+      myRank,
+      myBest
+    };
+  }
+  return result;
+}
+
+async function handleWeeklyStatus(env, player) {
+  const tournaments = await getAllWeeklySummaries(env, player.phone);
+  return jsonResponse({ ok: true, tournaments });
+}
+
+async function handleAdminWeeklyConfig(env, { gameId, entryFeePts, startAt, endAt, resetCycle }) {
+  if (!WEEKLY_GAMES.includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير صالحة.' }, 400);
+  const fee = Math.max(1, Number(entryFeePts || 10));
+  const sAt = Number(startAt || Date.now());
+  const eAt = Number(endAt || (sAt + 7 * 24 * 60 * 60 * 1000));
+  if (eAt <= sAt) return jsonResponse({ code: 'ERR_DATES', message: 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء.' }, 400);
+
+  if (resetCycle) {
+    const newCycleId = `wk_${gameId}_${Date.now()}`;
+    await fbDelete(env, `arena_world/weekly_tournaments/${gameId}/entries`);
+    await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
+      gameId, title: WEEKLY_GAME_TITLES[gameId], cycleId: newCycleId,
+      entryFeePts: fee, startAt: sAt, endAt: eAt, poolPts: 0, totalRounds: 0, settled: false
+    });
+    return jsonResponse({ ok: true, message: `تم بدء دورة بطولة أسبوعية جديدة للعبة ${WEEKLY_GAME_TITLES[gameId]}!` });
+  } else {
+    await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
+      entryFeePts: fee, startAt: sAt, endAt: eAt
+    });
+    return jsonResponse({ ok: true, message: `تم تحديث إعدادات بطولة ${WEEKLY_GAME_TITLES[gameId]} بنجاح.` });
+  }
+}
+
+async function handleAdminWeeklySettle(env, { gameId }) {
+  if (!WEEKLY_GAMES.includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير صالحة.' }, 400);
+  const res = await settleWeeklyTournamentIfDue(env, gameId, true);
+  if (!res.settledNow) return jsonResponse({ code: 'ERR_ALREADY', message: 'تمت تسوية هذه الدورة مسبقاً.' }, 400);
+  return jsonResponse({ ok: true, message: `تم توزيع جوائز ${WEEKLY_GAME_TITLES[gameId]} (${res.distributed} عملة لـ ${res.winners.length} فائزين).` });
 }
