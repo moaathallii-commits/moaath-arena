@@ -5,136 +5,251 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>عالم تحديات معاذ | Moaath Arena</title>
   <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#070c18" />
   <style>
     :root {
-      --bg-dark: #070c18;
-      --bg-card: #121c30;
+      --bg-dark: #050914;
+      --bg-card: rgba(17, 26, 46, 0.88);
       --gold: #d4af37;
-      --gold-light: #f3d576;
+      --gold-light: #fde047;
       --silver: #cbd5e1;
       --blue: #2563eb;
+      --cyan: #38bdf8;
       --danger: #ef4444;
       --success: #22c55e;
       --char-aura: #38bdf8;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
-    body { background: var(--bg-dark); color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Tahoma, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #13203d 0%, #070c18 55%, #03060d 100%);
+      color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 78px;
+    }
     .hidden { display: none !important; }
 
+    /* الهيدر المستقبلي */
     header {
-      background: linear-gradient(135deg, #0f172a, #16223b);
-      border-bottom: 1px solid var(--char-aura);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-      padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 500;
+      background: rgba(9, 15, 30, 0.86); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+      padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
     }
-    .brand { font-weight: 900; color: var(--gold-light); font-size: 1rem; }
+    .brand { font-weight: 900; font-size: 1rem; background: linear-gradient(90deg, #fde047, #f59e0b, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .wallet-wrap { display: flex; align-items: center; gap: 6px; }
     .wallet-badge {
-      background: rgba(212, 175, 55, 0.15); border: 1px solid var(--gold);
-      padding: 6px 12px; border-radius: 20px; font-weight: bold; color: var(--gold-light); font-size: 0.9rem;
+      background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(15,23,42,0.9));
+      border: 1px solid var(--gold); padding: 5px 11px; border-radius: 999px;
+      font-weight: 900; color: var(--gold-light); font-size: 0.86rem;
+      box-shadow: 0 0 12px rgba(212,175,55,0.2);
     }
-    .offline-banner { background: #991b1b; color: #fff; text-align: center; padding: 6px; font-size: 0.85rem; }
+    .topup-plus {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid #22c55e;
+      background: rgba(34,197,94,0.18); color: #4ade80; font-weight: 900; font-size: 1rem; cursor: pointer;
+    }
+    .offline-banner { background: #991b1b; color: #fff; text-align: center; padding: 6px; font-size: 0.82rem; }
+    .live-strip {
+      background: linear-gradient(90deg, rgba(56,189,248,0.12), rgba(212,175,55,0.18), rgba(56,189,248,0.12));
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 5px 12px; font-size: 0.74rem; color: #e2e8f0; text-align: center; font-weight: 700;
+    }
 
     #toastBox {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
-      z-index: 1200; background: #0f172a; color: #f8fafc;
-      border: 1px solid var(--char-aura); border-radius: 14px;
-      padding: 10px 16px; font-size: 0.88rem; font-weight: 700;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.55); max-width: 90%; text-align: center;
+      z-index: 1500; background: #0f172a; color: #f8fafc;
+      border: 1px solid var(--gold); border-radius: 14px;
+      padding: 10px 16px; font-size: 0.86rem; font-weight: 800;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.65); max-width: 90%; text-align: center;
     }
 
-    main { flex: 1; padding: 14px; max-width: 600px; width: 100%; margin: 0 auto; }
+    main { flex: 1; padding: 12px; max-width: 560px; width: 100%; margin: 0 auto; }
     .card {
-      background: var(--bg-card); border: 1px solid rgba(203, 213, 225, 0.14);
-      border-radius: 16px; padding: 14px; margin-bottom: 12px;
+      background: var(--bg-card); backdrop-filter: blur(8px);
+      border: 1px solid rgba(203, 213, 225, 0.14);
+      border-radius: 18px; padding: 14px; margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
-    .card h3 { color: var(--gold-light); margin-bottom: 8px; font-size: 1rem; }
+    .card h3 { color: var(--gold-light); margin-bottom: 8px; font-size: 0.98rem; }
 
-    /* شريط المرافق التفاعلي + الإطار المفعّل */
+    /* ================= شاشة الدخول المستقبلية ================= */
+    .login-hero {
+      text-align: center; padding: 20px 16px;
+      background: radial-gradient(circle at 50% 0%, rgba(212,175,55,0.22), rgba(15,23,42,0.95) 68%);
+      border: 1.5px solid rgba(212,175,55,0.55); border-radius: 22px;
+      box-shadow: 0 0 36px rgba(212,175,55,0.16);
+    }
+    .login-emblem {
+      width: 78px; height: 78px; margin: 0 auto 10px; border-radius: 22px;
+      background: linear-gradient(135deg, #fde047, #b45309);
+      display: flex; align-items: center; justify-content: center; font-size: 2.3rem;
+      box-shadow: 0 0 28px rgba(250,204,21,0.55); animation: floatBob 2.8s ease-in-out infinite;
+    }
+    .login-prize-pill {
+      display: inline-block; margin: 10px 0; padding: 6px 14px; border-radius: 999px;
+      background: rgba(34,197,94,0.15); border: 1px solid #22c55e; color: #4ade80;
+      font-size: 0.82rem; font-weight: 800;
+    }
+    .login-games-row { display: flex; justify-content: center; gap: 14px; margin: 12px 0; }
+    .login-game-ico { width: 58px; height: 58px; border-radius: 14px; border: 1.5px solid rgba(212,175,55,0.5); box-shadow: 0 6px 16px rgba(0,0,0,0.45); }
+    .login-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0; font-size: 0.72rem; color: var(--silver); }
+    .login-step { background: rgba(7,12,24,0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 7px 4px; }
+    .bind-input-row { display: flex; gap: 6px; align-items: center; margin: 10px 0; }
+    .paste-btn {
+      padding: 11px 12px; border-radius: 10px; border: 1px solid var(--cyan);
+      background: rgba(56,189,248,0.16); color: #7dd3fc; font-weight: 800; font-size: 0.82rem; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ================= الإطارات المتحركة الـ 15 ================= */
+    .avatar-framed { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .avatar-framed .av-photo {
+      width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(212,175,55,0.45); background: #0b1120; display: block;
+    }
+    .avatar-framed .av-frame-img {
+      position: absolute; inset: -16%; width: 132%; height: 132%;
+      object-fit: contain; pointer-events: none; z-index: 3;
+    }
+    /* تأثيرات حركية فخمة حسب مستوى الإطار */
+    .anim-pulse-soft { animation: frPulseSoft 2.8s ease-in-out infinite; }
+    .anim-shine { animation: frShine 2.4s ease-in-out infinite; }
+    .anim-neon { animation: frNeon 2s ease-in-out infinite; }
+    .anim-flame { animation: frFlame 1.5s ease-in-out infinite; }
+    .anim-electric { animation: frElectric 1.3s ease-in-out infinite; }
+    .anim-aura { animation: frAura 2.6s ease-in-out infinite; }
+    .anim-royal { animation: frRoyal 2.2s ease-in-out infinite; }
+    .anim-galaxy { animation: frGalaxy 9s linear infinite; }
+    .anim-emperor { animation: frEmperor 2.4s ease-in-out infinite; }
+
+    @keyframes floatBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes frPulseSoft { 0%,100%{filter:drop-shadow(0 0 4px rgba(203,213,225,0.45)); transform:scale(1)} 50%{filter:drop-shadow(0 0 10px rgba(255,255,255,0.75)); transform:scale(1.03)} }
+    @keyframes frShine { 0%,100%{filter:brightness(1) drop-shadow(0 0 6px rgba(52,211,153,0.5))} 50%{filter:brightness(1.25) drop-shadow(0 0 14px rgba(255,255,255,0.85))} }
+    @keyframes frNeon { 0%,100%{filter:drop-shadow(0 0 6px #38bdf8)} 50%{filter:brightness(1.2) drop-shadow(0 0 16px #7dd3fc)} }
+    @keyframes frFlame { 0%,100%{filter:drop-shadow(0 0 8px #ef4444); transform:scale(1)} 50%{filter:brightness(1.25) drop-shadow(0 0 18px #facc15); transform:scale(1.05)} }
+    @keyframes frElectric { 0%,100%{filter:drop-shadow(0 0 7px #facc15)} 30%{filter:brightness(1.4) drop-shadow(0 0 18px #38bdf8)} 60%{filter:brightness(1.1) drop-shadow(0 0 10px #fde047)} }
+    @keyframes frAura { 0%,100%{filter:drop-shadow(0 0 8px #a855f7); transform:scale(1)} 50%{filter:brightness(1.2) drop-shadow(0 0 18px #e879f9); transform:scale(1.04)} }
+    @keyframes frRoyal { 0%,100%{filter:drop-shadow(0 0 8px #d4af37)} 50%{filter:brightness(1.22) drop-shadow(0 0 18px #fde047)} }
+    @keyframes frGalaxy { 0%{transform:rotate(0deg); filter:drop-shadow(0 0 10px #a855f7)} 50%{filter:drop-shadow(0 0 18px #38bdf8)} 100%{transform:rotate(360deg); filter:drop-shadow(0 0 10px #a855f7)} }
+    @keyframes frEmperor { 0%,100%{filter:brightness(1.05) drop-shadow(0 0 10px #facc15); transform:scale(1)} 50%{filter:brightness(1.3) drop-shadow(0 0 22px #fde047); transform:scale(1.06)} }
+
+    /* شريط المرافق + شريط XP */
     .companion-bar {
-      display: flex; align-items: center; gap: 12px;
-      background: linear-gradient(135deg, #162440, #0c1426);
-      border: 1px solid var(--char-aura); border-radius: 16px; padding: 10px 12px; margin-bottom: 12px;
-      box-shadow: 0 0 16px color-mix(in srgb, var(--char-aura) 22%, transparent);
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, rgba(22,36,64,0.95), rgba(11,17,32,0.95));
+      border: 1px solid rgba(56,189,248,0.45); border-radius: 18px; padding: 12px 14px; margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
-    .avatar-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .companion-avatar {
-      width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--char-aura);
-      background: #0b1120; display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; overflow: hidden;
-    }
-    .companion-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .avatar-frame-ring {
-      position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
-    }
-    .frame-gold-ring {
-      border: 3px solid #f3d576;
-      box-shadow: 0 0 12px rgba(243, 213, 118, 0.75), inset 0 0 8px rgba(212, 175, 55, 0.6);
-    }
-    .frame-cyber-ring {
-      border: 3px solid #38bdf8;
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.85), 0 0 22px rgba(168, 85, 247, 0.55);
-    }
-    .pop-anim { animation: pop 0.35s ease; }
-    @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-    .companion-bubble { font-size: 0.84rem; color: #e2e8f0; line-height: 1.45; margin-top: 2px; }
+    .xp-bar-bg { width: 100%; height: 7px; background: #070c18; border-radius: 999px; overflow: hidden; margin-top: 6px; border: 1px solid rgba(212,175,55,0.3); }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #fde047); transition: width 0.3s ease; }
 
-    /* التبويبات الرئيسية والفرعية */
-    .tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
-    .tab-btn {
-      flex: 1; min-width: 72px; padding: 9px 6px; border-radius: 10px;
-      border: 1px solid rgba(212, 175, 55, 0.3); background: #0f172a;
-      color: var(--silver); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+    /* ================= منصة الصدارة الملكية (Royal Top-3 Podium) ================= */
+    .podium-card {
+      background: radial-gradient(circle at 50% 0%, rgba(212,175,55,0.22), rgba(13,21,38,0.96) 72%);
+      border: 1.5px solid rgba(212,175,55,0.6); border-radius: 20px; padding: 14px 12px; margin-bottom: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 24px rgba(212,175,55,0.12);
     }
-    .tab-btn.active { background: var(--gold); color: #0b1120; }
+    .podium-stage {
+      display: grid; grid-template-columns: 1fr 1.18fr 1fr; align-items: end; gap: 8px;
+      margin: 14px 0 10px; text-align: center;
+    }
+    .podium-slot {
+      background: rgba(7,12,24,0.78); border-radius: 16px; padding: 10px 6px;
+      border: 1px solid rgba(255,255,255,0.1); position: relative;
+    }
+    .podium-slot.rank-1 {
+      background: linear-gradient(180deg, rgba(212,175,55,0.24), rgba(7,12,24,0.92));
+      border: 1.5px solid #fde047; padding: 14px 6px; transform: translateY(-6px);
+      box-shadow: 0 0 20px rgba(250,204,21,0.25);
+    }
+    .podium-slot.rank-2 { border-color: #cbd5e1; }
+    .podium-slot.rank-3 { border-color: #d97706; }
+    .podium-crown { font-size: 1.15rem; margin-bottom: 2px; display: block; }
+    .podium-name { font-size: 0.76rem; font-weight: 800; color: #fff; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .podium-score { font-size: 0.72rem; color: #7dd3fc; font-weight: 800; }
+    .podium-prize { font-size: 0.72rem; color: #4ade80; font-weight: 900; margin-top: 2px; }
+    .my-rank-bar {
+      background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.4);
+      border-radius: 10px; padding: 7px 10px; font-size: 0.78rem; color: #bae6fd;
+      display: flex; justify-content: space-between; align-items: center; margin-top: 8px;
+    }
 
+    /* ================= بطاقات الألعاب الفخمة ================= */
+    .hero-game-card {
+      position: relative; overflow: hidden; border-radius: 18px; padding: 13px; margin-bottom: 12px;
+      border: 1.5px solid rgba(212,175,55,0.45);
+      background: linear-gradient(145deg, rgba(23,35,62,0.95), rgba(10,16,32,0.98));
+      box-shadow: 0 10px 26px rgba(0,0,0,0.42);
+    }
+    .hero-game-card.tower { border-color: #facc15; box-shadow: 0 0 22px rgba(250,204,21,0.16); }
+    .hero-game-card.hill { border-color: #fb923c; }
+    .hero-game-card.shooter { border-color: #38bdf8; }
+    .game-head { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+    .game-icon-lg { width: 68px; height: 68px; border-radius: 16px; object-fit: cover; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.2); box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
+    .orient-badge {
+      display: inline-block; font-size: 0.66rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;
+      background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.45); color: #7dd3fc; margin-bottom: 3px;
+    }
+
+    /* ================= شريط التنقل السفلي الزجاجي ================= */
+    .bottom-dock {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 600;
+      background: rgba(9, 15, 30, 0.92); backdrop-filter: blur(14px);
+      border-top: 1px solid rgba(212, 175, 55, 0.4);
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+      padding: 6px 6px 9px; max-width: 600px; margin: 0 auto;
+    }
+    .dock-btn {
+      background: transparent; border: none; color: #94a3b8;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      font-size: 0.68rem; font-weight: 800; cursor: pointer; padding: 4px 2px; border-radius: 10px;
+      position: relative; transition: color 0.2s, transform 0.15s;
+    }
+    .dock-btn .dock-ico { font-size: 1.2rem; }
+    .dock-btn.active { color: #fde047; background: rgba(212,175,55,0.14); }
+    .dock-badge {
+      position: absolute; top: 1px; right: 16%; background: #ef4444; color: #fff;
+      font-size: 0.6rem; padding: 1px 5px; border-radius: 999px; font-weight: 900;
+    }
+
+    /* التبويبات الفرعية والأزرار */
     .filter-row { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; }
     .filter-pill {
-      flex: 1; min-width: 76px; padding: 7px 6px; border-radius: 10px; border: 1px solid rgba(203,213,225,0.2);
-      background: #0f172a; color: var(--silver); font-size: 0.76rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      flex: 1; min-width: 72px; padding: 7px 6px; border-radius: 10px; border: 1px solid rgba(203,213,225,0.2);
+      background: #0f172a; color: var(--silver); font-size: 0.74rem; font-weight: 800; cursor: pointer; white-space: nowrap;
     }
-    .filter-pill.active { border-color: var(--char-aura); color: #fff; background: rgba(56,189,248,0.16); }
+    .filter-pill.active { border-color: var(--gold); color: #0b1120; background: linear-gradient(135deg, #fde047, #d4af37); }
 
-    /* شبكة الشخصيات */
+    .btn { width: 100%; padding: 11px; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 800; cursor: pointer; margin-top: 8px; transition: transform 0.12s; }
+    .btn:active { transform: scale(0.98); }
+    .btn-sm { padding: 7px 10px; font-size: 0.78rem; margin-top: 6px; }
+    .btn-gold { background: linear-gradient(135deg, #fde047, #d4af37); color: #0b1120; box-shadow: 0 4px 14px rgba(212,175,55,0.3); }
+    .btn-blue { background: linear-gradient(135deg, #2563eb, #0284c7); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid #64748b; color: #cbd5e1; }
+    .btn-wa { background: #16a34a; color: #fff; }
+
+    input, select {
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.4);
+      background: #0b1120; color: #fff; font-size: 0.9rem; margin: 5px 0; text-align: center;
+    }
+    .stat-row { display: flex; justify-content: space-between; font-size: 0.84rem; color: var(--silver); margin: 4px 0; }
+    .jackpot-pill { color: #4ade80; font-weight: 900; }
+
+    /* شبكة الشخصيات والإطارات */
     .char-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .char-card {
       background: #0f172a; border: 1px solid rgba(203, 213, 225, 0.2);
       border-radius: 14px; padding: 10px; text-align: center; position: relative;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .char-card.vip {
-      border: 1px solid var(--gold);
-      background: linear-gradient(155deg, #211c10, #0f172a);
-      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.2);
-    }
-    .char-card.vip:active { transform: perspective(420px) rotateY(7deg) scale(0.98); }
+    .char-card.vip { border-color: var(--gold); background: linear-gradient(155deg, #211c10, #0f172a); }
     .char-card.selected { border: 2px solid var(--success); }
-    .char-thumb {
-      width: 82px; height: 82px; border-radius: 50%; margin: 6px auto 8px;
-      border: 2px solid var(--gold); overflow: hidden; background: #070c18;
-      display: flex; align-items: center; justify-content: center; font-size: 2rem;
-    }
-    .char-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .char-badge {
-      position: absolute; top: 8px; left: 8px; font-size: 0.68rem; padding: 2px 6px;
-      border-radius: 6px; font-weight: 800;
-    }
+    .char-thumb { width: 76px; height: 76px; border-radius: 50%; margin: 6px auto 8px; border: 2px solid var(--gold); overflow: hidden; background: #070c18; }
+    .char-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .char-badge { position: absolute; top: 8px; left: 8px; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 800; }
     .badge-vip { background: var(--gold); color: #0b1120; }
     .badge-basic { background: #334155; color: #fff; }
 
-    /* === ستايلات المتجر المطور === */
-    .inv-strip {
-      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px;
-    }
-    .inv-chip {
-      flex: 0 0 auto; background: #0f172a; border: 1px solid rgba(212,175,55,0.35);
-      border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; font-size: 0.78rem;
-    }
-    .inv-chip img { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; }
-    .inv-chip button {
-      background: rgba(56,189,248,0.18); border: 1px solid #38bdf8; color: #7dd3fc;
-      border-radius: 8px; padding: 3px 7px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
-    }
+    .inv-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+    .inv-chip { flex: 0 0 auto; background: #0f172a; border: 1px solid rgba(212,175,55,0.35); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; font-size: 0.76rem; }
+    .inv-chip img { width: 26px; height: 26px; border-radius: 7px; object-fit: cover; }
+    .inv-chip button { background: rgba(56,189,248,0.18); border: 1px solid #38bdf8; color: #7dd3fc; border-radius: 7px; padding: 3px 7px; font-size: 0.68rem; font-weight: 800; cursor: pointer; }
 
     .shop-card {
       background: linear-gradient(155deg, #121d33, #0b1222);
@@ -143,194 +258,185 @@
       border: 1px solid rgba(203,213,225,0.2);
     }
     .rarity-common { border-color: rgba(148, 163, 184, 0.35); }
-    .rarity-rare { border-color: rgba(56, 189, 248, 0.65); box-shadow: 0 0 12px rgba(56, 189, 248, 0.14); }
-    .rarity-epic { border-color: rgba(168, 85, 247, 0.7); box-shadow: 0 0 14px rgba(168, 85, 247, 0.18); }
-    .rarity-legendary { border-color: rgba(243, 213, 118, 0.85); box-shadow: 0 0 16px rgba(212, 175, 55, 0.25); }
-
-    .shop-icon-box {
-      width: 78px; height: 78px; border-radius: 14px; overflow: hidden; flex-shrink: 0;
-      background: #070c18; border: 1px solid rgba(255,255,255,0.14);
-      display: flex; align-items: center; justify-content: center; font-size: 2rem;
-    }
-    .shop-icon-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .shop-rarity-tag {
-      position: absolute; top: 8px; left: 10px; font-size: 0.65rem; font-weight: 800;
-      padding: 2px 7px; border-radius: 999px;
-    }
+    .rarity-rare { border-color: rgba(56, 189, 248, 0.65); }
+    .rarity-epic { border-color: rgba(168, 85, 247, 0.7); }
+    .rarity-legendary { border-color: rgba(243, 213, 118, 0.85); }
+    .rarity-mythic { border-color: #f43f5e; box-shadow: 0 0 18px rgba(244,63,94,0.22); }
+    .shop-icon-box { width: 74px; height: 74px; border-radius: 14px; overflow: hidden; flex-shrink: 0; background: #070c18; display: flex; align-items: center; justify-content: center; font-size: 1.9rem; }
+    .shop-icon-box img { width: 100%; height: 100%; object-fit: cover; }
+    .shop-rarity-tag { position: absolute; top: 8px; left: 10px; font-size: 0.62rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; }
     .tag-common { background: #334155; color: #e2e8f0; }
     .tag-rare { background: rgba(56,189,248,0.2); color: #7dd3fc; border: 1px solid #38bdf8; }
     .tag-epic { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid #a855f7; }
-    .tag-legendary { background: rgba(212,175,55,0.25); color: #f3d576; border: 1px solid #d4af37; }
-
-    .price-old { text-decoration: line-through; color: #94a3b8; font-size: 0.78rem; margin-left: 6px; }
+    .tag-legendary { background: rgba(212,175,55,0.25); color: #fde047; border: 1px solid #d4af37; }
+    .tag-mythic { background: rgba(244,63,94,0.22); color: #fda4af; border: 1px solid #f43f5e; }
+    .price-old { text-decoration: line-through; color: #94a3b8; font-size: 0.76rem; margin-left: 6px; }
     .price-new { color: #4ade80; font-weight: 900; }
-    .saver-badge {
-      display: inline-block; background: rgba(34,197,94,0.16); border: 1px solid #22c55e;
-      color: #4ade80; font-size: 0.68rem; padding: 1px 6px; border-radius: 6px; margin-right: 4px;
-    }
-    .xp-bar-bg { width: 100%; height: 8px; background: #070c18; border-radius: 6px; overflow: hidden; margin: 6px 0; border: 1px solid rgba(212,175,55,0.3); }
-    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #f3d576); }
 
-    .deal-banner {
-      background: linear-gradient(135deg, #2a1808, #121c30);
-      border: 1px solid var(--gold); border-radius: 16px; padding: 12px; margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .btn {
-      width: 100%; padding: 11px; border: none; border-radius: 12px;
-      font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 8px;
-    }
-    .btn-sm { padding: 7px 10px; font-size: 0.8rem; margin-top: 6px; }
-    .btn-gold { background: linear-gradient(135deg, var(--gold-light), var(--gold)); color: #0b1120; }
-    .btn-blue { background: var(--blue); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--silver); color: var(--silver); }
-    .btn-wa { background: #16a34a; color: #fff; }
-
-    input, select {
-      width: 100%; padding: 11px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.4);
-      background: #0b1120; color: #fff; font-size: 0.95rem; margin: 6px 0; text-align: center;
-    }
-    .stat-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--silver); margin: 4px 0; }
-    .jackpot-pill { color: #4ade80; font-weight: 800; }
-
-    /* شاشة اللعب الأفقية الكاملة مع أزرار شفافة عائمة */
-    #gameOverlay {
-      position: fixed; inset: 0; background: #000; z-index: 900;
-      width: 100vw; height: 100vh; overflow: hidden;
-    }
+    /* شاشة اللعب الأفقية والنوافذ */
+    #gameOverlay { position: fixed; inset: 0; background: #000; z-index: 900; width: 100vw; height: 100vh; overflow: hidden; }
     #gameCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
     .floating-ctrl {
-      position: absolute; bottom: 20px; width: 92px; height: 92px;
-      border-radius: 50%; border: 2px solid rgba(243, 213, 118, 0.65);
-      background: rgba(15, 23, 42, 0.42); backdrop-filter: blur(4px);
-      color: #fff; font-size: 1.35rem; font-weight: 900;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      touch-action: none; z-index: 910; transition: transform 0.08s ease, background 0.1s ease;
+      position: absolute; bottom: 20px; width: 92px; height: 92px; border-radius: 50%;
+      border: 2px solid rgba(243, 213, 118, 0.65); background: rgba(15, 23, 42, 0.42); backdrop-filter: blur(4px);
+      color: #fff; font-size: 1.35rem; font-weight: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; touch-action: none; z-index: 910;
     }
-    .floating-ctrl small { font-size: 0.7rem; font-weight: 700; margin-top: 2px; color: #f3d576; }
     .floating-ctrl.left { left: 22px; }
     .floating-ctrl.right { right: 22px; }
-    .floating-ctrl.pressed { background: rgba(212, 175, 55, 0.55); transform: scale(0.93); border-color: #fff; }
-    .rotate-hint {
-      position: absolute; top: 12px; right: 14px; z-index: 915;
-      background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(212,175,55,0.4);
-      color: #f3d576; font-size: 0.74rem; padding: 5px 10px; border-radius: 999px;
-    }
+    .rotate-hint { position: absolute; top: 12px; right: 14px; z-index: 915; background: rgba(15,23,42,0.75); border: 1px solid var(--gold); color: #fde047; font-size: 0.74rem; padding: 5px 10px; border-radius: 999px; }
 
-    .overlay {
-      position: fixed; inset: 0; background: rgba(7, 12, 24, 0.94);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      text-align: center; padding: 20px; z-index: 999;
-    }
-    .modal-box {
-      background: #121c30; border: 1px solid var(--gold); border-radius: 18px;
-      padding: 18px; width: 100%; max-width: 350px;
-    }
-    .countdown-num { font-size: 5rem; font-weight: 900; color: var(--gold-light); margin: 16px 0; }
+    .overlay { position: fixed; inset: 0; background: rgba(5, 9, 20, 0.94); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; z-index: 1200; }
+    .modal-box { background: #121c30; border: 1.5px solid var(--gold); border-radius: 18px; padding: 18px; width: 100%; max-width: 350px; }
+    .countdown-num { font-size: 5rem; font-weight: 900; color: var(--gold-light); margin: 14px 0; }
     .error-code { font-family: monospace; background: #000; color: #f87171; padding: 6px 12px; border-radius: 6px; margin-top: 12px; }
   </style>
 </head>
 <body>
 
   <div id="toastBox" class="hidden"></div>
-
-  <div id="offlineBanner" class="offline-banner hidden">
-    أنت بدون إنترنت حالياً — النقاط مجمدة وسيتم التحقق منها فور عودة الاتصال.
-  </div>
+  <div id="offlineBanner" class="offline-banner hidden">أنت بدون إنترنت حالياً — النقاط مجمدة حتى عودة الاتصال.</div>
 
   <header>
     <div class="brand">🏆 عالم تحديات معاذ</div>
-    <div class="wallet-badge"><span id="coinsDisplay">0</span> عملة</div>
+    <div class="wallet-wrap">
+      <div class="wallet-badge"><span id="coinsDisplay">0</span> عملة</div>
+      <button type="button" class="topup-plus" title="شحن من متجر معاذ" onclick="ArenaApp.openStoreTopupHint()">+</button>
+    </div>
   </header>
+  <div id="liveCountdownStrip" class="live-strip hidden">⏳ جاري مزامنة عداد البطولة الأسبوعية...</div>
 
   <main>
-    <!-- شاشة تفعيل الجهاز -->
-    <section id="loginScreen" class="card">
-      <h3>تفعيل حسابك في العالم</h3>
-      <p style="color: var(--silver); font-size: 0.9rem; line-height: 1.6;">
-        انسخ <strong>معرف اللاعب السري</strong> من إعدادات حسابك في «متجر معاذ» وألصقه هنا لربط جهازك بأمان.
-      </p>
-      <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" />
-      <button class="btn btn-gold" onclick="ArenaApp.bindDevice()">ربط الجهاز والدخول</button>
+    <!-- ================= 1. شاشة تسجيل الدخول الأول المستقبلية ================= -->
+    <section id="loginScreen" class="login-hero">
+      <div class="login-emblem">🏆</div>
+      <h2 style="color:#fde047; font-size:1.25rem; font-weight:900;">بوابة عالم تحديات معاذ</h2>
+      <p style="color:var(--silver); font-size:0.84rem; margin-top:4px;">تنافس أسبوعياً، تصدّر المنصة الملكية، وحوّل أرباحك لرصيد فعلي في متجر معاذ!</p>
+      <div id="loginLivePrize" class="login-prize-pill">🔥 الجوائز الأسبوعية المتاحة الآن: جاري التحديث...</div>
+
+      <div class="login-games-row">
+        <img class="login-game-ico" src="./assets/icons/game_tower.png" alt="برج التحدي" />
+        <img class="login-game-ico" src="./assets/icons/game_hill.png" alt="قيادة التلال" />
+        <img class="login-game-ico" src="./assets/icons/game_shooter.png" alt="ميجا شوتر" />
+      </div>
+
+      <div class="login-steps">
+        <div class="login-step"><b>1. متجر معاذ</b><br>اضغط «عالم التحديات»</div>
+        <div class="login-step"><b>2. ولّد المعرف</b><br>انسخ MTH-XXXX</div>
+        <div class="login-step"><b>3. الصق وانطلق</b><br>ربط آمن وفوري</div>
+      </div>
+
+      <div class="bind-input-row">
+        <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" style="margin:0; font-family:monospace; letter-spacing:1px;" oninput="ArenaApp.formatBindInput(this)" />
+        <button type="button" class="paste-btn" onclick="ArenaApp.pasteBindKey()">📋 لصق</button>
+      </div>
+      <button id="bindSubmitBtn" class="btn btn-gold" onclick="ArenaApp.bindDevice()">🚀 ربط الجهاز والدخول للساحة</button>
+      <button class="btn btn-outline btn-sm" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 ليس لدي معرف؟ افتح متجر معاذ</button>
+      <button id="pwaInstallBtn" class="btn btn-blue btn-sm hidden" onclick="ArenaApp.installPWA()">📲 تثبيت التطبيق على الشاشة الرئيسية</button>
+      <div style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">🛡️ حسابك مرتبط مباشرة بمحفظة متجر معاذ ومؤمّن بالكامل.</div>
     </section>
 
-    <!-- اللوبي الرئيسي -->
+    <!-- ================= 2. اللوبي الرئيسي ================= -->
     <section id="lobbyScreen" class="hidden">
-      <div class="companion-bar">
-        <div class="avatar-wrap">
-          <div id="companionAvatar" class="companion-avatar">🎭</div>
-          <div id="companionFrameRing" class="avatar-frame-ring hidden"></div>
-        </div>
-        <div style="flex:1;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong id="companionName" style="color:var(--gold-light); font-size:0.92rem;">بندق الودود</strong>
-            <label style="font-size:0.75rem; color:var(--silver);">
-              <input type="checkbox" id="dataSaverToggle" style="width:auto; margin:0 4px;" onchange="ArenaApp.toggleDataSaver(this.checked)" /> توفير البيانات
-            </label>
+
+      <!-- التبويب 1: الرئيسية (منصة الصدارة الملكية + بطاقات الألعاب) -->
+      <div id="tab-home">
+        <!-- بطاقة المرافق + الإطار المتحرك + شريط XP -->
+        <div class="companion-bar">
+          <div id="companionFramedBox" class="avatar-framed" style="width:58px; height:58px;" onclick="ArenaApp.switchTab('profile')">
+            <img id="companionImg" class="av-photo" src="./assets/chars/buddy.jpg" alt="بطل" />
+            <img id="companionFrameImg" class="av-frame-img hidden" src="" alt="" />
           </div>
-          <div id="companionBubble" class="companion-bubble">أهلاً بك في عالم التحديات!</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong id="companionName" style="color:var(--gold-light); font-size:0.9rem;">بندق الودود</strong>
+              <span style="font-size:0.74rem; color:#7dd3fc; font-weight:800;">XP: <b id="xpDisplay">0</b> • فوز: <b id="winsDisplay">0</b></span>
+            </div>
+            <div id="companionBubble" style="font-size:0.78rem; color:#e2e8f0; margin-top:2px;">أهلاً بك في ساحة الأبطال!</div>
+            <div class="xp-bar-bg"><div id="xpProgressFill" class="xp-bar-fill" style="width:15%"></div></div>
+            <div id="nextFrameHint" style="font-size:0.68rem; color:#94a3b8; margin-top:2px;"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="card" style="padding:10px 14px;">
-        <div class="stat-row">
-          <strong id="playerName" style="color:#fff;">اللاعب</strong>
-          <span>XP: <strong id="xpDisplay" style="color:var(--gold-light)">0</strong> | فوز: <strong id="winsDisplay">0</strong></span>
+        <!-- منصة الصدارة الملكية البارزة -->
+        <div class="podium-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="color:#fde047; font-size:0.96rem;">👑 منصة الصدارة الأسبوعية</strong>
+            <span id="podiumPoolBadge" style="font-size:0.74rem; color:#4ade80; font-weight:900;">الوعاء: 0 عملة</span>
+          </div>
+          <div class="filter-row" style="margin-bottom:6px;">
+            <button class="filter-pill active" onclick="ArenaApp.setPodiumGame('tower_match', this)">🏰 برج التحدي</button>
+            <button class="filter-pill" onclick="ArenaApp.setPodiumGame('hill_drive', this)">🚗 قيادة التلال</button>
+            <button class="filter-pill" onclick="ArenaApp.setPodiumGame('cyber_shooter', this)">🔫 ميجا شوتر</button>
+          </div>
+          <div id="royalPodiumStage" class="podium-stage"></div>
+          <div id="podiumMyRank" class="my-rank-bar hidden"></div>
+          <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="ArenaApp.togglePodiumRest()">📋 عرض المراكز 4 إلى 7 وتفاصيل البطولة</button>
+          <div id="podiumRestList" class="hidden" style="margin-top:8px;"></div>
         </div>
-      </div>
 
-      <div class="tabs">
-        <button class="tab-btn active" onclick="ArenaApp.switchTab('records', this)">👑 الأرقام</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('weekly', this)">🏆 الأسبوعية</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('pvp', this)">⚔️ PvP</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('chars', this)">🎭 الشخصيات</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('shop', this)">🛒 المتجر</button>
-        <button class="tab-btn" onclick="ArenaApp.switchTab('wallet', this)">💰 المحفظة</button>
-      </div>
-
-      <!-- 1. كسر الأرقام -->
-      <div id="tab-records">
-        <div class="card">
-          <label style="font-size:0.8rem; color:var(--silver);">أداة تكتيكية للجولة (حد أقصى 1):</label>
-          <select id="tacticalItemSelect"><option value="">بدون أداة تكتيكية</option></select>
-          <label id="usePassRow" class="hidden" style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.84rem; color:#4ade80;">
+        <!-- اختيار الأداة التكتيكية بشكل مدمج -->
+        <div class="card" style="padding:10px 12px;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:0.78rem; color:var(--silver); white-space:nowrap;">🛡️ أداة الجولة:</span>
+            <select id="tacticalItemSelect" style="margin:0; padding:7px; font-size:0.8rem;"><option value="">بدون أداة تكتيكية</option></select>
+          </div>
+          <label id="usePassRow" class="hidden" style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.8rem; color:#4ade80;">
             <input type="checkbox" id="usePassCheckbox" style="width:auto; margin:0;" />
             <span>استخدام تذكرة الساحة المجانية (لديك: <strong id="passCountSpan">0</strong>)</span>
           </label>
         </div>
 
-        <div class="card">
-          <h3>🚗 قيادة التلال 2D (شاشة أفقية)</h3>
-          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-hill-score">350</strong></div>
-          <div class="stat-row"><span>البطل:</span><strong id="rec-hill-holder">إدارة العالم</strong></div>
-          <div class="stat-row"><span>الجائزة التراكمية:</span><span class="jackpot-pill" id="rec-hill-jackpot">100 عملة</span></div>
-          <button class="btn btn-gold" onclick="ArenaApp.startFlow('hill_drive', 'record', 10)">اكسر الرقم الآن (10 عملات)</button>
+        <!-- بطاقات الألعاب الثلاث بأيقونات فخمة (بدون تدريب مجاني وبدون زعيم يومي) -->
+        <div class="hero-game-card tower">
+          <div class="game-head">
+            <img class="game-icon-lg" src="./assets/icons/game_tower.png" alt="برج التحدي" />
+            <div style="flex:1;">
+              <span class="orient-badge">📱 طولية — بيد واحدة</span>
+              <h3 style="color:#fde047; margin:0;">برج التحدي اللانهائي</h3>
+              <div class="stat-row"><span>الرقم القياسي: <b id="rec-tower-score">1200</b></span><span class="jackpot-pill" id="rec-tower-jackpot">120 عملة</span></div>
+              <div style="font-size:0.72rem; color:#94a3b8;">البطل: <b id="rec-tower-holder" style="color:#fff;">إدارة العالم</b></div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('tower_match', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('tower_match')">🏆 البطولة الأسبوعية</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>🔫 ميجا شوتر 2D (شاشة أفقية)</h3>
-          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-shooter-score">500</strong></div>
-          <div class="stat-row"><span>البطل:</span><strong id="rec-shooter-holder">إدارة العالم</strong></div>
-          <div class="stat-row"><span>الجائزة التراكمية:</span><span class="jackpot-pill" id="rec-shooter-jackpot">100 عملة</span></div>
-          <button class="btn btn-gold" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">اكسر الرقم الآن (10 عملات)</button>
+        <div class="hero-game-card hill">
+          <div class="game-head">
+            <img class="game-icon-lg" src="./assets/icons/game_hill.png" alt="قيادة التلال" />
+            <div style="flex:1;">
+              <span class="orient-badge">↔️ شاشة أفقية</span>
+              <h3 style="color:#fb923c; margin:0;">قيادة التلال 2D</h3>
+              <div class="stat-row"><span>الرقم القياسي: <b id="rec-hill-score">350</b></span><span class="jackpot-pill" id="rec-hill-jackpot">100 عملة</span></div>
+              <div style="font-size:0.72rem; color:#94a3b8;">البطل: <b id="rec-hill-holder" style="color:#fff;">إدارة العالم</b></div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('hill_drive', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('hill_drive')">🏆 البطولة الأسبوعية</button>
+          </div>
         </div>
 
-        <div class="card" style="border-color:var(--gold); box-shadow:0 0 18px rgba(212,175,55,0.18);">
-          <h3>🏰 برج التحدي اللانهائي (شاشة طولية — بيد واحدة)</h3>
-          <div class="stat-row"><span>الرقم القياسي:</span><strong id="rec-tower-score">1200</strong></div>
-          <div class="stat-row"><span>حامل الرقم:</span><strong id="rec-tower-holder">إدارة العالم</strong></div>
-          <div class="stat-row"><span>الجائزة الكبرى:</span><strong id="rec-tower-jackpot" style="color:var(--success);">120 عملة</strong></div>
-          <button class="btn btn-gold" onclick="ArenaApp.startFlow('tower_match', 'record', 10)">🏰 اصعد البرج الآن (10 عملات)</button>
-          <div style="display:flex; gap:6px; margin-top:6px;">
-            <button class="btn btn-outline btn-sm" style="flex:1; margin-top:0;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'practice', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">🎓 تدريب مجاني</button>
-            <button class="btn btn-blue btn-sm" style="flex:1; margin-top:0;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'daily_boss', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">📅 الزعيم اليومي</button>
-            <button class="btn btn-outline btn-sm" style="flex:1; margin-top:0; border-color:#ef4444; color:#fca5a5;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'hardcore', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">💀 النخبة (ط10)</button>
+        <div class="hero-game-card shooter">
+          <div class="game-head">
+            <img class="game-icon-lg" src="./assets/icons/game_shooter.png" alt="ميجا شوتر" />
+            <div style="flex:1;">
+              <span class="orient-badge">↔️ شاشة أفقية</span>
+              <h3 style="color:#38bdf8; margin:0;">ميجا شوتر 2D</h3>
+              <div class="stat-row"><span>الرقم القياسي: <b id="rec-shooter-score">500</b></span><span class="jackpot-pill" id="rec-shooter-jackpot">100 عملة</span></div>
+              <div style="font-size:0.72rem; color:#94a3b8;">البطل: <b id="rec-shooter-holder" style="color:#fff;">إدارة العالم</b></div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-gold" style="margin:0;" onclick="ArenaApp.startFlow('cyber_shooter', 'record', 10)">👑 كسر الرقم (10)</button>
+            <button class="btn btn-blue" style="margin:0;" onclick="ArenaApp.startWeeklyFlow('cyber_shooter')">🏆 البطولة الأسبوعية</button>
           </div>
         </div>
       </div>
 
-            <!-- 1.5 البطولة الأسبوعية المستقلة لكل لعبة -->
+      <!-- التبويب 2: البطولات الأسبوعية المفصّلة -->
       <div id="tab-weekly" class="hidden">
         <div class="filter-row">
           <button class="filter-pill active" onclick="ArenaApp.setWeeklyGame('tower_match', this)">🏰 برج التحدي</button>
@@ -340,14 +446,14 @@
         <div id="weeklyContainer" class="card" style="text-align:center; color:var(--silver);">جاري تحميل البطولة الأسبوعية...</div>
       </div>
 
-      <!-- 2. ساحة PvP -->
+      <!-- التبويب 3: ساحة PvP -->
       <div id="tab-pvp" class="hidden">
         <div class="card">
-          <h3>أنشئ تحدياً جديداً (1 ضد 1)</h3>
+          <h3>⚔️ أنشئ تحدياً جديداً (1 ضد 1)</h3>
           <select id="pvpGameSelect">
+            <option value="tower_match">🏰 برج التحدي اللانهائي</option>
             <option value="hill_drive">🚗 قيادة التلال 2D</option>
             <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
-            <option value="tower_match">🏰 برج التحدي اللانهائي</option>
           </select>
           <input type="number" id="pvpStakeInput" value="20" min="10" step="10" placeholder="قيمة التحدي" />
           <button class="btn btn-blue" onclick="ArenaApp.createPvp()">العب وانشر التحدي</button>
@@ -355,66 +461,82 @@
         <div class="card">
           <div class="stat-row">
             <h3>تحديات الساحة المفتوحة</h3>
-            <button style="background:none;border:none;color:var(--gold-light);cursor:pointer;" onclick="ArenaApp.loadPvpList()">🔄 تحديث</button>
+            <button style="background:none;border:none;color:var(--gold-light);cursor:pointer;font-weight:800;" onclick="ArenaApp.loadPvpList()">🔄 تحديث</button>
           </div>
-          <div id="pvpListContainer" style="margin-top:8px; color:var(--silver); font-size:0.9rem;">جاري التحميل...</div>
+          <div id="pvpListContainer" style="margin-top:8px; color:var(--silver); font-size:0.86rem;">جاري التحميل...</div>
         </div>
       </div>
 
-      <!-- 3. الشخصيات الـ 18 -->
-      <div id="tab-chars" class="hidden">
-        <div class="filter-row">
-          <button class="filter-pill active" onclick="ArenaApp.setCharFilter('all', this)">الكل (18)</button>
-          <button class="filter-pill" onclick="ArenaApp.setCharFilter('basic', this)">الأساسية (9)</button>
-          <button class="filter-pill" onclick="ArenaApp.setCharFilter('vip', this)">VIP (9)</button>
-        </div>
-        <div id="charactersGrid" class="char-grid"></div>
-      </div>
-
-      <!-- 4. المتجر المطور -->
+      <!-- التبويب 4: المتجر + الإطارات الـ 15 -->
       <div id="tab-shop" class="hidden">
-        <!-- شريط حقيبتي -->
         <div class="card" style="padding:10px 12px;">
           <div class="stat-row" style="margin-bottom:6px;">
-            <strong style="color:var(--gold-light); font-size:0.86rem;">🎒 حقيبتي الآن</strong>
-            <small style="color:var(--silver); font-size:0.74rem;">تجهيز سريع للجولة</small>
+            <strong style="color:var(--gold-light); font-size:0.84rem;">🎒 حقيبتي الآن</strong>
+            <small style="color:var(--silver); font-size:0.72rem;">تجهيز سريع</small>
           </div>
           <div id="myInventoryBar" class="inv-strip"></div>
         </div>
 
-        <!-- تبويبات المتجر الأربعة -->
         <div class="filter-row">
-          <button class="filter-pill active" onclick="ArenaApp.setShopTab('tactical', this)">🛡️ أدوات</button>
+          <button class="filter-pill active" onclick="ArenaApp.setShopTab('frames', this)">🖼️ الإطارات (15)</button>
+          <button class="filter-pill" onclick="ArenaApp.setShopTab('tactical', this)">🛡️ أدوات</button>
           <button class="filter-pill" onclick="ArenaApp.setShopTab('bundles', this)">📦 باقات</button>
-          <button class="filter-pill" onclick="ArenaApp.setShopTab('cosmetic', this)">👑 مظاهر XP</button>
-          <button class="filter-pill" onclick="ArenaApp.setShopTab('deal', this)">🔥 صفقة اليوم</button>
+          <button class="filter-pill" onclick="ArenaApp.setShopTab('deal', this)">🔥 عرض اليوم</button>
         </div>
 
         <div id="shopContainer"></div>
 
-        <!-- سجل آخر 5 مشتريات -->
         <div class="card" style="margin-top:12px;">
-          <h3 style="font-size:0.9rem;">🧾 سجل آخر 5 مشتريات</h3>
-          <div id="shopHistoryBox" style="font-size:0.8rem; color:var(--silver);">لا توجد مشتريات بعد.</div>
+          <h3 style="font-size:0.88rem;">🧾 سجل آخر 5 مشتريات</h3>
+          <div id="shopHistoryBox" style="font-size:0.78rem; color:var(--silver);">لا توجد مشتريات بعد.</div>
         </div>
       </div>
 
-      <!-- 5. المحفظة -->
-      <div id="tab-wallet" class="hidden">
-        <div class="card">
-          <h3>سحب عملات معاذ إلى متجر معاذ</h3>
-          <p style="color:var(--silver); font-size:0.85rem; line-height:1.5; margin-bottom:10px;">
-            تُخصم النقاط فوراً وتُدقق خوارزمياً في السجل المتدحرج خلال ساعة واحدة قبل إضافتها لمحفظتك في المتجر.
-          </p>
-          <button class="btn btn-gold" onclick="ArenaApp.requestCashout(100)">سحب 100 عملة</button>
-          <button class="btn btn-outline" onclick="ArenaApp.requestCashout(200)">سحب 200 عملة</button>
-          <button class="btn btn-outline" onclick="ArenaApp.requestCashout(500)">سحب 500 عملة</button>
+      <!-- التبويب 5: ملفي (الشخصيات الـ 18 + المحفظة بالليرة السورية) -->
+      <div id="tab-profile" class="hidden">
+        <div class="filter-row">
+          <button class="filter-pill active" onclick="ArenaApp.setProfileSub('chars', this)">🎭 الشخصيات (18)</button>
+          <button class="filter-pill" onclick="ArenaApp.setProfileSub('wallet', this)">💰 المحفظة والسحب (ل.س)</button>
+        </div>
+
+        <div id="profile-chars">
+          <div class="filter-row">
+            <button class="filter-pill active" onclick="ArenaApp.setCharFilter('all', this)">الكل (18)</button>
+            <button class="filter-pill" onclick="ArenaApp.setCharFilter('basic', this)">الأساسية (9)</button>
+            <button class="filter-pill" onclick="ArenaApp.setCharFilter('vip', this)">VIP (9)</button>
+          </div>
+          <div id="charactersGrid" class="char-grid"></div>
+        </div>
+
+        <div id="profile-wallet" class="hidden">
+          <div class="card">
+            <h3>💰 سحب عملات معاذ إلى رصيد متجر معاذ</h3>
+            <p style="color:var(--silver); font-size:0.82rem; line-height:1.55; margin-bottom:10px;">
+              تُخصم النقاط فوراً وتُدقق خوارزمياً في السجل المتدحرج خلال ساعة واحدة قبل إضافتها تلقائياً لمحفظتك في متجر معاذ.
+            </p>
+            <div id="walletSypButtons"></div>
+          </div>
+          <div class="card">
+            <label style="font-size:0.8rem; color:var(--silver); display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" id="dataSaverToggle" style="width:auto; margin:0;" onchange="ArenaApp.toggleDataSaver(this.checked)" />
+              <span>وضع توفير البيانات (تقليل تحميل الأصوات)</span>
+            </label>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- شاشة اللعب الأفقية الكاملة مع الأزرار الشفافة العائمة -->
+  <!-- شريط التنقل السفلي الزجاجي الثابت -->
+  <nav id="bottomDock" class="bottom-dock hidden">
+    <button class="dock-btn active" data-tab="home" onclick="ArenaApp.switchTab('home')"><span class="dock-ico">🏠</span><span>الرئيسية</span></button>
+    <button class="dock-btn" data-tab="weekly" onclick="ArenaApp.switchTab('weekly')"><span class="dock-ico">🏆</span><span>الأسبوعية</span></button>
+    <button class="dock-btn" data-tab="pvp" onclick="ArenaApp.switchTab('pvp')"><span class="dock-ico">⚔️</span><span>PvP</span><span id="pvpCountBadge" class="dock-badge hidden">0</span></button>
+    <button class="dock-btn" data-tab="shop" onclick="ArenaApp.switchTab('shop')"><span class="dock-ico">🛒</span><span>المتجر</span></button>
+    <button class="dock-btn" data-tab="profile" onclick="ArenaApp.switchTab('profile')"><span class="dock-ico">👤</span><span>ملفي</span></button>
+  </nav>
+
+  <!-- شاشة اللعب الأفقية -->
   <div id="gameOverlay" class="hidden">
     <div id="rotateHint" class="rotate-hint hidden">📱 أدر هاتفك أفقياً للرؤية الكاملة</div>
     <canvas id="gameCanvas"></canvas>
@@ -422,12 +544,12 @@
     <button id="btnGameRight" class="floating-ctrl right">يمين</button>
   </div>
 
-  <!-- نافذة تأكيد الشراء الشفافة -->
+  <!-- نافذة تأكيد الشراء -->
   <div id="confirmBuyOverlay" class="overlay hidden">
     <div class="modal-box">
       <h3 style="color:var(--gold-light); margin-bottom:8px;">تأكيد الشراء</h3>
-      <p id="confirmBuyDesc" style="font-size:0.9rem; color:#fff; margin-bottom:10px;"></p>
-      <div style="background:#070c18; border-radius:12px; padding:10px; margin-bottom:12px; font-size:0.86rem;">
+      <p id="confirmBuyDesc" style="font-size:0.88rem; color:#fff; margin-bottom:10px;"></p>
+      <div style="background:#070c18; border-radius:12px; padding:10px; margin-bottom:12px; font-size:0.84rem;">
         <div class="stat-row"><span>رصيدك الحالي:</span><strong id="cbCurPts">0</strong></div>
         <div class="stat-row"><span>السعر النهائي:</span><strong id="cbCostPts" style="color:#f87171;">-0</strong></div>
         <div class="stat-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:6px;">
@@ -439,15 +561,15 @@
     </div>
   </div>
 
-  <!-- نافذة معاينة الإطار -->
+  <!-- نافذة معاينة الإطار الحيّة -->
   <div id="previewOverlay" class="overlay hidden">
     <div class="modal-box">
       <h3 id="previewTitle" style="color:var(--gold-light); margin-bottom:12px;">معاينة الإطار</h3>
-      <div style="position:relative; width:124px; height:124px; margin:12px auto;">
-        <img id="previewCharImg" src="" style="width:100%; height:100%; border-radius:50%; object-fit:cover; display:block;" />
-        <div id="previewRingEl" class="avatar-frame-ring" style="inset:-6px;"></div>
+      <div id="previewAvatarWrap" class="avatar-framed" style="width:118px; height:118px; margin:16px auto;">
+        <img id="previewCharImg" class="av-photo" src="" alt="" />
+        <img id="previewFrameImg" class="av-frame-img" src="" alt="" />
       </div>
-      <p style="font-size:0.82rem; color:var(--silver); margin:10px 0;">هكذا ستظهر صورتك في اللوبي والساحة بعد تفعيل الإطار.</p>
+      <p style="font-size:0.8rem; color:var(--silver); margin:10px 0;">هكذا ستظهر شخصيتك مع التأثير الحركي على منصة الصدارة وفي الساحة!</p>
       <button class="btn btn-gold" onclick="document.getElementById('previewOverlay').classList.add('hidden')">إغلاق المعاينة</button>
     </div>
   </div>
@@ -456,7 +578,7 @@
   <div id="countdownOverlay" class="overlay hidden">
     <h2 style="color: var(--danger);">تنبيه هام قبل البدء!</h2>
     <p style="color: var(--silver); max-width: 320px; margin-top: 8px; line-height: 1.5;">
-      تأكد من استقرار الإنترنت. بعد انتهاء العد التنازلي <strong>لا يمكنك التراجع أبداً</strong>، وستتحول الشاشة للوضع الأفقي تلقائياً.
+      تأكد من استقرار الإنترنت. بعد انتهاء العد التنازلي <strong>لا يمكنك التراجع أبداً</strong>.
     </p>
     <div id="countdownNumber" class="countdown-num">5</div>
     <button id="cancelMatchBtn" class="btn btn-outline" style="max-width: 240px;" onclick="ArenaApp.cancelCountdown()">تراجع الآن</button>
@@ -465,7 +587,7 @@
   <!-- شاشة النتيجة -->
   <div id="resultOverlay" class="overlay hidden">
     <h2 style="color: var(--gold-light);">نتيجة الجولة</h2>
-    <p id="resultText" style="color: #fff; font-size: 1.05rem; max-width: 340px; margin: 14px 0; line-height: 1.6;"></p>
+    <p id="resultText" style="color: #fff; font-size: 1rem; max-width: 340px; margin: 14px 0; line-height: 1.6;"></p>
     <button id="waShareBtn" class="btn btn-wa hidden" style="max-width: 260px;">📲 أرسل التحدي عبر واتساب</button>
     <button class="btn btn-gold" style="max-width: 260px;" onclick="ArenaApp.closeResult()">العودة للساحة</button>
   </div>
@@ -494,12 +616,22 @@
 
   <script>
     const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const b = document.getElementById('pwaInstallBtn');
+      if (b) b.classList.remove('hidden');
+    });
 
     const ArenaApp = {
       token: localStorage.getItem('arena_device_token'),
       profile: null,
+      weeklyData: null,
+      podiumGame: 'tower_match',
+      weeklyGame: 'tower_match',
       charFilter: 'all',
-      shopTab: 'tactical',
+      shopTab: 'frames',
       countdownTimer: null,
       dealTimer: null,
       toastTimer: null,
@@ -514,7 +646,64 @@
         window.addEventListener('online', () => { updateNet(); if (this.token) this.syncProfile(); });
         window.addEventListener('offline', updateNet);
         updateNet();
-        if (this.token) this.syncProfile();
+
+        // التقاط المعرف تلقائياً من الرابط (?bind=MTH-XXXX-XXXX)
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoBind = urlParams.get('bind');
+        if (autoBind && !this.token) {
+          document.getElementById('bindKeyInput').value = autoBind.toUpperCase();
+          this.bindDevice();
+          return;
+        }
+
+        if (this.token) {
+          this.syncProfile();
+        } else {
+          this.loadPublicPreview();
+        }
+      },
+
+      async installPWA() {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt = null;
+        document.getElementById('pwaInstallBtn').classList.add('hidden');
+      },
+
+      async loadPublicPreview() {
+        try {
+          const res = await fetch(`${WORKER_URL}/public/preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+          const data = await res.json();
+          const pill = document.getElementById('loginLivePrize');
+          if (pill && data && data.ok) {
+            pill.textContent = `🔥 الجوائز الأسبوعية الحية الآن: ${Number(data.totalWeeklyPool || 0).toLocaleString()} عملة معاذ!`;
+          }
+        } catch (_) {}
+      },
+
+      formatBindInput(inp) {
+        let v = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (v.length > 3 && v.length <= 7) v = v.slice(0, 3) + '-' + v.slice(3);
+        else if (v.length > 7) v = v.slice(0, 3) + '-' + v.slice(3, 7) + '-' + v.slice(7, 11);
+        inp.value = v;
+      },
+
+      async pasteBindKey() {
+        try {
+          const txt = await navigator.clipboard.readText();
+          if (txt) {
+            document.getElementById('bindKeyInput').value = txt.trim().toUpperCase();
+            this.toast('تم لصق المعرف بنجاح!');
+          }
+        } catch (_) {
+          this.toast('الصق المعرف يدوياً داخل الخانة.');
+        }
+      },
+
+      openStoreTopupHint() {
+        if (confirm('لشحن عملات معاذ بالليرة السورية من محفظتك في متجر معاذ، هل تريد فتح المتجر الآن؟')) {
+          window.open('https://moaathallii-commits.github.io/-/', '_blank');
+        }
       },
 
       toast(msg) {
@@ -525,110 +714,63 @@
         this.toastTimer = setTimeout(() => box.classList.add('hidden'), 3200);
       },
 
-      toggleDataSaver(enabled) {
-        localStorage.setItem('arena_data_saver', enabled ? '1' : '0');
+      toggleDataSaver(enabled) { localStorage.setItem('arena_data_saver', enabled ? '1' : '0'); },
+
+      switchTab(tab) {
+        ['home', 'weekly', 'pvp', 'shop', 'profile'].forEach((t) => {
+          const el = document.getElementById(`tab-${t}`);
+          if (el) el.classList.toggle('hidden', t !== tab);
+        });
+        document.querySelectorAll('.dock-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+        if (tab === 'weekly') this.loadWeeklyStatus();
+        if (tab === 'pvp') this.loadPvpList();
+        if (tab === 'shop') this.renderShop();
+        if (tab === 'profile') { this.renderCharacters(); this.renderWalletSYP(); }
       },
 
-
-      weeklyGame: 'tower_match',
-      weeklyData: null,
-
-      setWeeklyGame(gId, btn) {
-        this.weeklyGame = gId;
-        document.querySelectorAll('#tab-weekly .filter-pill').forEach((b) => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-        this.renderWeekly();
-      },
-
-      async loadWeeklyStatus() {
-        const box = document.getElementById('weeklyContainer');
-        if (box) box.innerHTML = 'جاري تحميل بيانات البطولة الأسبوعية...';
-        const res = await this.api('/weekly/status');
-        if (res && res.tournaments) {
-          this.weeklyData = res.tournaments;
-          this.renderWeekly();
-        }
-      },
-
-      renderWeekly() {
-        const box = document.getElementById('weeklyContainer');
-        if (!box || !this.weeklyData) return;
-        const w = this.weeklyData[this.weeklyGame];
-        if (!w) { box.innerHTML = 'لا توجد بيانات لهذه اللعبة.'; return; }
-
-        const now = Date.now();
-        const diffMs = Math.max(0, w.endAt - now);
-        const days = Math.floor(diffMs / 86400000);
-        const hrs = Math.floor((diffMs % 86400000) / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        const timeStr = w.status === 'active'
-          ? `ينتهي خلال: ${days}ي ${hrs}س ${mins}د`
-          : (w.status === 'scheduled' ? 'تبدأ قريباً' : 'تم إغلاق الدورة وتوزيع الجوائز');
-
-        const pctLabels = ['40%', '20%', '15%', '5%', '4%', '3.5%', '2.5%'];
-        const boardHtml = w.top7.length === 0
-          ? '<p style="font-size:0.82rem; color:var(--silver); padding:8px;">كن أول من يسجّل رقماً في هذه البطولة!</p>'
-          : w.top7.map((row) => `
-              <div class="stat-row" style="padding:6px 8px; border-radius:8px; background:${row.isMe ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${row.isMe ? '#22c55e' : 'rgba(255,255,255,0.06)'};">
-                <span><strong>#${row.rank}</strong> ${row.displayName} <small style="color:#94a3b8;">(${pctLabels[row.rank - 1]})</small></span>
-                <span><strong style="color:#fff;">${row.bestScore}</strong> • <strong style="color:#4ade80;">${row.prizePts} عملة</strong></span>
-              </div>
-            `).join('');
-
-        box.innerHTML = `
-          <div style="text-align:right;">
-            <div class="stat-row"><strong style="color:var(--gold-light); font-size:1rem;">🏆 ${w.title}</strong><span style="color:#7dd3fc; font-size:0.78rem;">${timeStr}</span></div>
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:10px 0; text-align:center;">
-              <div style="background:#070c18; border:1px solid rgba(212,175,55,0.35); border-radius:10px; padding:7px;">
-                <div style="font-size:0.7rem; color:#94a3b8;">وعاء الجوائز</div>
-                <strong style="color:#facc15; font-size:0.95rem;">${w.poolPts} عملة</strong>
-              </div>
-              <div style="background:#070c18; border:1px solid rgba(34,197,94,0.35); border-radius:10px; padding:7px;">
-                <div style="font-size:0.7rem; color:#94a3b8;">جائزة الأول (40%)</div>
-                <strong style="color:#4ade80; font-size:0.95rem;">${w.rankPrizes[0] || 0} عملة</strong>
-              </div>
-              <div style="background:#070c18; border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:7px;">
-                <div style="font-size:0.7rem; color:#94a3b8;">رسم الدخول</div>
-                <strong style="color:#7dd3fc; font-size:0.95rem;">${w.entryFeePts} عملة</strong>
-              </div>
-            </div>
-            <div style="font-size:0.74rem; color:var(--silver); margin-bottom:8px;">
-              توزيع الوعاء: 10% إدارة • 40% أول • 20% ثاني • 15% ثالث • 5% رابع • 4% خامس • 3.5% سادس • 2.5% سابع
-            </div>
-            ${w.myRank ? `<div style="font-size:0.8rem; color:#4ade80; margin-bottom:8px;">🏅 ترتيبك الحالي: <strong>#${w.myRank}</strong> (أعلى نتيجة: <strong>${w.myBest}</strong>)</div>` : ''}
-            ${w.status === 'active'
-              ? `<button class="btn btn-gold" onclick="ArenaApp.startFlow('${w.gameId}', 'weekly', ${w.entryFeePts})">🔥 دخول جولة البطولة (${w.entryFeePts} عملة)</button>`
-              : `<button class="btn btn-outline" disabled>البطولة مغلقة حالياً</button>`
-            }
-            <h4 style="color:var(--gold-light); margin:12px 0 6px 0; font-size:0.88rem;">👑 لوحة المتصدرين (المراكز 1 إلى 7)</h4>
-            ${boardHtml}
-          </div>
-        `;
+      setProfileSub(sub, btn) {
+        document.getElementById('profile-chars').classList.toggle('hidden', sub !== 'chars');
+        document.getElementById('profile-wallet').classList.toggle('hidden', sub !== 'wallet');
+        btn.parentElement.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (sub === 'wallet') this.renderWalletSYP();
       },
 
       setCharFilter(filter, btn) {
         this.charFilter = filter;
-        document.querySelectorAll('#tab-chars .filter-pill').forEach((b) => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
+        btn.parentElement.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
         this.renderCharacters();
       },
 
       setShopTab(tab, btn) {
         this.shopTab = tab;
-        document.querySelectorAll('#tab-shop .filter-pill').forEach((b) => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
+        btn.parentElement.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
         this.renderShop();
       },
 
-      switchTab(tab, btn) {
-        ['records', 'weekly', 'pvp', 'chars', 'shop', 'wallet'].forEach((t) => document.getElementById(`tab-${t}`).classList.add('hidden'));
-        document.getElementById(`tab-${tab}`).classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      setPodiumGame(gId, btn) {
+        this.podiumGame = gId;
+        btn.parentElement.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        if (tab === 'weekly') this.loadWeeklyStatus();
-        if (tab === 'pvp') this.loadPvpList();
-        if (tab === 'chars') this.renderCharacters();
-        if (tab === 'shop') this.renderShop();
+        this.renderRoyalPodium();
+      },
+
+      setWeeklyGame(gId, btn) {
+        this.weeklyGame = gId;
+        btn.parentElement.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.renderWeekly();
+      },
+
+      togglePodiumRest() {
+        document.getElementById('podiumRestList').classList.toggle('hidden');
+      },
+
+      getFrameMeta(frameId) {
+        const list = (this.profile && this.profile.framesCatalog) || [];
+        return list.find((f) => f.id === frameId) || null;
       },
 
       showError(code, msg) {
@@ -658,23 +800,32 @@
       async bindDevice() {
         const key = document.getElementById('bindKeyInput').value.trim();
         if (!key) return this.showError('ERR_INPUT', 'أدخل معرف اللاعب.');
+        const btn = document.getElementById('bindSubmitBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري تجهيز ساحتك...'; }
         let deviceId = localStorage.getItem('arena_device_fp') || crypto.randomUUID();
         localStorage.setItem('arena_device_fp', deviceId);
         const res = await this.api('/auth/bind', { bindKey: key, deviceId });
+        if (btn) { btn.disabled = false; btn.textContent = '🚀 ربط الجهاز والدخول للساحة'; }
         if (res && res.deviceToken) {
           this.token = res.deviceToken;
           localStorage.setItem('arena_device_token', res.deviceToken);
+          history.replaceState({}, '', window.location.pathname);
           this.syncProfile();
         }
       },
 
-      applyEquippedFrame() {
-        const ring = document.getElementById('companionFrameRing');
-        const f = this.profile && this.profile.activeFrame;
-        ring.className = 'avatar-frame-ring';
-        if (f === 'frame_gold') ring.classList.add('frame-gold-ring');
-        else if (f === 'frame_cyber') ring.classList.add('frame-cyber-ring');
-        else ring.classList.add('hidden');
+      applyEquippedFrameUI() {
+        const fId = (this.profile && this.profile.activeFrame) || '';
+        const meta = this.getFrameMeta(fId);
+        const fImg = document.getElementById('companionFrameImg');
+        if (!fImg) return;
+        if (meta && meta.file) {
+          fImg.src = meta.file;
+          fImg.className = `av-frame-img ${meta.anim || 'anim-pulse-soft'}`;
+          fImg.classList.remove('hidden');
+        } else {
+          fImg.classList.add('hidden');
+        }
       },
 
       async syncProfile() {
@@ -683,28 +834,42 @@
         this.profile = res;
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('lobbyScreen').classList.remove('hidden');
-        document.getElementById('playerName').textContent = res.displayName;
+        document.getElementById('bottomDock').classList.remove('hidden');
+
         document.getElementById('coinsDisplay').textContent = res.points;
         document.getElementById('xpDisplay').textContent = res.xp;
         document.getElementById('winsDisplay').textContent = res.wins;
 
-        if (res.records && res.records.hill_drive) {
+        // تحديث صورة الشخصية والمرافق وشريط XP نحو الإطار القادم
+        const cImg = document.getElementById('companionImg');
+        if (cImg && window.ArenaVoice) cImg.src = window.ArenaVoice.getCharImgUrl(res.activeCharacterId);
+        this.applyEquippedFrameUI();
+
+        const frames = res.framesCatalog || [];
+        const nextXpFrame = frames.find((f) => f.reqXp > 0 && f.reqXp > (res.xp || 0));
+        if (nextXpFrame) {
+          const pct = Math.min(100, Math.round(((res.xp || 0) / nextXpFrame.reqXp) * 100));
+          document.getElementById('xpProgressFill').style.width = `${pct}%`;
+          document.getElementById('nextFrameHint').textContent = `متبقي ${nextXpFrame.reqXp - (res.xp || 0)} XP لفتح «${nextXpFrame.name}» مجاناً`;
+        } else {
+          document.getElementById('xpProgressFill').style.width = '100%';
+          document.getElementById('nextFrameHint').textContent = '👑 وصلت لأعلى مستوى خبرة (XP)!';
+        }
+
+        if (res.records?.hill_drive) {
           document.getElementById('rec-hill-score').textContent = res.records.hill_drive.currentRecord;
           document.getElementById('rec-hill-holder').textContent = res.records.hill_drive.holderName;
           document.getElementById('rec-hill-jackpot').textContent = `${res.records.hill_drive.jackpotPts} عملة`;
         }
-        if (res.records && res.records.cyber_shooter) {
+        if (res.records?.cyber_shooter) {
           document.getElementById('rec-shooter-score').textContent = res.records.cyber_shooter.currentRecord;
           document.getElementById('rec-shooter-holder').textContent = res.records.cyber_shooter.holderName;
           document.getElementById('rec-shooter-jackpot').textContent = `${res.records.cyber_shooter.jackpotPts} عملة`;
         }
-        if (res.records && res.records.tower_match) {
-          const ts = document.getElementById('rec-tower-score');
-          const th = document.getElementById('rec-tower-holder');
-          const tj = document.getElementById('rec-tower-jackpot');
-          if (ts) ts.textContent = res.records.tower_match.currentRecord;
-          if (th) th.textContent = res.records.tower_match.holderName;
-          if (tj) tj.textContent = `${res.records.tower_match.jackpotPts} عملة`;
+        if (res.records?.tower_match) {
+          document.getElementById('rec-tower-score').textContent = res.records.tower_match.currentRecord;
+          document.getElementById('rec-tower-holder').textContent = res.records.tower_match.holderName;
+          document.getElementById('rec-tower-jackpot').textContent = `${res.records.tower_match.jackpotPts} عملة`;
         }
 
         const sel = document.getElementById('tacticalItemSelect');
@@ -714,38 +879,169 @@
             .map((i) => `<option value="${i.id}">${i.emoji} ${i.name} (لديك: ${inv[i.id]})</option>`).join('');
 
         const passCount = Number(inv.arena_pass || 0);
-        const passRow = document.getElementById('usePassRow');
         document.getElementById('passCountSpan').textContent = passCount;
-        passRow.classList.toggle('hidden', passCount <= 0);
+        document.getElementById('usePassRow').classList.toggle('hidden', passCount <= 0);
 
-        this.applyEquippedFrame();
-        window.ArenaVoice.speak(res.activeCharacterId, 'welcome');
+        if (window.ArenaVoice) window.ArenaVoice.speak(res.activeCharacterId, 'welcome');
+        this.loadWeeklyStatus();
+        this.refreshPvpBadge();
+      },
+
+      async refreshPvpBadge() {
+        const res = await this.api('/pvp/list');
+        const b = document.getElementById('pvpCountBadge');
+        if (b && res && Array.isArray(res.matches)) {
+          b.textContent = res.matches.length;
+          b.classList.toggle('hidden', res.matches.length === 0);
+        }
+      },
+
+      async loadWeeklyStatus() {
+        const res = await this.api('/weekly/status');
+        if (res && res.tournaments) {
+          this.weeklyData = res.tournaments;
+          this.renderRoyalPodium();
+          this.renderWeekly();
+          const w = this.weeklyData[this.podiumGame];
+          if (w && w.status === 'active') {
+            const diff = Math.max(0, w.endAt - Date.now());
+            const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
+            const strip = document.getElementById('liveCountdownStrip');
+            strip.textContent = `⏳ ينتهي تحدي الأسبوع خلال: ${d} يوم و ${h} ساعة • الوعاء: ${w.poolPts} عملة`;
+            strip.classList.remove('hidden');
+          }
+        }
+      },
+
+      startWeeklyFlow(gameId) {
+        const w = this.weeklyData && this.weeklyData[gameId];
+        const fee = w ? Number(w.entryFeePts || 10) : 10;
+        this.startFlow(gameId, 'weekly', fee);
+      },
+
+      renderRoyalPodium() {
+        const stage = document.getElementById('royalPodiumStage');
+        if (!stage || !this.weeklyData) return;
+        const w = this.weeklyData[this.podiumGame];
+        if (!w) return;
+        document.getElementById('podiumPoolBadge').textContent = `الوعاء: ${w.poolPts} عملة`;
+
+        const top = w.top7 || [];
+        const order = [1, 0, 2]; // 2nd (left), 1st (center tall), 3rd (right)
+        const medals = ['👑 #1', '🥈 #2', '🥉 #3'];
+        stage.innerHTML = order.map((idx) => {
+          const row = top[idx];
+          const rankNum = idx + 1;
+          const sz = rankNum === 1 ? 64 : 52;
+          if (!row) {
+            return `<div class="podium-slot rank-${rankNum}"><span class="podium-crown">${medals[idx]}</span><div style="font-size:0.74rem; color:#64748b; padding:18px 0;">بانتظار البطل</div><div class="podium-prize">${w.rankPrizes[idx] || 0} عملة</div></div>`;
+          }
+          const avSrc = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(row.characterId || 'buddy') : './assets/chars/buddy.jpg';
+          const fMeta = this.getFrameMeta(row.activeFrame);
+          const fHtml = fMeta ? `<img class="av-frame-img ${fMeta.anim}" src="${fMeta.file}" alt="" />` : '';
+          return `
+            <div class="podium-slot rank-${rankNum}">
+              <span class="podium-crown">${medals[idx]}</span>
+              <div class="avatar-framed" style="width:${sz}px; height:${sz}px; margin:4px auto;">
+                <img class="av-photo" src="${avSrc}" onerror="this.src='./assets/chars/buddy.jpg'" />
+                ${fHtml}
+              </div>
+              <div class="podium-name">${row.displayName}</div>
+              <div class="podium-score">${row.bestScore} نقطة</div>
+              <div class="podium-prize">🪙 ${row.prizePts} عملة</div>
+            </div>
+          `;
+        }).join('');
+
+        const myBar = document.getElementById('podiumMyRank');
+        if (w.myRank) {
+          myBar.innerHTML = `<span>🏅 ترتيبك الحالي: <b>#${w.myRank}</b></span><span>أعلى نتيجة لك: <b>${w.myBest}</b></span>`;
+          myBar.classList.remove('hidden');
+        } else {
+          myBar.innerHTML = `<span>لم تدخل بطولة هذا الأسبوع بعد!</span><button style="background:none;border:none;color:#fde047;font-weight:900;cursor:pointer;" onclick="ArenaApp.startWeeklyFlow('${w.gameId}')">شارك الآن ←</button>`;
+          myBar.classList.remove('hidden');
+        }
+
+        const restBox = document.getElementById('podiumRestList');
+        const pctLabels = ['40%', '20%', '15%', '5%', '4%', '3.5%', '2.5%'];
+        const rest = top.slice(3, 7);
+        restBox.innerHTML = rest.length === 0
+          ? '<p style="font-size:0.76rem; color:#94a3b8; text-align:center;">المراكز 4 إلى 7 لا تزال متاحة للمنافسة!</p>'
+          : rest.map((r) => `
+              <div class="stat-row" style="padding:5px 8px; background:rgba(255,255,255,0.03); border-radius:8px;">
+                <span><b>#${r.rank}</b> ${r.displayName} <small>(${pctLabels[r.rank - 1]})</small></span>
+                <span><b>${r.bestScore}</b> • <b style="color:#4ade80;">${r.prizePts} عملة</b></span>
+              </div>
+            `).join('');
+      },
+
+      renderWeekly() {
+        const box = document.getElementById('weeklyContainer');
+        if (!box || !this.weeklyData) return;
+        const w = this.weeklyData[this.weeklyGame];
+        if (!w) return;
+        const diff = Math.max(0, w.endAt - Date.now());
+        const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000);
+        const timeStr = w.status === 'active' ? `ينتهي خلال: ${d}ي ${h}س ${m}د` : 'البطولة مغلقة حالياً';
+        const pctLabels = ['40%', '20%', '15%', '5%', '4%', '3.5%', '2.5%'];
+        const rows = (w.top7 || []).map((r) => `
+          <div class="stat-row" style="padding:7px 8px; border-radius:10px; background:${r.isMe ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${r.isMe ? '#22c55e' : 'rgba(255,255,255,0.06)'};">
+            <span><b>#${r.rank}</b> ${r.displayName} <small style="color:#94a3b8;">(${pctLabels[r.rank - 1]})</small></span>
+            <span><b style="color:#fff;">${r.bestScore}</b> • <b style="color:#4ade80;">${r.prizePts} عملة</b></span>
+          </div>
+        `).join('') || '<p style="font-size:0.8rem; color:var(--silver); padding:10px;">كن أول من يسجل رقماً هذا الأسبوع!</p>';
+
+        box.innerHTML = `
+          <div style="text-align:right;">
+            <div class="stat-row"><strong style="color:var(--gold-light);">🏆 ${w.title}</strong><span style="color:#7dd3fc; font-size:0.76rem;">${timeStr}</span></div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:10px 0; text-align:center;">
+              <div style="background:#070c18; border:1px solid rgba(212,175,55,0.35); border-radius:10px; padding:7px;"><div style="font-size:0.68rem; color:#94a3b8;">وعاء الجوائز</div><strong style="color:#facc15;">${w.poolPts}</strong></div>
+              <div style="background:#070c18; border:1px solid rgba(34,197,94,0.35); border-radius:10px; padding:7px;"><div style="font-size:0.68rem; color:#94a3b8;">الأول (40%)</div><strong style="color:#4ade80;">${w.rankPrizes[0] || 0}</strong></div>
+              <div style="background:#070c18; border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:7px;"><div style="font-size:0.68rem; color:#94a3b8;">رسم الدخول</div><strong style="color:#7dd3fc;">${w.entryFeePts}</strong></div>
+            </div>
+            ${w.status === 'active'
+              ? `<button class="btn btn-gold" onclick="ArenaApp.startFlow('${w.gameId}', 'weekly', ${w.entryFeePts})">🔥 دخول جولة البطولة (${w.entryFeePts} عملة)</button>`
+              : `<button class="btn btn-outline" disabled>البطولة مغلقة حالياً</button>`
+            }
+            <h4 style="color:var(--gold-light); margin:12px 0 6px; font-size:0.86rem;">👑 لوحة المتصدرين (المراكز 1 إلى 7)</h4>
+            ${rows}
+          </div>
+        `;
+      },
+
+      renderWalletSYP() {
+        const box = document.getElementById('walletSypButtons');
+        if (!box || !this.profile) return;
+        const eco = this.profile.economy || { coinToUsdRate: 0.01, usdToSypRate: 15000 };
+        const tiers = [100, 200, 500];
+        box.innerHTML = tiers.map((pts, i) => {
+          const syp = Math.round(pts * Number(eco.coinToUsdRate || 0.01) * Number(eco.usdToSypRate || 15000));
+          return `<button class="btn ${i === 0 ? 'btn-gold' : 'btn-outline'}" onclick="ArenaApp.requestCashout(${pts})">سحب ${pts} عملة (≈ ${syp.toLocaleString()} ل.س)</button>`;
+        }).join('');
       },
 
       renderCharacters() {
         const grid = document.getElementById('charactersGrid');
+        if (!grid) return;
         const activeId = this.profile ? this.profile.activeCharacterId : 'buddy';
         const unlockedVips = (this.profile && this.profile.unlockedVips) || [];
         const list = window.ARENA_CHARACTERS.filter((ch) => this.charFilter === 'all' || ch.tier === this.charFilter);
-
         grid.innerHTML = list.map((ch) => {
           const isVip = ch.tier === 'vip';
           const isUnlocked = !isVip || unlockedVips.includes(ch.id);
           const isSelected = ch.id === activeId;
           const imgUrl = window.ArenaVoice.getCharImgUrl(ch.id);
           return `
-            <div class="char-card ${isVip ? 'vip' : ''} ${isSelected ? 'selected' : ''}" style="border-color:${isSelected ? '#22c55e' : (isVip ? '#d4af37' : 'rgba(203,213,225,0.2)')}">
+            <div class="char-card ${isVip ? 'vip' : ''} ${isSelected ? 'selected' : ''}">
               <span class="char-badge ${isVip ? 'badge-vip' : 'badge-basic'}">${isVip ? 'VIP' : 'أساسية'}</span>
-              <div class="char-thumb" style="border-color:${ch.color || '#d4af37'}">
-                <img src="${imgUrl}" alt="${ch.name}" loading="lazy" onerror="this.parentElement.textContent='${isVip ? '🌟' : '🎭'}'" />
-              </div>
-              <strong style="color:${isVip ? 'var(--gold-light)' : '#fff'}; font-size:0.9rem;">${ch.name}</strong>
-              <p style="font-size:0.74rem; color:var(--silver); margin:6px 0; min-height:34px;">${ch.skillDesc}</p>
+              <div class="char-thumb"><img src="${imgUrl}" alt="${ch.name}" loading="lazy" /></div>
+              <strong style="color:${isVip ? 'var(--gold-light)' : '#fff'}; font-size:0.86rem;">${ch.name}</strong>
+              <p style="font-size:0.72rem; color:var(--silver); margin:5px 0; min-height:30px;">${ch.skillDesc}</p>
               ${isSelected
                 ? '<button class="btn btn-outline btn-sm" disabled>مفعّلة حالياً</button>'
                 : isUnlocked
                   ? `<button class="btn btn-gold btn-sm" onclick="ArenaApp.selectCharacter('${ch.id}')">اختيار</button>`
-                  : '<button class="btn btn-outline btn-sm" style="opacity:0.65;" disabled>🔒 متاح عبر متجر معاذ</button>'
+                  : '<button class="btn btn-outline btn-sm" style="opacity:0.6;" disabled>🔒 متاح في متجر معاذ</button>'
               }
             </div>
           `;
@@ -756,8 +1052,8 @@
         const res = await this.api('/character/select', { characterId });
         if (res && res.ok) {
           this.profile.activeCharacterId = characterId;
+          this.syncProfile();
           this.renderCharacters();
-          window.ArenaVoice.speak(characterId, 'welcome');
           this.toast('تم تفعيل الشخصية بنجاح!');
         }
       },
@@ -777,150 +1073,102 @@
         const cos = (this.profile && this.profile.cosmetics) || {};
         const xp = Number((this.profile && this.profile.xp) || 0);
         const activeFrame = (this.profile && this.profile.activeFrame) || '';
-        const isSaver = this.profile && this.profile.activeCharacterId === 'saver';
         const deal = this.profile && this.profile.dailyDeal;
+        const charImg = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(this.profile?.activeCharacterId || 'buddy') : './assets/chars/buddy.jpg';
 
-        // 1. شريط حقيبتي
         const invBar = document.getElementById('myInventoryBar');
-        const ownedChips = window.ARENA_SHOP_ITEMS.filter((it) => {
-          if (it.type === 'cosmetic') return Boolean(cos[it.id]);
-          if (it.type === 'bundle') return false;
-          return Number(inv[it.id] || 0) > 0;
-        });
+        const ownedChips = window.ARENA_SHOP_ITEMS.filter((it) => it.type !== 'cosmetic' && it.type !== 'bundle' && Number(inv[it.id] || 0) > 0);
         invBar.innerHTML = ownedChips.length === 0
-          ? '<span style="font-size:0.78rem; color:var(--silver);">حقيبتك فارغة حالياً — اشترِ أداة تكتيكية لتجهيزها!</span>'
-          : ownedChips.map((it) => {
-              const imgUrl = window.ArenaVoice.getShopImgUrl(it);
-              const countText = it.type === 'cosmetic' ? (activeFrame === it.id ? 'مفعّل' : 'مملوك') : `x${inv[it.id]}`;
-              const actionBtn = it.type === 'tactical'
-                ? `<button onclick="ArenaApp.quickEquipItem('${it.id}')">تجهيز</button>`
-                : it.type === 'cosmetic'
-                  ? `<button onclick="ArenaApp.equipFrame('${activeFrame === it.id ? '' : it.id}')">${activeFrame === it.id ? 'إلغاء' : 'تفعيل'}</button>`
-                  : '';
-              return `
-                <div class="inv-chip">
-                  <img src="${imgUrl}" alt="${it.name}" onerror="this.style.display='none'" />
-                  <div><strong>${it.name}</strong> <small style="color:#4ade80;">${countText}</small></div>
-                  ${actionBtn}
-                </div>
-              `;
-            }).join('');
+          ? '<span style="font-size:0.76rem; color:var(--silver);">حقيبة الأدوات فارغة — اشترِ أداة لتجهيزها!</span>'
+          : ownedChips.map((it) => `<div class="inv-chip"><span>${it.emoji} <b>${it.name}</b> <small style="color:#4ade80;">x${inv[it.id]}</small></span>${it.type === 'tactical' ? `<button onclick="ArenaApp.quickEquipItem('${it.id}')">تجهيز</button>` : ''}</div>`).join('');
 
-        // 2. فلترة العناصر حسب التبويب الفرعي
         const box = document.getElementById('shopContainer');
-        let itemsToShow = [];
-        let dealHeaderHtml = '';
+        const rarityLabel = { common: 'عادي', rare: 'نادر', epic: 'ملحمي', legendary: 'أسطوري', mythic: 'خرافي' };
 
-        if (this.shopTab === 'deal' && deal) {
-          const dealItem = window.ARENA_SHOP_ITEMS.find((i) => i.id === deal.itemId);
-          if (dealItem) itemsToShow = [dealItem];
-          dealHeaderHtml = `
-            <div class="deal-banner">
-              <strong style="color:var(--gold-light);">🔥 صفقة اليوم — خصم ${deal.discountPct}%</strong>
-              <div style="font-size:0.82rem; color:#7dd3fc; margin-top:4px;">يتجدد العرض خلال: <strong id="dealCountdown">--:--:--</strong></div>
-            </div>
-          `;
+        if (this.shopTab === 'frames') {
+          const frames = (this.profile && this.profile.framesCatalog) || [];
+          box.innerHTML = frames.map((f) => {
+            const owned = Boolean(cos[f.id]);
+            const equipped = activeFrame === f.id;
+            const xpReady = f.reqXp > 0 && xp >= f.reqXp;
+            const pct = f.reqXp > 0 ? Math.min(100, Math.round((xp / f.reqXp) * 100)) : 0;
+            let actionHtml = '';
+            if (owned) {
+              actionHtml = `<button class="btn ${equipped ? 'btn-outline' : 'btn-gold'} btn-sm" style="flex:1;" onclick="ArenaApp.equipFrame('${equipped ? '' : f.id}')">${equipped ? 'إزالة الإطار' : '✅ تفعيل الإطار'}</button>`;
+            } else if (xpReady) {
+              actionHtml = `<button class="btn btn-gold btn-sm" style="flex:1;" onclick="ArenaApp.executeBuy('${f.id}')">🎉 فتح مجاناً (XP)</button>`;
+            } else if (f.price > 0) {
+              actionHtml = `<button class="btn btn-gold btn-sm" style="flex:1;" onclick="ArenaApp.openFrameBuyConfirm('${f.id}')">🪙 شراء (${f.price} عملة)</button>`;
+            } else {
+              actionHtml = `<button class="btn btn-outline btn-sm" style="flex:1;" disabled>🔒 يتطلب ${f.reqXp} XP</button>`;
+            }
+
+            return `
+              <div class="shop-card rarity-${f.rarity}">
+                <span class="shop-rarity-tag tag-${f.rarity}">Lv.${f.level} • ${rarityLabel[f.rarity] || 'عادي'}</span>
+                <div class="avatar-framed" style="width:68px; height:68px; margin:4px;">
+                  <img class="av-photo" src="${charImg}" />
+                  <img class="av-frame-img ${f.anim}" src="${f.file}" loading="lazy" />
+                </div>
+                <div style="flex:1;">
+                  <strong style="color:var(--gold-light); font-size:0.9rem;">${f.name}</strong>
+                  ${f.reqXp > 0 ? `<div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div><div style="font-size:0.7rem; color:var(--silver);">${owned ? '✅ مملوك' : (xpReady ? '🎉 مؤهل للفتح المجاني بالـ XP!' : `فتح مجاني عند ${f.reqXp} XP (لديك ${xp})`)}</div>` : `<div style="font-size:0.72rem; color:#7dd3fc; margin:4px 0;">إطار حصري يُقتنى بعملات معاذ</div>`}
+                  <div style="display:flex; gap:6px; margin-top:4px;">
+                    <button class="btn btn-outline btn-sm" style="width:auto;" onclick="ArenaApp.previewFrame('${f.id}')">👁️</button>
+                    ${actionHtml}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
         } else {
-          itemsToShow = window.ARENA_SHOP_ITEMS.filter((i) => i.category === this.shopTab);
-        }
-
-        const rarityLabel = { common: 'عادي', rare: 'نادر', epic: 'ملحمي', legendary: 'أسطوري' };
-
-        box.innerHTML = dealHeaderHtml + itemsToShow.map((item) => {
-          const finalPrice = this.getFinalShopPrice(item);
-          const isDeal = deal && deal.itemId === item.id;
-          const basePrice = item.origPrice || item.price;
-          const hasDiscount = item.price > 0 && finalPrice < basePrice;
-          const owned = item.type === 'cosmetic' ? Boolean(cos[item.id]) : (inv[item.id] || 0);
-          const imgUrl = window.ArenaVoice.getShopImgUrl(item);
-
-          let bottomHtml = '';
-          if (item.type === 'cosmetic') {
-            const pct = Math.min(100, Math.round((xp / item.reqXp) * 100));
-            const remXp = Math.max(0, item.reqXp - xp);
-            bottomHtml = `
-              <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
-              <div style="font-size:0.74rem; color:var(--silver);">${owned ? '✅ مفتوح لديك' : (remXp > 0 ? `متبقي ${remXp} XP للفتح المجاني` : '🎉 جاهز للفتح مجاناً!')}</div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-outline btn-sm" style="flex:1;" onclick="ArenaApp.previewFrame('${item.id}')">👁️ معاينة</button>
-                ${owned
-                  ? `<button class="btn btn-gold btn-sm" style="flex:1;" onclick="ArenaApp.equipFrame('${activeFrame === item.id ? '' : item.id}')">${activeFrame === item.id ? 'إزالة الإطار' : 'تفعيل الإطار'}</button>`
-                  : `<button class="btn btn-gold btn-sm" style="flex:1;" onclick="ArenaApp.executeBuy('${item.id}')">فتح مجاناً</button>`
-                }
-              </div>
-            `;
+          let itemsToShow = [];
+          let dealHeaderHtml = '';
+          if (this.shopTab === 'deal' && deal) {
+            const di = window.ARENA_SHOP_ITEMS.find((i) => i.id === deal.itemId);
+            if (di) itemsToShow = [di];
+            dealHeaderHtml = `<div class="card" style="text-align:center; border-color:var(--gold);"><strong style="color:#fde047;">🔥 صفقة اليوم — خصم ${deal.discountPct}%</strong></div>`;
           } else {
-            const priceLine = hasDiscount
-              ? `<span class="price-old">${basePrice}</span> <span class="price-new">${finalPrice} عملة</span>` +
-                (isSaver ? `<span class="saver-badge">خصم التوفير 5%</span>` : '') +
-                (isDeal ? `<span class="saver-badge" style="border-color:#f59e0b;color:#fbbf24;">عرض اليوم</span>` : '')
-              : `<span class="price-new">${finalPrice} عملة</span>`;
-
-            bottomHtml = `
-              <div style="margin-top:4px; font-size:0.84rem;">${priceLine}</div>
-              <button class="btn btn-gold btn-sm" onclick="ArenaApp.openBuyConfirm('${item.id}')">شراء الآن</button>
-            `;
+            itemsToShow = window.ARENA_SHOP_ITEMS.filter((i) => i.category === this.shopTab && i.type !== 'cosmetic');
           }
-
-          return `
-            <div class="shop-card rarity-${item.rarity}">
-              <span class="shop-rarity-tag tag-${item.rarity}">${rarityLabel[item.rarity] || 'عادي'}</span>
-              <div class="shop-icon-box">
-                <img src="${imgUrl}" alt="${item.name}" loading="lazy" onerror="this.parentElement.textContent='${item.emoji}'" />
+          box.innerHTML = dealHeaderHtml + itemsToShow.map((item) => {
+            const finalPrice = this.getFinalShopPrice(item);
+            const imgUrl = window.ArenaVoice.getShopImgUrl(item);
+            return `
+              <div class="shop-card rarity-${item.rarity}">
+                <span class="shop-rarity-tag tag-${item.rarity}">${rarityLabel[item.rarity] || 'عادي'}</span>
+                <div class="shop-icon-box"><img src="${imgUrl}" alt="${item.name}" loading="lazy" onerror="this.parentElement.textContent='${item.emoji}'" /></div>
+                <div style="flex:1;">
+                  <strong style="color:var(--gold-light); font-size:0.9rem;">${item.name}</strong>
+                  <p style="font-size:0.74rem; color:var(--silver); margin:4px 0;">${item.desc}</p>
+                  <div class="price-new">${finalPrice} عملة</div>
+                  <button class="btn btn-gold btn-sm" onclick="ArenaApp.openBuyConfirm('${item.id}')">شراء الآن</button>
+                </div>
               </div>
-              <div style="flex:1;">
-                <strong style="color:var(--gold-light); font-size:0.94rem;">${item.name}</strong>
-                <p style="font-size:0.76rem; color:var(--silver); margin:4px 0; line-height:1.4;">${item.desc}</p>
-                ${bottomHtml}
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // 3. مؤقت صفقة اليوم
-        if (this.shopTab === 'deal' && deal && deal.expiresAt) {
-          const tick = () => {
-            const el = document.getElementById('dealCountdown');
-            if (!el) return clearInterval(this.dealTimer);
-            const diff = Math.max(0, deal.expiresAt - Date.now());
-            const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
-            const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-            const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-            el.textContent = `${h}:${m}:${s}`;
-          };
-          tick();
-          this.dealTimer = setInterval(tick, 1000);
+            `;
+          }).join('');
         }
 
-        // 4. سجل آخر 5 مشتريات
-        const histBox = document.getElementById('shopHistoryBox');
         const hist = (this.profile && this.profile.shopHistory) || [];
-        histBox.innerHTML = hist.length === 0
+        document.getElementById('shopHistoryBox').innerHTML = hist.length === 0
           ? 'لا توجد مشتريات مسجلة بعد.'
-          : hist.map((h) => {
-              const dt = new Date(h.at).toLocaleDateString('ar-SY');
-              return `<div class="stat-row" style="border-top:1px solid rgba(255,255,255,0.08); padding:4px 0;">
-                <span>${h.name}</span>
-                <span style="color:var(--gold-light);">${h.price} عملة • ${dt}</span>
-              </div>`;
-            }).join('');
+          : hist.map((h) => `<div class="stat-row" style="border-top:1px solid rgba(255,255,255,0.07); padding:4px 0;"><span>${h.name}</span><span style="color:var(--gold-light);">${h.price} عملة</span></div>`).join('');
       },
 
       quickEquipItem(itemId) {
         const sel = document.getElementById('tacticalItemSelect');
-        if (sel) {
-          sel.value = itemId;
-          this.toast('تم تجهيز الأداة لجولتك القادمة!');
-        }
+        if (sel) { sel.value = itemId; this.toast('تم تجهيز الأداة لجولتك القادمة!'); }
       },
 
       previewFrame(frameId) {
-        const item = window.ARENA_SHOP_ITEMS.find((i) => i.id === frameId);
+        const meta = this.getFrameMeta(frameId);
+        if (!meta) return;
         const charId = this.profile ? this.profile.activeCharacterId : 'buddy';
-        document.getElementById('previewTitle').textContent = `معاينة: ${item ? item.name : ''}`;
+        document.getElementById('previewTitle').textContent = `معاينة: ${meta.name}`;
         document.getElementById('previewCharImg').src = window.ArenaVoice.getCharImgUrl(charId);
-        const ring = document.getElementById('previewRingEl');
-        ring.className = 'avatar-frame-ring ' + (frameId === 'frame_gold' ? 'frame-gold-ring' : 'frame-cyber-ring');
+        const fImg = document.getElementById('previewFrameImg');
+        fImg.src = meta.file;
+        fImg.className = `av-frame-img ${meta.anim}`;
         document.getElementById('previewOverlay').classList.remove('hidden');
       },
 
@@ -928,32 +1176,38 @@
         const res = await this.api('/cosmetic/equip', { frameId });
         if (res && res.ok) {
           this.profile.activeFrame = frameId;
-          this.applyEquippedFrame();
+          this.applyEquippedFrameUI();
           this.renderShop();
           this.toast(res.message);
         }
       },
 
+      openFrameBuyConfirm(frameId) {
+        const meta = this.getFrameMeta(frameId);
+        if (!meta) return;
+        let cost = meta.price;
+        if (this.profile?.activeCharacterId === 'saver') cost = Math.max(1, Math.floor(cost * 0.95));
+        this._showConfirmModal(meta.name, cost, frameId);
+      },
+
       openBuyConfirm(itemId) {
         const item = window.ARENA_SHOP_ITEMS.find((i) => i.id === itemId);
         if (!item) return;
-        const cost = this.getFinalShopPrice(item);
+        this._showConfirmModal(item.name, this.getFinalShopPrice(item), itemId);
+      },
+
+      _showConfirmModal(name, cost, itemId) {
         const cur = Number((this.profile && this.profile.points) || 0);
         const rem = cur - cost;
-
-        document.getElementById('confirmBuyDesc').textContent = `هل تريد شراء "${item.name}"؟`;
+        document.getElementById('confirmBuyDesc').textContent = `هل تريد شراء "${name}"؟`;
         document.getElementById('cbCurPts').textContent = `${cur} عملة`;
         document.getElementById('cbCostPts').textContent = `-${cost} عملة`;
         document.getElementById('cbRemPts').textContent = rem >= 0 ? `${rem} عملة` : 'رصيد غير كافٍ';
         document.getElementById('cbRemPts').style.color = rem >= 0 ? '#4ade80' : '#ef4444';
-
         const btn = document.getElementById('cbConfirmBtn');
         btn.disabled = rem < 0;
         btn.style.opacity = rem < 0 ? '0.5' : '1';
-        btn.onclick = () => {
-          document.getElementById('confirmBuyOverlay').classList.add('hidden');
-          this.executeBuy(itemId);
-        };
+        btn.onclick = () => { document.getElementById('confirmBuyOverlay').classList.add('hidden'); this.executeBuy(itemId); };
         document.getElementById('confirmBuyOverlay').classList.remove('hidden');
       },
 
@@ -961,7 +1215,7 @@
         const res = await this.api('/shop/buy', { itemId });
         if (res && res.ok) {
           this.toast(res.message);
-          if (this.profile) window.ArenaVoice.speak(this.profile.activeCharacterId, 'shop');
+          if (this.profile && window.ArenaVoice) window.ArenaVoice.speak(this.profile.activeCharacterId, 'shop');
           await this.syncProfile();
           this.renderShop();
         }
@@ -972,33 +1226,28 @@
         const hint = document.getElementById('rotateHint');
         try {
           if (overlay.requestFullscreen) await overlay.requestFullscreen();
-          if (screen.orientation && screen.orientation.lock) {
-            await screen.orientation.lock('landscape');
-            hint.classList.add('hidden');
-            return;
-          }
-        } catch (e) {}
+          if (screen.orientation?.lock) { await screen.orientation.lock('landscape'); hint.classList.add('hidden'); return; }
+        } catch (_) {}
         if (window.innerHeight > window.innerWidth) hint.classList.remove('hidden');
       },
 
       async exitLandscapeMode() {
         document.getElementById('rotateHint').classList.add('hidden');
         try {
-          if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+          if (screen.orientation?.unlock) screen.orientation.unlock();
           if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
-        } catch (e) {}
+        } catch (_) {}
       },
 
       startFlow(gameId, mode, stakePts, pvpMatchId = null) {
         const useItem = document.getElementById('tacticalItemSelect').value || null;
         const usePass = mode === 'record' && document.getElementById('usePassCheckbox').checked;
-        if (this.profile) window.ArenaVoice.speak(this.profile.activeCharacterId, 'start');
+        if (this.profile && window.ArenaVoice) window.ArenaVoice.speak(this.profile.activeCharacterId, 'start');
 
         let sec = 5;
         const overlay = document.getElementById('countdownOverlay');
         const numEl = document.getElementById('countdownNumber');
         const cancelBtn = document.getElementById('cancelMatchBtn');
-
         numEl.textContent = sec;
         cancelBtn.classList.remove('hidden');
         overlay.classList.remove('hidden');
@@ -1018,17 +1267,12 @@
 
             const session = await this.api(endpoint, payload);
             overlay.classList.add('hidden');
-            if (session && session.sessionId) {
-              this.launchGame(gameId, mode, stakePts, session);
-            }
+            if (session && session.sessionId) this.launchGame(gameId, mode, stakePts, session);
           }
         }, 1000);
       },
 
-      cancelCountdown() {
-        clearInterval(this.countdownTimer);
-        document.getElementById('countdownOverlay').classList.add('hidden');
-      },
+      cancelCountdown() { clearInterval(this.countdownTimer); document.getElementById('countdownOverlay').classList.add('hidden'); },
 
       async launchGame(gameId, mode, stakePts, session) {
         if (gameId === 'tower_match' && window.MoaathTowerUI) {
@@ -1039,37 +1283,23 @@
             sessionId: session.sessionId,
             personaId: session.characterId || (this.profile && this.profile.activeCharacterId) || 'buddy',
             activeItem: session.activeItem || null,
-            opponentTargetScore: (this.profile && this.profile.records && this.profile.records.tower_match && towerMode === 'record') ? this.profile.records.tower_match.currentRecord : 0,
+            opponentTargetScore: (this.profile?.records?.tower_match && towerMode === 'record') ? this.profile.records.tower_match.currentRecord : 0,
             onComplete: async (summary) => {
               const durationSec = Math.max(2, Math.round((summary.durationMs || 2000) / 1000));
               const telemetry = {
-                durationSec,
-                floorsCleared: summary.floorsCleared || 0,
-                totalMoves: summary.totalMoves || 0,
-                bossesDefeated: summary.bossesDefeated || 0,
-                maxCombo: summary.maxCombo || 1,
+                durationSec, floorsCleared: summary.floorsCleared || 0, totalMoves: summary.totalMoves || 0,
+                bossesDefeated: summary.bossesDefeated || 0, maxCombo: summary.maxCombo || 1,
                 snapshots: [{ t: durationSec, score: summary.score || 0, floor: summary.highestFloor || 1 }]
               };
-              const res = await this.api('/session/submit', {
-                sessionId: session.sessionId,
-                score: summary.score || 0,
-                telemetry
-              });
+              const res = await this.api('/session/submit', { sessionId: session.sessionId, score: summary.score || 0, telemetry });
               if (res) {
-                if (window.ArenaVoice && typeof window.ArenaVoice.speak === 'function') {
-                  window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
-                }
+                if (window.ArenaVoice) window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
                 document.getElementById('resultText').textContent = res.message;
                 const waBtn = document.getElementById('waShareBtn');
                 if (mode === 'pvp_create') {
                   waBtn.classList.remove('hidden');
-                  waBtn.onclick = () => {
-                    const txt = encodeURIComponent(`أتحداك في برج التحدي اللانهائي على ${stakePts} عملة! وصلت للطابق ${summary.highestFloor} بنتيجة (${summary.score})، هل تستطيع هزيمتي؟`);
-                    window.open(`https://wa.me/?text=${txt}`, '_blank');
-                  };
-                } else {
-                  waBtn.classList.add('hidden');
-                }
+                  waBtn.onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent(`أتحداك في برج التحدي اللانهائي على ${stakePts} عملة! نتيجتي (${summary.score})`)}`, '_blank');
+                } else waBtn.classList.add('hidden');
                 document.getElementById('resultOverlay').classList.remove('hidden');
                 this.syncProfile();
               }
@@ -1081,36 +1311,24 @@
         const canvas = document.getElementById('gameCanvas');
         overlay.classList.remove('hidden');
         await this.enterLandscapeMode();
-
-        const recScore = (this.profile && this.profile.records && this.profile.records[gameId])
-          ? this.profile.records[gameId].currentRecord : 0;
-
+        const recScore = this.profile?.records?.[gameId]?.currentRecord || 0;
         const engine = gameId === 'hill_drive' ? window.HillDriveGame : window.CyberShooterGame;
         engine.start(canvas, session.seed, async (score, telemetry) => {
           await this.exitLandscapeMode();
           overlay.classList.add('hidden');
           const res = await this.api('/session/submit', { sessionId: session.sessionId, score, telemetry });
           if (res) {
-            window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
+            if (window.ArenaVoice) window.ArenaVoice.speak(session.characterId, res.won ? 'win' : 'lose');
             document.getElementById('resultText').textContent = res.message;
             const waBtn = document.getElementById('waShareBtn');
             if (mode === 'pvp_create') {
               waBtn.classList.remove('hidden');
-              waBtn.onclick = () => {
-                const txt = encodeURIComponent(`أتحداك في عالم تحديات معاذ على ${stakePts} عملة! نتيجتي (${score})، هل تستطيع هزيمتي؟`);
-                window.open(`https://wa.me/?text=${txt}`, '_blank');
-              };
-            } else {
-              waBtn.classList.add('hidden');
-            }
+              waBtn.onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent(`أتحداك في عالم تحديات معاذ على ${stakePts} عملة! نتيجتي (${score})`)}`, '_blank');
+            } else waBtn.classList.add('hidden');
             document.getElementById('resultOverlay').classList.remove('hidden');
             this.syncProfile();
           }
-        }, {
-          characterId: session.characterId,
-          activeItem: session.activeItem,
-          recordScore: recScore
-        });
+        }, { characterId: session.characterId, activeItem: session.activeItem, recordScore: recScore });
       },
 
       closeResult() { document.getElementById('resultOverlay').classList.add('hidden'); },
@@ -1126,10 +1344,7 @@
         const box = document.getElementById('pvpListContainer');
         box.textContent = 'جاري التحميل...';
         const res = await this.api('/pvp/list');
-        if (!res || !res.matches || res.matches.length === 0) {
-          box.textContent = 'لا توجد تحديات مفتوحة حالياً.';
-          return;
-        }
+        if (!res || !res.matches || res.matches.length === 0) { box.textContent = 'لا توجد تحديات مفتوحة حالياً.'; return; }
         box.innerHTML = res.matches.map((m) => `
           <div style="border-top:1px solid rgba(255,255,255,0.1); padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
@@ -1144,7 +1359,7 @@
       async requestCashout(tierPts) {
         const res = await this.api('/bridge/cashout', { tierPts });
         if (res && res.ok) {
-          this.toast(`تم خصم ${tierPts} عملة (${res.usdAmount}$). سيُراجع السجل خلال ساعة.`);
+          this.toast(`تم خصم ${tierPts} عملة بنجاح. سيُراجع السجل خلال ساعة وتُضاف لرصيدك في المتجر.`);
           this.syncProfile();
         }
       }

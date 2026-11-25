@@ -32,7 +32,25 @@ const CORE_ASSETS = [
   './assets/tower_match/boss_1_bronze.png',
   './assets/tower_match/boss_2_cyber.png',
   './assets/tower_match/boss_3_emerald.png',
-  './assets/tower_match/boss_4_gold.png'
+  './assets/tower_match/boss_4_gold.png',
+  './assets/icons/game_tower.png',
+  './assets/icons/game_hill.png',
+  './assets/icons/game_shooter.png',
+  './assets/frames/frame_01_steel.png',
+  './assets/frames/frame_02_bronze.png',
+  './assets/frames/frame_03_silver.png',
+  './assets/frames/frame_04_neon_blue.png',
+  './assets/frames/frame_05_emerald.png',
+  './assets/frames/frame_06_flame.png',
+  './assets/frames/frame_07_frost.png',
+  './assets/frames/frame_08_lightning.png',
+  './assets/frames/frame_09_amethyst.png',
+  './assets/frames/frame_10_gold_crown.png',
+  './assets/frames/frame_11_cyber_diamond.png',
+  './assets/frames/frame_12_phoenix.png',
+  './assets/frames/frame_13_dragon.png',
+  './assets/frames/frame_14_galaxy.png',
+  './assets/frames/frame_15_emperor.png'
 ];
 
 // 1. التثبيت: حفظ الملفات الأساسية فوراً
