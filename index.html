@@ -282,6 +282,7 @@
 
       <div class="tabs">
         <button class="tab-btn active" onclick="ArenaApp.switchTab('records', this)">👑 الأرقام</button>
+        <button class="tab-btn" onclick="ArenaApp.switchTab('weekly', this)">🏆 الأسبوعية</button>
         <button class="tab-btn" onclick="ArenaApp.switchTab('pvp', this)">⚔️ PvP</button>
         <button class="tab-btn" onclick="ArenaApp.switchTab('chars', this)">🎭 الشخصيات</button>
         <button class="tab-btn" onclick="ArenaApp.switchTab('shop', this)">🛒 المتجر</button>
@@ -326,6 +327,16 @@
             <button class="btn btn-blue btn-sm" style="flex:1; margin-top:0;" onclick="window.MoaathTowerUI && window.MoaathTowerUI.launch({ mode: 'daily_boss', personaId: (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy' })">📅 الزعيم اليومي</button>
           </div>
         </div>
+      </div>
+
+            <!-- 1.5 البطولة الأسبوعية المستقلة لكل لعبة -->
+      <div id="tab-weekly" class="hidden">
+        <div class="filter-row">
+          <button class="filter-pill active" onclick="ArenaApp.setWeeklyGame('tower_match', this)">🏰 برج التحدي</button>
+          <button class="filter-pill" onclick="ArenaApp.setWeeklyGame('hill_drive', this)">🚗 قيادة التلال</button>
+          <button class="filter-pill" onclick="ArenaApp.setWeeklyGame('cyber_shooter', this)">🔫 ميجا شوتر</button>
+        </div>
+        <div id="weeklyContainer" class="card" style="text-align:center; color:var(--silver);">جاري تحميل البطولة الأسبوعية...</div>
       </div>
 
       <!-- 2. ساحة PvP -->
@@ -517,6 +528,83 @@
         localStorage.setItem('arena_data_saver', enabled ? '1' : '0');
       },
 
+
+      weeklyGame: 'tower_match',
+      weeklyData: null,
+
+      setWeeklyGame(gId, btn) {
+        this.weeklyGame = gId;
+        document.querySelectorAll('#tab-weekly .filter-pill').forEach((b) => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        this.renderWeekly();
+      },
+
+      async loadWeeklyStatus() {
+        const box = document.getElementById('weeklyContainer');
+        if (box) box.innerHTML = 'جاري تحميل بيانات البطولة الأسبوعية...';
+        const res = await this.api('/weekly/status');
+        if (res && res.tournaments) {
+          this.weeklyData = res.tournaments;
+          this.renderWeekly();
+        }
+      },
+
+      renderWeekly() {
+        const box = document.getElementById('weeklyContainer');
+        if (!box || !this.weeklyData) return;
+        const w = this.weeklyData[this.weeklyGame];
+        if (!w) { box.innerHTML = 'لا توجد بيانات لهذه اللعبة.'; return; }
+
+        const now = Date.now();
+        const diffMs = Math.max(0, w.endAt - now);
+        const days = Math.floor(diffMs / 86400000);
+        const hrs = Math.floor((diffMs % 86400000) / 3600000);
+        const mins = Math.floor((diffMs % 3600000) / 60000);
+        const timeStr = w.status === 'active'
+          ? `ينتهي خلال: ${days}ي ${hrs}س ${mins}د`
+          : (w.status === 'scheduled' ? 'تبدأ قريباً' : 'تم إغلاق الدورة وتوزيع الجوائز');
+
+        const pctLabels = ['40%', '20%', '15%', '5%', '4%', '3.5%', '2.5%'];
+        const boardHtml = w.top7.length === 0
+          ? '<p style="font-size:0.82rem; color:var(--silver); padding:8px;">كن أول من يسجّل رقماً في هذه البطولة!</p>'
+          : w.top7.map((row) => `
+              <div class="stat-row" style="padding:6px 8px; border-radius:8px; background:${row.isMe ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${row.isMe ? '#22c55e' : 'rgba(255,255,255,0.06)'};">
+                <span><strong>#${row.rank}</strong> ${row.displayName} <small style="color:#94a3b8;">(${pctLabels[row.rank - 1]})</small></span>
+                <span><strong style="color:#fff;">${row.bestScore}</strong> • <strong style="color:#4ade80;">${row.prizePts} عملة</strong></span>
+              </div>
+            `).join('');
+
+        box.innerHTML = `
+          <div style="text-align:right;">
+            <div class="stat-row"><strong style="color:var(--gold-light); font-size:1rem;">🏆 ${w.title}</strong><span style="color:#7dd3fc; font-size:0.78rem;">${timeStr}</span></div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:10px 0; text-align:center;">
+              <div style="background:#070c18; border:1px solid rgba(212,175,55,0.35); border-radius:10px; padding:7px;">
+                <div style="font-size:0.7rem; color:#94a3b8;">وعاء الجوائز</div>
+                <strong style="color:#facc15; font-size:0.95rem;">${w.poolPts} عملة</strong>
+              </div>
+              <div style="background:#070c18; border:1px solid rgba(34,197,94,0.35); border-radius:10px; padding:7px;">
+                <div style="font-size:0.7rem; color:#94a3b8;">جائزة الأول (40%)</div>
+                <strong style="color:#4ade80; font-size:0.95rem;">${w.rankPrizes[0] || 0} عملة</strong>
+              </div>
+              <div style="background:#070c18; border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:7px;">
+                <div style="font-size:0.7rem; color:#94a3b8;">رسم الدخول</div>
+                <strong style="color:#7dd3fc; font-size:0.95rem;">${w.entryFeePts} عملة</strong>
+              </div>
+            </div>
+            <div style="font-size:0.74rem; color:var(--silver); margin-bottom:8px;">
+              توزيع الوعاء: 10% إدارة • 40% أول • 20% ثاني • 15% ثالث • 5% رابع • 4% خامس • 3.5% سادس • 2.5% سابع
+            </div>
+            ${w.myRank ? `<div style="font-size:0.8rem; color:#4ade80; margin-bottom:8px;">🏅 ترتيبك الحالي: <strong>#${w.myRank}</strong> (أعلى نتيجة: <strong>${w.myBest}</strong>)</div>` : ''}
+            ${w.status === 'active'
+              ? `<button class="btn btn-gold" onclick="ArenaApp.startFlow('${w.gameId}', 'weekly', ${w.entryFeePts})">🔥 دخول جولة البطولة (${w.entryFeePts} عملة)</button>`
+              : `<button class="btn btn-outline" disabled>البطولة مغلقة حالياً</button>`
+            }
+            <h4 style="color:var(--gold-light); margin:12px 0 6px 0; font-size:0.88rem;">👑 لوحة المتصدرين (المراكز 1 إلى 7)</h4>
+            ${boardHtml}
+          </div>
+        `;
+      },
+
       setCharFilter(filter, btn) {
         this.charFilter = filter;
         document.querySelectorAll('#tab-chars .filter-pill').forEach((b) => b.classList.remove('active'));
@@ -532,10 +620,11 @@
       },
 
       switchTab(tab, btn) {
-        ['records', 'pvp', 'chars', 'shop', 'wallet'].forEach((t) => document.getElementById(`tab-${t}`).classList.add('hidden'));
+        ['records', 'weekly', 'pvp', 'chars', 'shop', 'wallet'].forEach((t) => document.getElementById(`tab-${t}`).classList.add('hidden'));
         document.getElementById(`tab-${tab}`).classList.remove('hidden');
         document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
+        if (tab === 'weekly') this.loadWeeklyStatus();
         if (tab === 'pvp') this.loadPvpList();
         if (tab === 'chars') this.renderCharacters();
         if (tab === 'shop') this.renderShop();
