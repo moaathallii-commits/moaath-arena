@@ -163,7 +163,7 @@
       this.bankedSafeScore = 0;
       this.riskMultiplier = this.mode === "hardcore" ? 1.5 : 1.0;
 
-      this.skillCharge = (this.activeItem === "double_xp" || this.activeItem === "tower_skill50") ? 50 : 0;
+      this.skillCharge = (this.activeItem === "tower_skill50") ? 50 : 0;
       this.maxCombo = 0;
       this.totalMoves = 0;
       this.floorsCleared = 0;
@@ -172,8 +172,12 @@
       this.elapsedMs = 0;
       this.endReason = null;
 
-      if (this.activeItem === "shield_1" || this.activeItem === "tower_bomb") {
+      if (this.activeItem === "tower_bomb" || this.activeItem === "shield_1") {
         this.board.spawnStartingSpecial("bomb_3x3");
+      } else if (this.activeItem === "tower_row") {
+        this.board.spawnStartingSpecial("row_blast");
+      } else if (this.activeItem === "tower_wildcard") {
+        this.board.spawnStartingSpecial("prism_core");
       }
       if (this.mode === "hardcore") {
         this.board.applyIceObstacles(3, 2);
