@@ -527,7 +527,9 @@ export default {
         case '/weekly/status':
           return handleWeeklyStatus(env, player);
         case '/pvp/list':
-          return handlePvpList(env, player);
+          return handlePvpList(env, player, body);
+        case '/pvp/bounty-leaders':
+          return handlePvpBountyLeaders(env);
         case '/pvp/cancel':
           return handlePvpCancel(env, player, body);
         case '/pvp/prestige/equip':
@@ -1237,11 +1239,13 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
 
   if (session.mode === 'pvp_create') {
     const matchId = `pvp_${crypto.randomUUID().slice(0, 8)}`;
+    const roomCode = session.isPrivate ? String(Math.floor(1000 + Math.random() * 9000)) : '';
     await fbPatch(env, `arena_world/pvp_matches/${matchId}`, {
       matchId, gameId: session.gameId, creatorPhone: player.phone, creatorName: player.displayName,
       creatorCharId: charId, creatorPrestigeId: (((player.games && player.games.tower_match) || {}).activePvpPrestige) || '',
       creatorScore: score, stakePts: session.stakePts, seed: session.seed,
-      isPermanent: true, bountyPts: 0, defensesCount: 0, uniqueVictims: {}, activeChallenge: null,
+      isPermanent: true, isPrivate: Boolean(session.isPrivate), roomCode,
+      bountyPts: 0, defensesCount: 0, uniqueVictims: {}, activeChallenge: null,
       status: 'open', createdAt: now
     });
     outcomeMsg = `💀 تم نشر تحديك الدائم في الساحة بنتيجة (${score}) ومبلغ (${session.stakePts} عملة)! كل من يخسر ضدك سيمنحك 80% ويرفع جائزة الصيد على رأسك!`;
@@ -1431,11 +1435,33 @@ function validateTelemetry(session, score, telemetry) {
   return { valid: true };
 }
 
-async function handlePvpList(env, player = null) {
+async function handlePvpBountyLeaders(env) {
+  const matches = (await fbGet(env, 'arena_world/pvp_matches')) || {};
+  const leaders = Object.values(matches)
+    .filter((m) => m && (Number(m.bountyPts || 0) > 0 || Number(m.defensesCount || 0) > 0))
+    .sort((a, b) => (Number(b.bountyPts || 0) - Number(a.bountyPts || 0)) || (Number(b.defensesCount || 0) - Number(a.defensesCount || 0)))
+    .slice(0, 5)
+    .map((m) => ({
+      creatorName: m.creatorName,
+      creatorCharId: m.creatorCharId || 'buddy',
+      bountyPts: Number(m.bountyPts || 0),
+      defensesCount: Number(m.defensesCount || 0)
+    }));
+  return jsonResponse({ ok: true, leaders });
+}
+
+async function handlePvpList(env, player = null, body = {}) {
   const now = Date.now();
+  const filterCode = String((body && body.roomCode) || '').trim();
   const matches = (await fbGet(env, 'arena_world/pvp_matches')) || {};
   const openList = Object.values(matches)
-    .filter((m) => m && m.status === 'open')
+    .filter((m) => {
+      if (!m || m.status !== 'open') return false;
+      if (m.isPrivate) {
+        return Boolean(filterCode && String(m.roomCode || '') === filterCode) || Boolean(player && m.creatorPhone === player.phone);
+      }
+      return true;
+    })
     .map((m) => {
       const inBattle = Boolean(m.activeChallenge && Number(m.activeChallenge.expiresAt || 0) > now);
       return {
@@ -1459,7 +1485,7 @@ async function handlePvpList(env, player = null) {
 }
 
 async function handlePvpCreate(env, player, body, config) {
-  return handleSessionStart(env, player, { gameId: body.gameId, mode: 'pvp_create', stakePts: Number(body.stakePts || 20), useItem: body.useItem, idempotencyKey: body.idempotencyKey }, config);
+  return handleSessionStart(env, player, { gameId: body.gameId, mode: 'pvp_create', stakePts: Number(body.stakePts || 20), useItem: body.useItem, isPrivate: Boolean(body.isPrivate), idempotencyKey: body.idempotencyKey }, config);
 }
 
 async function handlePvpJoin(env, player, { matchId, useItem, idempotencyKey }, config) {
