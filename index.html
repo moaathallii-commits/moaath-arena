@@ -1739,7 +1739,7 @@
             MythicFX.playBadgeUnlock();
           }
           alert(res.message || 'تم تسجيل الحضور!');
-          await this.loadProfile();
+          await this.syncProfile();
           this.renderPhase3UI();
           this.renderTowerStreak();
         } catch (err) { alert(err.message || 'تعذر تسجيل الحضور.'); }
@@ -1750,18 +1750,18 @@
           const res = await this.api('/tower/cosmetic/equip', payload);
           MythicFX.playBadgeUnlock();
           alert(res.message || 'تم التجهيز!');
-          await this.loadProfile();
+          await this.syncProfile();
           this.renderPhase3UI();
           this.renderTowerStreak();
         } catch (err) { alert(err.message || 'تعذر التجهيز.'); }
       };
 
       // Hook into loadProfile to show Hub first on fresh load and update Phase 3 UI
-      if (typeof ArenaApp.loadProfile === 'function') {
-        const origLoadProfile = ArenaApp.loadProfile.bind(ArenaApp);
+      if (typeof ArenaApp.syncProfile === 'function') {
+        const origSyncProfile = ArenaApp.syncProfile.bind(ArenaApp);
         let firstHubShown = false;
-        ArenaApp.loadProfile = async function(...args) {
-          const r = await origLoadProfile(...args);
+        ArenaApp.syncProfile = async function(...args) {
+          const r = await origSyncProfile(...args);
           this.renderPhase3UI();
           if (!firstHubShown) {
             firstHubShown = true;
