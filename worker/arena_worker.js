@@ -271,6 +271,108 @@ async function runAutomaticTowerStreakForPlayer(env, player) {
   return { autoClaimed: true, streakDays, newlyUnlocked };
 }
 
+
+// ============================================================================
+// المرحلة 8: التحدي الدائم (Bounty PvP) + الأدوات الفخرية الأسطورية + نظام الإحالة الصارم (5%)
+// ============================================================================
+const PVP_DEFENSE_PRESTIGE = [
+  { count: 5,  id: 'pvp_def_5',  name: '🛡️ حارس الساحة',          rarity: 'rare' },
+  { count: 10, id: 'pvp_def_10', name: '⚔️ صائد المتحدين',         rarity: 'epic' },
+  { count: 15, id: 'pvp_def_15', name: '🔥 مرعب الساحة',           rarity: 'epic' },
+  { count: 20, id: 'pvp_def_20', name: '💀 جلاد الـ PvP',          rarity: 'legendary' },
+  { count: 25, id: 'pvp_def_25', name: '👑 سيد الجماجم',           rarity: 'legendary' },
+  { count: 50, id: 'pvp_def_50', name: '🌌 إمبراطور الجماجم الخالد', rarity: 'mythic' }
+];
+
+const PVP_STREAK_PRESTIGE = [
+  { count: 3,  id: 'pvp_str_3',  name: '⚡ شرارة الانتصار (×3)',     rarity: 'rare' },
+  { count: 5,  id: 'pvp_str_5',  name: '🌪️ عاصفة الساحة (×5)',      rarity: 'epic' },
+  { count: 10, id: 'pvp_str_10', name: '🔥 قاهر الأبطال (×10)',     rarity: 'legendary' },
+  { count: 20, id: 'pvp_str_20', name: '🏆 أسطورة الـ PvP المطلقة', rarity: 'mythic' }
+];
+
+async function ensurePlayerRefCode(env, player) {
+  if (player.refCode) return player.refCode;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('ref_' + String(player.phone || '')));
+  const code = 'MTH' + Array.from(new Uint8Array(buf)).slice(0, 4).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  await fbPatch(env, `arena_world/players/${player.phone}`, { refCode: code });
+  await fbPatch(env, `arena_world/ref_codes/${code}`, { phone: player.phone, createdAt: Date.now() });
+  player.refCode = code;
+  return code;
+}
+
+async function resolveValidReferrer(env, refCode, newPhone, deviceId) {
+  const cleanCode = String(refCode || '').trim().toUpperCase();
+  if (!cleanCode || cleanCode.length < 5) return '';
+  const refObj = await fbGet(env, `arena_world/ref_codes/${cleanCode}`);
+  if (!refObj || !refObj.phone) return '';
+  const refPhone = String(refObj.phone);
+  // قيد صارم 1: منع الإحالة الذاتية
+  if (refPhone === String(newPhone)) return '';
+  // قيد صارم 2: منع الإحالة من نفس الجهاز
+  const devObj = deviceId ? await fbGet(env, `arena_world/devices/${deviceId}`) : null;
+  if (devObj && String(devObj.phone || '') === refPhone) return '';
+  const refPlayer = await fbGet(env, `arena_world/players/${refPhone}`);
+  if (!refPlayer || refPlayer.frozen || (deviceId && refPlayer.lastDeviceId === deviceId)) return '';
+  return refPhone;
+}
+
+async function creditReferralFromApprovedTopup(env, player, addedCoins, sourceTxId) {
+  const refPhone = player && player.referredBy ? String(player.referredBy) : '';
+  if (!refPhone || refPhone === String(player.phone)) return;
+  const bonus = Math.floor(Number(addedCoins || 0) * 0.05);
+  if (bonus <= 0) return;
+
+  // قيد صارم 3: لا يُصرف البونص إلا للاعب حقيقي أكمل جولة لعب واحدة على الأقل
+  if (Number(player.totalRoundsPlayed || 0) < 1) {
+    const prevPending = Number(player.pendingRefBonusPts || 0);
+    await fbPatch(env, `arena_world/players/${player.phone}`, { pendingRefBonusPts: prevPending + bonus });
+    return;
+  }
+
+  const referrer = await fbGet(env, `arena_world/players/${refPhone}`);
+  if (!referrer || referrer.frozen) return;
+  const now = Date.now();
+  await updatePlayerBalance(env, referrer, bonus, {
+    txId: `ref5_${sourceTxId}`, type: 'referral_bonus_5pct', delta: bonus, fromPhone: player.phone, at: now
+  });
+  const stats = referrer.referralStats || {};
+  await fbPatch(env, `arena_world/players/${refPhone}/referralStats`, {
+    totalEarnedPts: Number(stats.totalEarnedPts || 0) + bonus,
+    totalCount: Number(stats.totalCount || 0)
+  });
+  const admStats = (await fbGet(env, 'arena_world/admin_stats')) || {};
+  await fbPatch(env, 'arena_world/admin_stats', {
+    referralPaidPts: Number(admStats.referralPaidPts || 0) + bonus
+  });
+  await pushPlayerNotification(env, refPhone, {
+    kind: 'referral_bonus',
+    title: '🎁 عمولة إحالة (5%)!',
+    body: `حصلت على +${bonus.toLocaleString()} عملة من شحن أحد أصدقائك المدعوين!`
+  });
+}
+
+async function releasePendingReferralIfEligible(env, player) {
+  const pending = Number(player.pendingRefBonusPts || 0);
+  if (pending <= 0 || !player.referredBy || player.referredBy === player.phone) return;
+  await fbPatch(env, `arena_world/players/${player.phone}`, { pendingRefBonusPts: 0 });
+  const referrer = await fbGet(env, `arena_world/players/${player.referredBy}`);
+  if (!referrer || referrer.frozen) return;
+  const now = Date.now();
+  await updatePlayerBalance(env, referrer, pending, {
+    txId: `ref5_rel_${now}`, type: 'referral_bonus_5pct', delta: pending, fromPhone: player.phone, at: now
+  });
+  const stats = referrer.referralStats || {};
+  await fbPatch(env, `arena_world/players/${player.referredBy}/referralStats`, {
+    totalEarnedPts: Number(stats.totalEarnedPts || 0) + pending,
+    totalCount: Number(stats.totalCount || 0)
+  });
+  const admStats = (await fbGet(env, 'arena_world/admin_stats')) || {};
+  await fbPatch(env, 'arena_world/admin_stats', {
+    referralPaidPts: Number(admStats.referralPaidPts || 0) + pending
+  });
+}
+
 const DAILY_DEAL_POOL = ['tower_bomb', 'tower_row', 'tower_wildcard', 'double_xp', 'streak_shield'];
 
 function getTodayDailyDeal() {
@@ -409,7 +511,9 @@ export default {
         case '/weekly/status':
           return handleWeeklyStatus(env, player);
         case '/pvp/list':
-          return handlePvpList(env);
+          return handlePvpList(env, player);
+        case '/pvp/cancel':
+          return handlePvpCancel(env, player, body);
         case '/pvp/create':
           return handlePvpCreate(env, player, body, config);
         case '/pvp/join':
@@ -548,6 +652,7 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
   }
 
   await updatePlayerBalance(env, player, coinsToAdd, { txId: idempotencyKey, type: 'store_topup_syp', delta: coinsToAdd, at: now });
+  await creditReferralFromApprovedTopup(env, player, coinsToAdd, idempotencyKey);
   await fbPatch(env, `arena_world/bridge_transfers/${idempotencyKey}`, { status: 'completed', completedAt: Date.now() });
 
   return jsonResponse({
@@ -609,7 +714,7 @@ async function handleAdminDashboard(env, config) {
       const sypRate = Math.max(1, Number(config.usdToSypRate || 150));
       const totalSyp = Math.round(totalPts * buySyp);
       const totalUsd = Number((totalSyp / sypRate).toFixed(2));
-      return { totalPts, totalUsd, totalSyp, bySource: (adminStats && adminStats.bySource) || {} };
+      return { totalPts, totalUsd, totalSyp, referralPaidPts: Number((adminStats && adminStats.referralPaidPts) || 0), bySource: (adminStats && adminStats.bySource) || {} };
     })(),
     pendingCashouts, pendingTopups, recentAlerts, frozenPlayers,
     weeklyTournaments: await getAllWeeklySummaries(env),
@@ -702,7 +807,7 @@ async function getPlayerUnlockedVips(env, phone) {
   return unlocked;
 }
 
-async function handleBindDevice(env, { bindKey, deviceId }, config) {
+async function handleBindDevice(env, { bindKey, deviceId, refCode }, config) {
   if (!bindKey || !deviceId) return jsonResponse({ code: 'ERR_BIND_01', message: 'بيانات ناقصة' }, 400);
   const keyData = await fbGet(env, `arena_world/bind_keys/${bindKey}`);
   if (!keyData || keyData.used) return jsonResponse({ code: 'ERR_BIND_02', message: 'المعرف غير صحيح أو مستخدم مسبقاً.' }, 403);
@@ -718,11 +823,18 @@ async function handleBindDevice(env, { bindKey, deviceId }, config) {
   const existingPlayer = await fbGet(env, playerPath);
   if (!existingPlayer) {
     const welcomePts = Number(config.welcomePoints || 0);
+    const validRef = await resolveValidReferrer(env, refCode, keyData.phone, deviceId);
     await fbPatch(env, playerPath, {
       phone: keyData.phone, displayName: keyData.displayName || 'لاعب جديد', activeCharacterId: 'buddy', activeFrame: '',
       points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
-      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
+      winStreak: 0, recordsBroken: 0, totalRoundsPlayed: 0, referredBy: validRef, lastDeviceId: deviceId,
+      inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
     });
+    if (validRef) {
+      const rp = await fbGet(env, `arena_world/players/${validRef}`);
+      const rStats = (rp && rp.referralStats) || {};
+      await fbPatch(env, `arena_world/players/${validRef}/referralStats`, { totalCount: Number(rStats.totalCount || 0) + 1, totalEarnedPts: Number(rStats.totalEarnedPts || 0) });
+    }
   } else {
     await fbPatch(env, playerPath, { deviceToken });
   }
@@ -748,7 +860,13 @@ async function handleProfile(env, player, config = {}) {
   const towerData = getTowerPlayerData(player);
   const todayStr = new Date().toISOString().slice(0, 10);
   const canCheckInToday = towerData.lastCheckInDate !== todayStr;
+  const myRefCode = await ensurePlayerRefCode(env, player);
   return jsonResponse({
+    refCode: myRefCode,
+    referralStats: player.referralStats || { totalCount: 0, totalEarnedPts: 0 },
+    pvpPrestige: (((player.games && player.games.tower_match) || {}).prestige) || {},
+    pvpDefenseCatalog: PVP_DEFENSE_PRESTIGE,
+    pvpStreakCatalog: PVP_STREAK_PRESTIGE,
     displayName: player.displayName,
     broadcast: getActiveBroadcast(config),
     towerData: { ...towerData, canCheckInToday },
@@ -954,10 +1072,14 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
 
   if (playMode === 'weekly' && cost > 0) {
     const wtCur = await ensureWeeklyTournament(env, gameId);
-    const nextPool = Number(wtCur.poolPts || 0) + cost;
+    const nextSeedAdd = Math.floor(cost * 0.05); // 5% رصيد بداية للبطولة القادمة
+    const poolAdd = Math.max(0, cost - nextSeedAdd);
+    const nextPool = Number(wtCur.poolPts || 0) + poolAdd;
+    const nextSeedTotal = Number(wtCur.nextWeeklySeedPts || 0) + nextSeedAdd;
     const nextEntriesCount = Number(wtCur.totalRounds || 0) + 1;
     await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
       poolPts: nextPool,
+      nextWeeklySeedPts: nextSeedTotal,
       totalRounds: nextEntriesCount
     });
   }
@@ -1092,36 +1214,90 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     const matchId = `pvp_${crypto.randomUUID().slice(0, 8)}`;
     await fbPatch(env, `arena_world/pvp_matches/${matchId}`, {
       matchId, gameId: session.gameId, creatorPhone: player.phone, creatorName: player.displayName,
-      creatorScore: score, stakePts: session.stakePts, seed: session.seed, status: 'open', createdAt: now
+      creatorCharId: charId, creatorScore: score, stakePts: session.stakePts, seed: session.seed,
+      isPermanent: true, bountyPts: 0, defensesCount: 0, uniqueVictims: {}, activeChallenge: null,
+      status: 'open', createdAt: now
     });
-    outcomeMsg = `تم نشر تحديك في الساحة بنتيجة (${score}) ورهان (${session.stakePts} عملة)!`;
+    outcomeMsg = `💀 تم نشر تحديك الدائم في الساحة بنتيجة (${score}) ومبلغ (${session.stakePts} عملة)! كل من يخسر ضدك سيمنحك 80% ويرفع جائزة الصيد على رأسك!`;
   }
 
   if (session.mode === 'pvp_join' && session.pvpMatchId) {
     const match = await fbGet(env, `arena_world/pvp_matches/${session.pvpMatchId}`);
     if (match && match.status === 'open') {
-      const pot = Number(match.stakePts) * 2;
-      let houseEdgePct = Number(config.pvpHouseEdgePct || 10);
-      if (charId === 'princess_layla') houseEdgePct = Math.max(5, houseEdgePct - 2);
-      const fee = Math.floor(pot * (houseEdgePct / 100));
-      const prize = pot - fee;
-      const rec = await fbGet(env, `arena_world/admin_records/${match.gameId}`);
-      if (rec) await fbPatch(env, `arena_world/admin_records/${match.gameId}`, { jackpotPts: Number(rec.jackpotPts || 100) + Math.floor(fee / 2) });
-      await recordAdminRevenue(env, 'pvp', Math.ceil(fee / 2));
+      const S = Number(match.stakePts || 0);
+      const currentBounty = Number(match.bountyPts || 0);
 
-      let winnerPhone = null;
       if (score > match.creatorScore) {
-        won = true; winnerPhone = player.phone; rewardPts = prize;
-        await updatePlayerBalance(env, player, prize, { txId: `pvp_win_${match.matchId}`, type: 'pvp_win', delta: prize, at: now });
-        await fbPatch(env, `arena_world/players/${player.phone}`, { wins: (player.wins || 0) + 1, winStreak: (player.winStreak || 0) + 1 });
-        outcomeMsg = `🏆 فزت بالتحدي! (${score} مقابل ${match.creatorScore}) وربحت ${prize} عملة معاذ!`;
+        // فوز المتحدي: 80% من مجموع ما دفعه الطرفان + كامل الـ bountyPts، و20% كاملة للإدارة
+        won = true;
+        const totalStakes = S * 2;
+        const baseWin = Math.floor(totalStakes * 0.80);
+        const adminCut = totalStakes - baseWin; // 20% كاملة للإدارة
+        const totalPrize = baseWin + currentBounty;
+        rewardPts = totalPrize;
+
+        await recordAdminRevenue(env, 'pvp', adminCut);
+        await updatePlayerBalance(env, player, totalPrize, { txId: `pvp_win_${match.matchId}_${now}`, type: 'pvp_bounty_win', delta: totalPrize, at: now });
+
+        const newStreak = (player.winStreak || 0) + 1;
+        const uniqueBeaten = { ...((((player.games && player.games.tower_match) || {}).pvpUniqueBeaten) || {}), [match.creatorPhone]: true };
+        const prestige = { ...((((player.games && player.games.tower_match) || {}).prestige) || {}) };
+        // شرط صامت لمنع تجميع الألقاب بالاتفاق: ضد 3 لاعبين مختلفين على الأقل
+        if (Object.keys(uniqueBeaten).length >= 3) {
+          for (const ms of PVP_STREAK_PRESTIGE) {
+            if (newStreak >= ms.count && !prestige[ms.id]) {
+              prestige[ms.id] = { id: ms.id, name: ms.name, rarity: ms.rarity, unlockedAt: now };
+            }
+          }
+        }
+        await fbPatch(env, `arena_world/players/${player.phone}`, { wins: (player.wins || 0) + 1, winStreak: newStreak });
+        await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, { pvpUniqueBeaten: uniqueBeaten, prestige });
+        await fbPatch(env, `arena_world/pvp_matches/${match.matchId}`, {
+          opponentPhone: player.phone, opponentName: player.displayName, opponentScore: score,
+          winnerPhone: player.phone, status: 'completed', bountyPts: 0, activeChallenge: null, completedAt: now
+        });
+        await pushPlayerNotification(env, match.creatorPhone, {
+          kind: 'pvp_dethroned',
+          title: '💥 سقط تحديك الدائم!',
+          body: `هزمك ${player.displayName} (${score} مقابل ${match.creatorScore}) وحصد ${totalPrize.toLocaleString()} عملة!`
+        });
+        outcomeMsg = `🏆 أسطورة! هزمت ${match.creatorName} (${score} مقابل ${match.creatorScore}) وربحت ${totalPrize.toLocaleString()} عملة` + (currentBounty > 0 ? ` (منها ${currentBounty} جائزة صيد 🎯)!` : '!');
       } else if (score < match.creatorScore) {
-        winnerPhone = match.creatorPhone;
+        // خسارة المتحدي: 80% لصاحب التحدي + 10% للإدارة + 10% جائزة إضافية (bountyPts) + جمجمة 💀 ويستمر التحدي
+        const creatorShare = Math.floor(S * 0.80);
+        const adminShare = Math.floor(S * 0.10);
+        const bountyAdd = Math.max(0, S - creatorShare - adminShare);
+        const nextDefenses = Number(match.defensesCount || 0) + 1;
+        const nextBounty = currentBounty + bountyAdd;
+        const nextVictims = { ...(match.uniqueVictims || {}), [player.phone]: true };
+
+        await recordAdminRevenue(env, 'pvp', adminShare);
         const creator = await fbGet(env, `arena_world/players/${match.creatorPhone}`);
         if (creator) {
-          await updatePlayerBalance(env, creator, prize, { txId: `pvp_win_${match.matchId}`, type: 'pvp_win', delta: prize, at: now });
+          await updatePlayerBalance(env, creator, creatorShare, { txId: `pvp_def_${match.matchId}_${now}`, type: 'pvp_defense_win', delta: creatorShare, at: now });
+          const cPrestige = { ...((((creator.games && creator.games.tower_match) || {}).prestige) || {}) };
+          // شرط صامت: 3 لاعبين مختلفين على الأقل لفتح الأدوات الفخرية الأسطورية للدفاع
+          if (Object.keys(nextVictims).length >= 3) {
+            for (const dm of PVP_DEFENSE_PRESTIGE) {
+              if (nextDefenses >= dm.count && !cPrestige[dm.id]) {
+                cPrestige[dm.id] = { id: dm.id, name: dm.name, rarity: dm.rarity, unlockedAt: now };
+              }
+            }
+          }
           await fbPatch(env, `arena_world/players/${creator.phone}`, { wins: (creator.wins || 0) + 1 });
+          await fbPatch(env, `arena_world/players/${creator.phone}/games/tower_match`, { prestige: cPrestige });
+          await pushPlayerNotification(env, creator.phone, {
+            kind: 'pvp_defense',
+            title: `💀 ضحية جديدة (#${nextDefenses}) في تحديك الدائم!`,
+            body: `خسر ${player.displayName} ضدك! أُضيف لرصيدك +${creatorShare} عملة وارتفعت جائزة صيدك إلى ${nextBounty} عملة.`
+          });
         }
+
+        await fbPatch(env, `arena_world/pvp_matches/${match.matchId}`, {
+          defensesCount: nextDefenses, bountyPts: nextBounty, uniqueVictims: nextVictims,
+          activeChallenge: null, lastBattleAt: now
+        });
+
         const inv = player.inventory || {};
         let newStreak = 0;
         let streakProtected = false;
@@ -1139,23 +1315,19 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
               opponentPhone: match.creatorPhone,
               opponentName: match.creatorName || 'منافس',
               gameId: match.gameId,
-              stakePts: Number(match.stakePts || 10),
+              stakePts: S,
               scoreDiff: Math.max(1, Number(match.creatorScore) - score),
               at: now
             }
           });
         }
-        outcomeMsg = `خسرت التحدي (${score} مقابل ${match.creatorScore}).` + (streakProtected ? ' (🔥 بطاقة حماية السلسلة حفظت سلسلتك!)' : '');
+        outcomeMsg = `💀 خسرت أمام التحدي الدائم (${score} مقابل ${match.creatorScore}). ارتفعت جائزة صيده إلى ${nextBounty} عملة!` + (streakProtected ? ' (🔥 بطاقة حماية السلسلة حفظت سلسلتك!)' : '');
       } else {
-        const refund = Math.floor(prize / 2);
-        await updatePlayerBalance(env, player, refund, { txId: `pvp_draw_${match.matchId}`, type: 'pvp_draw', delta: refund, at: now });
-        const creator = await fbGet(env, `arena_world/players/${match.creatorPhone}`);
-        if (creator) await updatePlayerBalance(env, creator, refund, { txId: `pvp_draw_${match.matchId}`, type: 'pvp_draw', delta: refund, at: now });
-        outcomeMsg = `تعادل (${score} مقابل ${match.creatorScore})! أُعيد ${refund} عملة لكل لاعب.`;
+        // تعادل: إعادة مبلغ المتحدي وفك قفل المنافسة
+        await updatePlayerBalance(env, player, S, { txId: `pvp_draw_${match.matchId}_${now}`, type: 'pvp_draw_refund', delta: S, at: now });
+        await fbPatch(env, `arena_world/pvp_matches/${match.matchId}`, { activeChallenge: null });
+        outcomeMsg = `تعادل مثير (${score} مقابل ${match.creatorScore})! تم إرجاع مبلغك (${S} عملة) وبقي التحدي مفتوحاً.`;
       }
-      await fbPatch(env, `arena_world/pvp_matches/${match.matchId}`, {
-        opponentPhone: player.phone, opponentName: player.displayName, opponentScore: score, winnerPhone, status: 'completed', completedAt: now
-      });
     }
   }
 
@@ -1167,7 +1339,10 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     outcomeMsg += ` (السيد فريد أعاد لك ${cashback} عملة Cashback!)`;
   }
 
-  await fbPatch(env, `arena_world/players/${player.phone}`, { xp: (player.xp || 0) + xpGain });
+  const nextRounds = Number(player.totalRoundsPlayed || 0) + 1;
+  player.totalRoundsPlayed = nextRounds;
+  await fbPatch(env, `arena_world/players/${player.phone}`, { xp: (player.xp || 0) + xpGain, totalRoundsPlayed: nextRounds });
+  await releasePendingReferralIfEligible(env, player);
   let streakUpdate = null;
   if (session.gameId === 'tower_match') {
     streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
@@ -1226,9 +1401,28 @@ function validateTelemetry(session, score, telemetry) {
   return { valid: true };
 }
 
-async function handlePvpList(env) {
+async function handlePvpList(env, player = null) {
+  const now = Date.now();
   const matches = (await fbGet(env, 'arena_world/pvp_matches')) || {};
-  const openList = Object.values(matches).filter((m) => m.status === 'open').sort((a, b) => b.createdAt - a.createdAt).slice(0, 20);
+  const openList = Object.values(matches)
+    .filter((m) => m && m.status === 'open')
+    .map((m) => {
+      const inBattle = Boolean(m.activeChallenge && Number(m.activeChallenge.expiresAt || 0) > now);
+      return {
+        matchId: m.matchId,
+        gameId: m.gameId,
+        creatorName: m.creatorName,
+        creatorCharId: m.creatorCharId || 'buddy',
+        stakePts: Number(m.stakePts || 0),
+        bountyPts: Number(m.bountyPts || 0),
+        defensesCount: Number(m.defensesCount || 0),
+        inBattle,
+        isMine: Boolean(player && m.creatorPhone === player.phone),
+        createdAt: Number(m.createdAt || 0)
+      };
+    })
+    .sort((a, b) => (b.bountyPts - a.bountyPts) || (b.defensesCount - a.defensesCount) || (b.createdAt - a.createdAt))
+    .slice(0, 30);
   return jsonResponse({ ok: true, matches: openList });
 }
 
@@ -1237,10 +1431,42 @@ async function handlePvpCreate(env, player, body, config) {
 }
 
 async function handlePvpJoin(env, player, { matchId, useItem }, config) {
+  const now = Date.now();
   const match = await fbGet(env, `arena_world/pvp_matches/${matchId}`);
   if (!match || match.status !== 'open') return jsonResponse({ code: 'ERR_PVP_CLOSED', message: 'هذا التحدي لم يعد متاحاً.' }, 400);
   if (match.creatorPhone === player.phone) return jsonResponse({ code: 'ERR_PVP_SELF', message: 'لا يمكنك قبول تحديك الخاص.' }, 400);
-  return handleSessionStart(env, player, { gameId: match.gameId, mode: 'pvp_join', stakePts: match.stakePts, pvpMatchId: matchId, useItem }, config);
+  if (match.activeChallenge && Number(match.activeChallenge.expiresAt || 0) > now && match.activeChallenge.phone !== player.phone) {
+    return jsonResponse({ code: 'ERR_PVP_BUSY', message: '⚔️ هذا التحدي في منافسة حالياً مع لاعب آخر، حاول بعد لحظات!' }, 409);
+  }
+  const sesRes = await handleSessionStart(env, player, { gameId: match.gameId, mode: 'pvp_join', stakePts: match.stakePts, pvpMatchId: matchId, useItem }, config);
+  if (sesRes.status === 200) {
+    await fbPatch(env, `arena_world/pvp_matches/${matchId}`, {
+      activeChallenge: { phone: player.phone, startedAt: now, expiresAt: now + 10 * 60 * 1000 }
+    });
+  }
+  return sesRes;
+}
+
+async function handlePvpCancel(env, player, { matchId }) {
+  const now = Date.now();
+  const match = await fbGet(env, `arena_world/pvp_matches/${matchId}`);
+  if (!match || match.status !== 'open') return jsonResponse({ code: 'ERR_PVP_CLOSED', message: 'التحدي مغلق بالفعل.' }, 400);
+  if (match.creatorPhone !== player.phone) return jsonResponse({ code: 'ERR_FORBIDDEN', message: 'لا تملك صلاحية إلغاء هذا التحدي.' }, 403);
+  if (match.activeChallenge && Number(match.activeChallenge.expiresAt || 0) > now) {
+    return jsonResponse({ code: 'ERR_PVP_BUSY', message: 'لا يمكن إلغاء التحدي أثناء وجود منافس يلعب ضده حالياً!' }, 409);
+  }
+  const S = Number(match.stakePts || 0);
+  const refund = Math.floor(S * 0.50);
+  const adminTake = (S - refund) + Number(match.bountyPts || 0);
+
+  await fbPatch(env, `arena_world/pvp_matches/${matchId}`, { status: 'cancelled', bountyPts: 0, activeChallenge: null, cancelledAt: now });
+  if (refund > 0) {
+    await updatePlayerBalance(env, player, refund, { txId: `pvp_can_${matchId}`, type: 'pvp_cancel_refund_50pct', delta: refund, at: now });
+  }
+  if (adminTake > 0) {
+    await recordAdminRevenue(env, 'pvp_cancel', adminTake);
+  }
+  return jsonResponse({ ok: true, refund, message: `تم إلغاء التحدي الدائم واسترداد 50% (${refund.toLocaleString()} عملة) إلى رصيدك.` });
 }
 
 async function updatePlayerBalance(env, player, delta, ledgerEntry) {
@@ -1454,12 +1680,14 @@ async function settleWeeklyTournamentIfDue(env, gameId, force = false) {
   const cfg = (await fbGet(env, 'arena_world/config')) || {};
   if (cfg.autoRolloverWeekly !== false) {
     const nextCycleId = `wk_${gameId}_${now + 1000}`;
-    const nextEnd = now + 7 * 24 * 60 * 60 * 1000;
+    const durDays = Math.max(1, Number(wt.durationDays || 7));
+    const nextEnd = now + durDays * 24 * 60 * 60 * 1000;
+    const seedStart = Number(wt.nextWeeklySeedPts || 0);
     await fbDelete(env, `arena_world/weekly_tournaments/${gameId}/entries`);
     await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
       gameId, title: WEEKLY_GAME_TITLES[gameId] || gameId, cycleId: nextCycleId,
-      entryFeePts: Number(wt.entryFeePts || 10), startAt: now, endAt: nextEnd,
-      poolPts: 0, totalRounds: 0, settled: false
+      entryFeePts: Number(wt.entryFeePts || 10), durationDays: durDays, startAt: now, endAt: nextEnd,
+      poolPts: seedStart, nextWeeklySeedPts: 0, totalRounds: 0, settled: false
     });
   }
   return { settledNow: true, wt, winners, pool, adminShare, distributed };
@@ -1506,6 +1734,8 @@ async function getAllWeeklySummaries(env, currentPhone = null) {
       status,
       settled: Boolean(wt.settled),
       poolPts: pool,
+      nextWeeklySeedPts: Number(wt.nextWeeklySeedPts || 0),
+      durationDays: Number(wt.durationDays || 7),
       totalRounds: Number(wt.totalRounds || 0),
       adminShare,
       rankPrizes,
@@ -1522,26 +1752,30 @@ async function handleWeeklyStatus(env, player) {
   return jsonResponse({ ok: true, tournaments });
 }
 
-async function handleAdminWeeklyConfig(env, { gameId, entryFeePts, startAt, endAt, resetCycle }) {
+async function handleAdminWeeklyConfig(env, { gameId, entryFeePts, startAt, endAt, durationDays, resetCycle }) {
   if (!WEEKLY_GAMES.includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير صالحة.' }, 400);
   const fee = Math.max(1, Number(entryFeePts || 10));
+  const durDays = Math.max(1, Math.min(60, Math.round(Number(durationDays || ((Number(endAt || 0) - Number(startAt || 0)) / 86400000) || 7))));
   const sAt = Number(startAt || Date.now());
-  const eAt = Number(endAt || (sAt + 7 * 24 * 60 * 60 * 1000));
+  const eAt = Number(endAt || (sAt + durDays * 24 * 60 * 60 * 1000));
   if (eAt <= sAt) return jsonResponse({ code: 'ERR_DATES', message: 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء.' }, 400);
 
   if (resetCycle) {
+    const wtOld = await ensureWeeklyTournament(env, gameId);
+    const seedStart = Number((wtOld && wtOld.nextWeeklySeedPts) || 0);
     const newCycleId = `wk_${gameId}_${Date.now()}`;
     await fbDelete(env, `arena_world/weekly_tournaments/${gameId}/entries`);
     await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
       gameId, title: WEEKLY_GAME_TITLES[gameId], cycleId: newCycleId,
-      entryFeePts: fee, startAt: sAt, endAt: eAt, poolPts: 0, totalRounds: 0, settled: false
+      entryFeePts: fee, durationDays: durDays, startAt: sAt, endAt: eAt,
+      poolPts: seedStart, nextWeeklySeedPts: 0, totalRounds: 0, settled: false
     });
-    return jsonResponse({ ok: true, message: `تم بدء دورة بطولة أسبوعية جديدة للعبة ${WEEKLY_GAME_TITLES[gameId]}!` });
+    return jsonResponse({ ok: true, message: `تم بدء دورة جديدة (${durDays} يوم) للعبة ${WEEKLY_GAME_TITLES[gameId]} برصيد بداية ${seedStart} عملة!` });
   } else {
     await fbPatch(env, `arena_world/weekly_tournaments/${gameId}`, {
-      entryFeePts: fee, startAt: sAt, endAt: eAt
+      entryFeePts: fee, durationDays: durDays, startAt: sAt, endAt: eAt
     });
-    return jsonResponse({ ok: true, message: `تم تحديث إعدادات بطولة ${WEEKLY_GAME_TITLES[gameId]} بنجاح.` });
+    return jsonResponse({ ok: true, message: `تم تحديث إعدادات بطولة ${WEEKLY_GAME_TITLES[gameId]} (${durDays} يوم) بنجاح.` });
   }
 }
 
@@ -1862,6 +2096,7 @@ async function handleAdminResolveTopup(env, { txId, action }) {
     await updatePlayerBalance(env, player, Number(topup.coins || 0), {
       txId, type: 'shamcash_topup_approved', delta: Number(topup.coins || 0), at: Date.now()
     });
+    await creditReferralFromApprovedTopup(env, player, Number(topup.coins || 0), txId);
     return jsonResponse({ ok: true, message: `✅ تم اعتماد الشحن وإضافة ${topup.coins} عملة للاعب ${topup.phone}.` });
   } else {
     await fbPatch(env, `arena_world/pending_topups/${txId}`, { status: 'rejected', resolvedAt: Date.now() });
@@ -1874,7 +2109,7 @@ async function hashPass(str) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function handleSharedRegister(env, { name, phone, password, deviceId }, config) {
+async function handleSharedRegister(env, { name, phone, password, deviceId, refCode }, config) {
   const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
   const cleanName = String(name || '').trim().slice(0, 40);
   const cleanPass = String(password || '').trim();
@@ -1898,11 +2133,18 @@ async function handleSharedRegister(env, { name, phone, password, deviceId }, co
   const existingPlayer = await fbGet(env, `arena_world/players/${cleanPhone}`);
   if (!existingPlayer) {
     const welcomePts = Number(config.welcomePoints || 0);
+    const validRef = await resolveValidReferrer(env, refCode, cleanPhone, deviceId);
     await fbPatch(env, `arena_world/players/${cleanPhone}`, {
       phone: cleanPhone, displayName: cleanName, activeCharacterId: 'buddy', activeFrame: '',
       points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
-      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
+      winStreak: 0, recordsBroken: 0, totalRoundsPlayed: 0, referredBy: validRef, lastDeviceId: deviceId,
+      inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
     });
+    if (validRef) {
+      const rp = await fbGet(env, `arena_world/players/${validRef}`);
+      const rStats = (rp && rp.referralStats) || {};
+      await fbPatch(env, `arena_world/players/${validRef}/referralStats`, { totalCount: Number(rStats.totalCount || 0) + 1, totalEarnedPts: Number(rStats.totalEarnedPts || 0) });
+    }
   } else {
     await fbPatch(env, `arena_world/players/${cleanPhone}`, { displayName: cleanName, deviceToken });
   }
