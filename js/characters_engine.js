@@ -213,60 +213,50 @@ window.ARENA_CHARACTERS = [
 ];
 
 window.ARENA_SHOP_ITEMS = [
-  // === الأدوات التكتيكية ===
   {
-    id: 'shield_1', name: 'درع الحماية', emoji: '🛡️', img: 'shield_1.jpg',
-    price: 25, type: 'tactical', category: 'tactical', rarity: 'rare',
-    desc: 'يحميك من أول ضربة في شوتر أو أول انقلاب في القيادة (مرة واحدة بالجولة).'
+    id: 'tower_bomb', name: 'قنبلة البرج (3×3)', emoji: '💣', img: 'tower_bomb.png',
+    price: 25, type: 'tactical', category: 'tactical', rarity: 'rare', games: ['tower_match'],
+    desc: 'تبدأ جولتك في برج التحدي بقطعة قنبلة 3×3 جاهزة للتفجير (حد أقصى أداة واحدة للجولة).'
+  },
+  {
+    id: 'tower_row', name: 'مدفع الصف الخارق', emoji: '⚡', img: 'tower_row.png',
+    price: 20, type: 'tactical', category: 'tactical', rarity: 'common', games: ['tower_match'],
+    desc: 'تبدأ جولتك بقطعة مدفع صف تمسح صفاً كاملاً بضربة واحدة.'
+  },
+  {
+    id: 'tower_wildcard', name: 'جوكر البداية', emoji: '🃏', img: 'tower_wildcard.png',
+    price: 35, type: 'tactical', category: 'tactical', rarity: 'epic', games: ['tower_match'],
+    desc: 'تبدأ جولتك بجوهرة طيف خارقة تنقذك وتصنع كومبو مدمّراً.'
+  },
+  {
+    id: 'double_xp', name: 'مضاعف XP (للتقدم فقط)', emoji: '✨', img: 'double_xp.png',
+    price: 15, type: 'tactical', category: 'tactical', rarity: 'common', games: ['tower_match', 'hill_drive', 'cyber_shooter'],
+    desc: 'يضاعف نقاط الخبرة (XP) فقط لفتح الإطارات الـ 15 أسرع دون أي تأثير على الرقم القياسي.'
+  },
+  {
+    id: 'streak_shield', name: 'حماية السلسلة', emoji: '🔥', img: 'shield_1.png',
+    price: 30, type: 'passive', category: 'tactical', rarity: 'epic', games: ['tower_match'],
+    desc: 'يحمي سلسلة مسار الـ 360 يوماً أو سلسلة انتصاراتك في PvP تلقائياً.'
+  },
+  {
+    id: 'arena_pass', name: 'تذكرة الساحة (5 جولات)', emoji: '🎟️', img: 'arena_pass.png',
+    price: 40, type: 'pass', category: 'bundles', rarity: 'legendary', games: ['tower_match'],
+    desc: '5 تذاكر دخول لتحديات كسر الرقم القياسي بسعر 4 جولات فقط!'
+  },
+  {
+    id: 'shield_1', name: 'درع الحماية', emoji: '🛡️', img: 'shield_1.png',
+    price: 25, type: 'tactical', category: 'tactical', rarity: 'rare', games: ['hill_drive', 'cyber_shooter'],
+    desc: 'يحميك من أول ضربة في شوتر أو أول انقلاب في القيادة.'
   },
   {
     id: 'fuel_boost', name: 'خزان وقود إضافي', emoji: '⛽', img: 'fuel_boost.jpg',
-    price: 20, type: 'tactical', category: 'tactical', rarity: 'common',
-    desc: 'يمنحك +25% وقود بدايةً في لعبة قيادة التلال 2D.'
-  },
-  {
-    id: 'double_xp', name: 'مضاعف XP', emoji: '⚡', img: 'double_xp.jpg',
-    price: 15, type: 'tactical', category: 'tactical', rarity: 'common',
-    desc: 'يضاعف نقاط الخبرة (XP) في الجولة القادمة لفتح القوالب الفاخرة أسرع.'
+    price: 20, type: 'tactical', category: 'tactical', rarity: 'common', games: ['hill_drive'],
+    desc: 'يمنحك +25% وقود بداية في لعبة قيادة التلال 2D.'
   },
   {
     id: 'extra_hp', name: 'قلب إضافي (+1 HP)', emoji: '❤️', img: 'extra_hp.jpg',
-    price: 25, type: 'tactical', category: 'tactical', rarity: 'rare',
+    price: 25, type: 'tactical', category: 'tactical', rarity: 'rare', games: ['cyber_shooter'],
     desc: 'تبدأ جولة ميجا شوتر 2D بـ 4 قلوب بدلاً من 3.'
-  },
-  {
-    id: 'fuel_magnet', name: 'مغناطيس الوقود', emoji: '🧲', img: 'fuel_magnet.jpg',
-    price: 20, type: 'tactical', category: 'tactical', rarity: 'rare',
-    desc: 'يجذب علب الوقود القريبة تلقائياً في قيادة التلال 2D.'
-  },
-  {
-    id: 'streak_shield', name: 'حماية السلسلة', emoji: '🔥', img: 'streak_shield.jpg',
-    price: 30, type: 'passive', category: 'tactical', rarity: 'epic',
-    desc: 'تُفعّل تلقائياً لحفظ سلسلة انتصاراتك في PvP عند الخسارة لمرة واحدة.'
-  },
-
-  // === الباقات والتذاكر ===
-  {
-    id: 'bundle_starter', name: 'باقة المنطلق', emoji: '📦', img: 'bundle_starter.jpg',
-    price: 80, origPrice: 90, type: 'bundle', category: 'bundles', rarity: 'epic',
-    desc: 'تحتوي على 2 درع حماية + 2 خزان وقود إضافي بتوفير أكثر من 10%!'
-  },
-  {
-    id: 'arena_pass', name: 'تذكرة الساحة (5 جولات)', emoji: '🎟️', img: 'arena_pass.jpg',
-    price: 40, origPrice: 50, type: 'pass', category: 'bundles', rarity: 'legendary',
-    desc: '5 تذاكر دخول لتحديات كسر الأرقام القياسية بسعر 4 جولات فقط!'
-  },
-
-  // === المظاهر والإطارات (مجانية بالـ XP) ===
-  {
-    id: 'frame_gold', name: 'الإطار الملكي الذهبي', emoji: '👑', img: 'frame_gold.jpg',
-    price: 0, reqXp: 300, type: 'cosmetic', category: 'cosmetic', rarity: 'legendary',
-    desc: 'إطار ذهبي منقوش يحيط بصورة شخصيتك (يُفتح مجاناً عند 300 XP).'
-  },
-  {
-    id: 'frame_cyber', name: 'إطار سايبر الماسي', emoji: '💠', img: 'frame_cyber.jpg',
-    price: 0, reqXp: 800, type: 'cosmetic', category: 'cosmetic', rarity: 'legendary',
-    desc: 'إطار ماسي متوهج بدوائر سايبر (يُفتح مجاناً عند 800 XP).'
   }
 ];
 
