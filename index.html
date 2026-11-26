@@ -1522,7 +1522,11 @@
                   waBtn.classList.remove('hidden');
                   waBtn.onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent(`أتحداك في برج التحدي اللانهائي على ${stakePts} عملة! نتيجتي (${summary.score})`)}`, '_blank');
                 } else waBtn.classList.add('hidden');
+                document.getElementById('quickRematchBtn')?.classList.remove('hidden');
                 document.getElementById('resultOverlay').classList.remove('hidden');
+                if (res.streakUpdate && Array.isArray(res.streakUpdate.newlyUnlocked) && res.streakUpdate.newlyUnlocked.length > 0 && typeof this.showStreakCelebration === 'function') {
+                  setTimeout(() => this.showStreakCelebration(res.streakUpdate.newlyUnlocked[0]), 450);
+                }
                 this.syncProfile();
               }
             }

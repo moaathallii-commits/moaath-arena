@@ -6,7 +6,7 @@
  * - استثناء تام لـ workers.dev و firebaseio.com لمنع الغش
  */
 
-const CACHE_NAME = 'moaath-arena-smart-cache-v3';
+const CACHE_NAME = 'moaath-arena-smart-cache-v4';
 
 const CORE_ASSETS = [
   './',
@@ -17,7 +17,12 @@ const CORE_ASSETS = [
   './js/tower_match/tower_board.js',
   './js/tower_match/tower_engine.js',
   './js/tower_match/tower_ui.js',
-  './assets/icons/game_tower.png',
+  './game_tower.png',
+  './assets/tower_match/boss_5_frost.png',
+  './assets/tower_match/boss_6_shadow.png',
+  './assets/tower_match/boss_7_cyber.png',
+  './assets/tower_match/boss_8_phoenix.png',
+  './assets/tower_match/boss_9_chrono.png',
   './assets/tower_match/streak/frame_streak_01_copper.png',
   './assets/tower_match/streak/frame_streak_02_silver.png',
   './assets/tower_match/streak/frame_streak_03_ruby.png',
