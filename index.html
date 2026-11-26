@@ -854,6 +854,30 @@
       border-radius: 10px; padding: 5px 10px; font-size: 1rem; cursor: pointer;
     }
 
+  
+    /* === Phase 14: Beginner-Friendly Progressive UI (Low Cognitive Load) === */
+    body.beginner-ui .daily-quests-box,
+    body.beginner-ui #pvpPrivateBox13,
+    body.beginner-ui #pvpBountyLeaders13,
+    body.beginner-ui #freePracticeBtn12,
+    body.beginner-ui #bossCodexBtn,
+    body.beginner-ui #poolRuleNote13,
+    body.beginner-ui #podiumRestList,
+    body.beginner-ui button[onclick*="togglePodiumRest"] {
+      display: none !important;
+    }
+    .beg-mode-bar {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(74, 222, 128, 0.45);
+      border-radius: 14px; padding: 8px 12px; margin-bottom: 10px;
+      font-size: 0.76rem; font-weight: 800; color: #bbf7d0;
+    }
+    .beg-switch-btn {
+      padding: 4px 10px; border-radius: 999px; border: 1px solid #4ade80;
+      background: rgba(20, 83, 45, 0.7); color: #fef08a; font-size: 0.7rem;
+      font-weight: 900; cursor: pointer; white-space: nowrap;
+    }
+
   </style>
 </head>
 <body>
@@ -4508,6 +4532,60 @@
       ArenaApp.syncProfile = async function(...args) {
         const res = await origSync13(...args);
         if (this.profile) this.renderRetentionBars13();
+        return res;
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 14: واجهة مبسّطة تدريجياً للمبتدئين (Beginner-Friendly Mode)
+    // ========================================================================
+    (function extendArenaAppPhase14() {
+      if (typeof ArenaApp === 'undefined') return;
+      const BEG_KEY = 'moaath_beginner_ui_mode_v1';
+
+      function isBeginnerAuto() {
+        const saved = localStorage.getItem(BEG_KEY);
+        if (saved === '0') return false;
+        if (saved === '1') return true;
+        const p = ArenaApp.profile || {};
+        const rounds = Number(p.totalRoundsPlayed || p.wins || 0);
+        return rounds < 3;
+      }
+
+      ArenaApp.toggleBeginnerMode = function(forceVal = null) {
+        const next = forceVal !== null ? Boolean(forceVal) : !document.body.classList.contains('beginner-ui');
+        localStorage.setItem(BEG_KEY, next ? '1' : '0');
+        this.applyBeginnerMode();
+        this.toast(next ? '🌱 تم تفعيل الواجهة المبسّطة للمبتدئين' : '⚡ تم عرض جميع الأدوات المتقدمة');
+      };
+
+      ArenaApp.applyBeginnerMode = function() {
+        const active = isBeginnerAuto();
+        document.body.classList.toggle('beginner-ui', active);
+        const homeTab = document.getElementById('tab-home');
+        if (homeTab && !document.getElementById('begModeBar14')) {
+          const bar = document.createElement('div');
+          bar.id = 'begModeBar14';
+          bar.className = 'beg-mode-bar';
+          homeTab.insertBefore(bar, homeTab.firstChild);
+        }
+        const bar = document.getElementById('begModeBar14');
+        if (bar) {
+          bar.innerHTML = active
+            ? `<span>🌱 وضع المبتدئ: ركّز على اللعب الآن فقط</span><button type="button" class="beg-switch-btn" onclick="ArenaApp.toggleBeginnerMode(false)">عرض الكل ▾</button>`
+            : `<span>⚡ الوضع الكامل: كل الأدوات والإحصائيات ظاهرة</span><button type="button" class="beg-switch-btn" onclick="ArenaApp.toggleBeginnerMode(true)">تبسيط للمبتدئ</button>`;
+        }
+
+        // Simplify inside gameplay when beginner mode is active
+        const cm = document.getElementById('comboMeter13');
+        if (active && cm) cm.classList.add('hidden');
+      };
+
+      const origSync14 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync14(...args);
+        this.applyBeginnerMode();
         return res;
       };
     })();
