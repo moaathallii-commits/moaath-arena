@@ -26,6 +26,9 @@ const SHOP_PRICES = {
   shield_1: { price: 25, type: 'tactical', name: 'درع الحماية' },
   fuel_boost: { price: 20, type: 'tactical', name: 'خزان وقود إضافي' },
   double_xp: { price: 15, type: 'tactical', name: 'مضاعف XP' },
+  tower_bomb: { price: 25, type: 'tactical', name: 'قنبلة البرج (3×3)' },
+  tower_row: { price: 20, type: 'tactical', name: 'مدفع الصف الخارق' },
+  tower_wildcard: { price: 35, type: 'tactical', name: 'جوكر البداية' },
   extra_hp: { price: 25, type: 'tactical', name: 'قلب إضافي (+1 HP)' },
   fuel_magnet: { price: 20, type: 'tactical', name: 'مغناطيس الوقود' },
   streak_shield: { price: 30, type: 'passive', name: 'حماية السلسلة' },
@@ -268,7 +271,7 @@ async function runAutomaticTowerStreakForPlayer(env, player) {
   return { autoClaimed: true, streakDays, newlyUnlocked };
 }
 
-const DAILY_DEAL_POOL = ['shield_1', 'fuel_boost', 'double_xp', 'extra_hp', 'fuel_magnet', 'streak_shield'];
+const DAILY_DEAL_POOL = ['tower_bomb', 'tower_row', 'tower_wildcard', 'double_xp', 'streak_shield'];
 
 function getTodayDailyDeal() {
   const dayStr = new Date().toISOString().slice(0, 10);
