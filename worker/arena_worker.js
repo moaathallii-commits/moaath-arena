@@ -276,19 +276,19 @@ async function runAutomaticTowerStreakForPlayer(env, player) {
 // المرحلة 8: التحدي الدائم (Bounty PvP) + الأدوات الفخرية الأسطورية + نظام الإحالة الصارم (5%)
 // ============================================================================
 const PVP_DEFENSE_PRESTIGE = [
-  { count: 5,  id: 'pvp_def_5',  name: '🛡️ حارس الساحة',          rarity: 'rare' },
-  { count: 10, id: 'pvp_def_10', name: '⚔️ صائد المتحدين',         rarity: 'epic' },
-  { count: 15, id: 'pvp_def_15', name: '🔥 مرعب الساحة',           rarity: 'epic' },
-  { count: 20, id: 'pvp_def_20', name: '💀 جلاد الـ PvP',          rarity: 'legendary' },
-  { count: 25, id: 'pvp_def_25', name: '👑 سيد الجماجم',           rarity: 'legendary' },
-  { count: 50, id: 'pvp_def_50', name: '🌌 إمبراطور الجماجم الخالد', rarity: 'mythic' }
+  { count: 5,  id: 'pvp_def_5',  name: '🛡️ حارس الساحة',          rarity: 'rare',      file: './assets/pvp_prestige/pvp_def_5.png' },
+  { count: 10, id: 'pvp_def_10', name: '⚔️ صائد المتحدين',         rarity: 'epic',      file: './assets/pvp_prestige/pvp_def_10.png' },
+  { count: 15, id: 'pvp_def_15', name: '🔥 مرعب الساحة',           rarity: 'epic',      file: './assets/pvp_prestige/pvp_def_15.png' },
+  { count: 20, id: 'pvp_def_20', name: '💀 جلاد الـ PvP',          rarity: 'legendary', file: './assets/pvp_prestige/pvp_def_20.png' },
+  { count: 25, id: 'pvp_def_25', name: '👑 سيد الجماجم',           rarity: 'legendary', file: './assets/pvp_prestige/pvp_def_25.png' },
+  { count: 50, id: 'pvp_def_50', name: '🌌 إمبراطور الجماجم الخالد', rarity: 'mythic',    file: './assets/pvp_prestige/pvp_def_50.png' }
 ];
 
 const PVP_STREAK_PRESTIGE = [
-  { count: 3,  id: 'pvp_str_3',  name: '⚡ شرارة الانتصار (×3)',     rarity: 'rare' },
-  { count: 5,  id: 'pvp_str_5',  name: '🌪️ عاصفة الساحة (×5)',      rarity: 'epic' },
-  { count: 10, id: 'pvp_str_10', name: '🔥 قاهر الأبطال (×10)',     rarity: 'legendary' },
-  { count: 20, id: 'pvp_str_20', name: '🏆 أسطورة الـ PvP المطلقة', rarity: 'mythic' }
+  { count: 3,  id: 'pvp_str_3',  name: '⚡ شرارة الانتصار (×3)',     rarity: 'rare',      file: './assets/pvp_prestige/pvp_str_3.png' },
+  { count: 5,  id: 'pvp_str_5',  name: '🌪️ عاصفة الساحة (×5)',      rarity: 'epic',      file: './assets/pvp_prestige/pvp_str_5.png' },
+  { count: 10, id: 'pvp_str_10', name: '🔥 قاهر الأبطال (×10)',     rarity: 'legendary', file: './assets/pvp_prestige/pvp_str_10.png' },
+  { count: 20, id: 'pvp_str_20', name: '🏆 أسطورة الـ PvP المطلقة', rarity: 'mythic',    file: './assets/pvp_prestige/pvp_str_20.png' }
 ];
 
 async function ensurePlayerRefCode(env, player) {
@@ -514,6 +514,8 @@ export default {
           return handlePvpList(env, player);
         case '/pvp/cancel':
           return handlePvpCancel(env, player, body);
+        case '/pvp/prestige/equip':
+          return handleEquipPvpPrestige(env, player, body);
         case '/pvp/create':
           return handlePvpCreate(env, player, body, config);
         case '/pvp/join':
@@ -865,6 +867,9 @@ async function handleProfile(env, player, config = {}) {
     refCode: myRefCode,
     referralStats: player.referralStats || { totalCount: 0, totalEarnedPts: 0 },
     pvpPrestige: (((player.games && player.games.tower_match) || {}).prestige) || {},
+    activePvpPrestige: (((player.games && player.games.tower_match) || {}).activePvpPrestige) || '',
+    personalBestRecord: Number((((player.games && player.games.tower_match) || {}).personalBestRecord) || 0),
+    lastAttempt: (((player.games && player.games.tower_match) || {}).lastAttempt) || null,
     pvpDefenseCatalog: PVP_DEFENSE_PRESTIGE,
     pvpStreakCatalog: PVP_STREAK_PRESTIGE,
     displayName: player.displayName,
@@ -1214,7 +1219,8 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     const matchId = `pvp_${crypto.randomUUID().slice(0, 8)}`;
     await fbPatch(env, `arena_world/pvp_matches/${matchId}`, {
       matchId, gameId: session.gameId, creatorPhone: player.phone, creatorName: player.displayName,
-      creatorCharId: charId, creatorScore: score, stakePts: session.stakePts, seed: session.seed,
+      creatorCharId: charId, creatorPrestigeId: (((player.games && player.games.tower_match) || {}).activePvpPrestige) || '',
+      creatorScore: score, stakePts: session.stakePts, seed: session.seed,
       isPermanent: true, bountyPts: 0, defensesCount: 0, uniqueVictims: {}, activeChallenge: null,
       status: 'open', createdAt: now
     });
@@ -1345,6 +1351,10 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
   await releasePendingReferralIfEligible(env, player);
   let streakUpdate = null;
   if (session.gameId === 'tower_match') {
+    const prevBestRec = Number((((player.games && player.games.tower_match) || {}).personalBestRecord) || 0);
+    const updTower = { lastAttempt: { mode: session.mode, score, won, at: now } };
+    if (session.mode === 'record' && score > prevBestRec) updTower.personalBestRecord = score;
+    await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, updTower);
     streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
   }
   return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, message: outcomeMsg });
@@ -1413,6 +1423,8 @@ async function handlePvpList(env, player = null) {
         gameId: m.gameId,
         creatorName: m.creatorName,
         creatorCharId: m.creatorCharId || 'buddy',
+        creatorPhone: m.creatorPhone || '',
+        creatorPrestigeId: m.creatorPrestigeId || '',
         stakePts: Number(m.stakePts || 0),
         bountyPts: Number(m.bountyPts || 0),
         defensesCount: Number(m.defensesCount || 0),
@@ -2179,4 +2191,16 @@ async function handleSharedLogin(env, { phone, password, deviceId }, config) {
     await fbPatch(env, `arena_world/players/${cleanPhone}`, { deviceToken });
   }
   return jsonResponse({ ok: true, deviceToken, message: '✅ أهلاً بعودتك إلى عالم تحديات معاذ!' });
+}
+
+
+async function handleEquipPvpPrestige(env, player, { prestigeId }) {
+  const owned = (((player.games && player.games.tower_match) || {}).prestige) || {};
+  if (prestigeId && !owned[prestigeId]) {
+    return jsonResponse({ code: 'ERR_LOCKED', message: 'لم تفتح هذا الوسام الفخري بعد.' }, 403);
+  }
+  await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, {
+    activePvpPrestige: prestigeId || ''
+  });
+  return jsonResponse({ ok: true, activePvpPrestige: prestigeId || '', message: prestigeId ? '🏆 تم تجهيز وسامك الفخري في ساحة PvP!' : 'تم إزالة الوسام الفخري.' });
 }
