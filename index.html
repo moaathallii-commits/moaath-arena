@@ -459,6 +459,72 @@
       background: rgba(56,189,248,0.12); color: #7dd3fc; font-weight: 800; font-size: 0.74rem; cursor: pointer;
     }
 
+  
+    /* === Phase 7: 3D Royal Spire + Clash/Brawl 3D Tactile UI === */
+    .btn {
+      position: relative;
+      border-radius: 14px !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.2px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+    }
+    .btn-gold {
+      background: linear-gradient(180deg, #fef08a 0%, #facc15 45%, #d97706 100%) !important;
+      color: #1c1002 !important;
+      border: 1.5px solid #fef9c3 !important;
+      box-shadow: 0 5px 0 #92400e, 0 8px 18px rgba(245, 158, 11, 0.35) !important;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+    }
+    .btn-gold:active {
+      transform: translateY(4px) !important;
+      box-shadow: 0 1px 0 #92400e, 0 3px 8px rgba(245, 158, 11, 0.25) !important;
+    }
+    .btn-blue {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #1d4ed8 100%) !important;
+      color: #ffffff !important;
+      border: 1.5px solid #bae6fd !important;
+      box-shadow: 0 5px 0 #1e3a8a, 0 8px 18px rgba(37, 99, 235, 0.35) !important;
+    }
+    .btn-blue:active {
+      transform: translateY(4px) !important;
+      box-shadow: 0 1px 0 #1e3a8a, 0 3px 8px rgba(37, 99, 235, 0.25) !important;
+    }
+    .hero-game-card.tower {
+      background: linear-gradient(160deg, #1b2a4a 0%, #0d172e 65%, #070d1c 100%) !important;
+      border: 2px solid #facc15 !important;
+      box-shadow: 0 7px 0 #78350f, 0 16px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(254,240,138,0.4) !important;
+      overflow: visible !important;
+    }
+    .hero-game-card.tower .game-icon-lg {
+      width: 78px !important; height: 78px !important;
+      transform: translateY(-6px) scale(1.06);
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,0.65));
+      border: 2px solid #fde047 !important;
+      background: radial-gradient(circle, #1e3a8a, #090f1e);
+    }
+    .podium-slot.rank-1 {
+      box-shadow: 0 6px 0 #92400e, 0 0 28px rgba(250,204,21,0.3) !important;
+      border: 2px solid #fde047 !important;
+    }
+    .podium-slot.rank-2 { box-shadow: 0 5px 0 #475569 !important; }
+    .podium-slot.rank-3 { box-shadow: 0 5px 0 #78350f !important; }
+    .room-tab-btn {
+      box-shadow: 0 4px 0 #0f172a;
+      transition: transform 0.08s ease;
+    }
+    .room-tab-btn.active {
+      background: linear-gradient(180deg, #fef08a 0%, #eab308 100%) !important;
+      box-shadow: 0 4px 0 #92400e, 0 6px 14px rgba(250,204,21,0.3) !important;
+    }
+    .room-tab-btn:active { transform: translateY(3px); }
+    #tvAdminShamId {
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      font-size: 0.84rem !important;
+      line-height: 1.45;
+      padding: 4px 6px;
+    }
+
   </style>
 </head>
 <body>
@@ -969,10 +1035,9 @@
             <div id="tvShamStatusLine" style="font-size:0.72rem; color:#4ade80;">1 ل.س = 1 عملة • رسالة واتساب تلقائية للإدارة</div>
           </div>
         </div>
-        <div id="tvAdminShamBox" style="background:#070c18; border-radius:10px; padding:8px; text-align:center; margin-bottom:8px;">
-          <div style="font-size:0.7rem; color:#94a3b8;">معرّف شام كاش الإدارة:</div>
-          <div id="tvAdminShamId" style="font-family:monospace; font-size:1rem; color:#fde047; margin:3px 0;">—</div>
-          <button type="button" class="btn btn-outline btn-sm" style="width:auto; margin:0; padding:4px 12px;" onclick="ArenaApp.copyAdminShamId()">📋 نسخ المعرّف</button>
+        <div id="tvAdminShamBox" style="background:#070c18; border:1px solid rgba(250,204,21,0.28); border-radius:12px; padding:9px; text-align:center; margin-bottom:8px;">
+          <div style="font-size:0.72rem; color:#94a3b8;">معرّف شام كاش الإدارة (يُنسخ تلقائياً عند التأكيد):</div>
+          <div id="tvAdminShamId" style="font-family:monospace; color:#fde047; margin:4px 0;">—</div>
         </div>
         <div class="vault-presets">
           <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=1000">1,000</button>
@@ -981,7 +1046,7 @@
           <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=25000">25,000</button>
         </div>
         <input type="number" id="tvSypInput" value="5000" min="100" placeholder="المبلغ بالليرة السورية (ل.س)" />
-        <button id="tvShamSubmitBtn" type="button" class="btn btn-gold" onclick="ArenaApp.submitTopupVaultSham()">📲 تأكيد وإرسال الطلب عبر واتساب</button>
+        <button id="tvShamSubmitBtn" type="button" class="btn btn-gold" onclick="ArenaApp.submitTopupVaultSham()">📋 نسخ المعرّف وتأكيد الطلب عبر واتساب</button>
       </div>
 
       <button type="button" class="btn btn-blue" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 أو الشحن من محفظة متجر معاذ</button>
@@ -1288,7 +1353,7 @@
         const sel = document.getElementById('tacticalItemSelect');
         const inv = res.inventory || {};
         sel.innerHTML = '<option value="">بدون أداة تكتيكية</option>' +
-          window.ARENA_SHOP_ITEMS.filter((i) => i.type === 'tactical' && (inv[i.id] || 0) > 0)
+          window.ARENA_SHOP_ITEMS.filter((i) => i.type === 'tactical' && (!i.games || i.games.includes('tower_match')) && (inv[i.id] || 0) > 0)
             .map((i) => `<option value="${i.id}">${i.emoji} ${i.name} (لديك: ${inv[i.id]})</option>`).join('');
 
         const passCount = Number(inv.arena_pass || 0);
@@ -1552,7 +1617,7 @@
             if (di) itemsToShow = [di];
             dealHeaderHtml = `<div class="card" style="text-align:center; border-color:var(--gold);"><strong style="color:#fde047;">🔥 صفقة اليوم — خصم ${deal.discountPct}%</strong></div>`;
           } else {
-            itemsToShow = window.ARENA_SHOP_ITEMS.filter((i) => i.category === this.shopTab && i.type !== 'cosmetic');
+            itemsToShow = window.ARENA_SHOP_ITEMS.filter((i) => i.category === this.shopTab && i.type !== 'cosmetic' && (!i.games || i.games.includes('tower_match')));
           }
           box.innerHTML = dealHeaderHtml + itemsToShow.map((item) => {
             const finalPrice = this.getFinalShopPrice(item);
@@ -2518,6 +2583,10 @@
       };
 
       ArenaApp.submitTopupVaultSham = async function() {
+        const adminId = document.getElementById('tvAdminShamId')?.textContent?.trim() || '';
+        if (adminId && !adminId.includes('غير مضاف') && navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(adminId).catch(() => {});
+        }
         const sypAmount = Number(document.getElementById('tvSypInput')?.value || 0);
         const res = await this.api('/bridge/shamcash-topup-request', { sypAmount });
         if (res && res.ok) {
