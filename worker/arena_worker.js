@@ -168,9 +168,9 @@ const TAUNT_RARITIES = {
 };
 
 const CRATE_BUNDLES = {
-  crate_basic:     { id: 'crate_basic',     name: 'صندوق الاستفزاز العادي',   price: 25,  rarity: 'common',    emoji: '📦' },
-  crate_epic:      { id: 'crate_epic',      name: 'صندوق الاستفزاز الملحمي', price: 75,  rarity: 'epic',      emoji: '🎁' },
-  crate_legendary: { id: 'crate_legendary', name: 'صندوق الاستفزاز الأسطوري',price: 160, rarity: 'legendary', emoji: '👑' }
+  crate_basic:     { id: 'crate_basic',     name: 'صندوق الاستفزاز العادي',   price: 25,  rarity: 'common',    emoji: '📦', img: './assets/tower_match/crates/crate_basic.png' },
+  crate_epic:      { id: 'crate_epic',      name: 'صندوق الاستفزاز الملحمي', price: 75,  rarity: 'epic',      emoji: '🎁', img: './assets/tower_match/crates/crate_epic.png' },
+  crate_legendary: { id: 'crate_legendary', name: 'صندوق الاستفزاز الأسطوري',price: 160, rarity: 'legendary', emoji: '👑', img: './assets/tower_match/crates/crate_legendary.png' }
 };
 
 const TAUNTS_50 = (() => {
@@ -338,6 +338,8 @@ export default {
             return handleAdminBroadcast(env, body);
           case '/admin/player/trust':
             return handleAdminPlayerTrust(env, body);
+          case '/admin/topup/resolve':
+            return handleAdminResolveTopup(env, body);
           default:
             return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
         }
@@ -375,6 +377,12 @@ export default {
       if (url.pathname === '/auth/bind') {
         return handleBindDevice(env, body, config);
       }
+      if (url.pathname === '/auth/register-shared') {
+        return handleSharedRegister(env, body, config);
+      }
+      if (url.pathname === '/auth/login-shared') {
+        return handleSharedLogin(env, body, config);
+      }
 
       const authHeader = request.headers.get('Authorization') || '';
       const token = authHeader.replace('Bearer ', '');
@@ -405,6 +413,8 @@ export default {
           return handlePvpJoin(env, player, body, config);
         case '/bridge/cashout':
           return handleCashoutRequest(env, player, body, config);
+        case '/bridge/shamcash-topup-request':
+          return handleShamCashTopupRequest(env, player, body, config);
         case '/tower/streak/claim':
           return handleTowerStreakClaim(env, player);
         case '/tower/cosmetic/equip':
@@ -477,7 +487,7 @@ async function handleGenerateBindKey(env, { phone }) {
 }
 
 async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount, idempotencyKey }, config) {
-  const sypRate = Number(config.usdToSypRate || config.sypPerUsd || 15000);
+  const sypRate = Number(config.usdToSypRate || config.sypPerUsd || 150);
   const syp = sypAmount !== undefined
     ? Number(sypAmount)
     : Math.round(Number(usdAmount || 0) * sypRate);
@@ -504,7 +514,7 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
     }, 400);
   }
 
-  const coinBuyRateSYP = Number(config.buyRateSYP || 0);
+  const coinBuyRateSYP = Number(config.buyRateSYP || 1);
   const coinToUsdRate = Number(config.coinToUsdRate || 0.01);
   const coinsToAdd = coinBuyRateSYP > 0
     ? Math.floor(syp / coinBuyRateSYP)
@@ -546,12 +556,16 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
 
 async function handleAdminDashboard(env, config) {
   await processDueAutoCashouts(env, config);
-  const [cashouts, alerts, players, adminStats] = await Promise.all([
+  const [cashouts, topups, alerts, players, adminStats] = await Promise.all([
     fbGet(env, 'arena_world/pending_cashouts'),
+    fbGet(env, 'arena_world/pending_topups'),
     fbGet(env, 'arena_world/admin_alerts'),
     fbGet(env, 'arena_world/players'),
     fbGet(env, 'arena_world/admin_stats')
   ]);
+  const pendingTopups = topups
+    ? Object.entries(topups).map(([txId, v]) => ({ txId, ...v })).filter((t) => t.status === 'pending').sort((a, b) => a.createdAt - b.createdAt)
+    : [];
 
   const pendingCashouts = cashouts
     ? Object.entries(cashouts).map(([txId, v]) => ({ txId, ...v })).filter((c) => c.status === 'pending_audit').sort((a, b) => a.createdAt - b.createdAt)
@@ -570,14 +584,19 @@ async function handleAdminDashboard(env, config) {
       welcomePoints: Number(config.welcomePoints || 0),
       minCashoutPts: Number(config.minCashoutPts || 100),
       pvpHouseEdgePct: Number(config.pvpHouseEdgePct || 10),
-      coinToUsdRate: Number(config.coinToUsdRate || 0.01),
-      buyRateSYP: Number(config.buyRateSYP || 150),
-      usdToSypRate: Number(config.usdToSypRate || 15000),
+      coinToUsdRate: Number(config.coinToUsdRate || (1 / Number(config.usdToSypRate || 150))),
+      buyRateSYP: Number(config.buyRateSYP || 1),
+      usdToSypRate: Number(config.usdToSypRate || 150),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
       autoRolloverWeekly: config.autoRolloverWeekly !== false,
       autoCashoutEnabled: Boolean(config.autoCashoutEnabled),
       autoCashoutMaxPts: Number(config.autoCashoutMaxPts || 200),
       autoCashoutMinWins: Number(config.autoCashoutMinWins || 3),
+      minTopupSYP: Number(config.minTopupSYP || 100),
+      shamCashCashoutEnabled: Boolean(config.shamCashCashoutEnabled),
+      shamCashTopupEnabled: Boolean(config.shamCashTopupEnabled),
+      adminShamCashId: String(config.adminShamCashId || ''),
+      adminWhatsApp: String(config.adminWhatsApp || '963965461504'),
       broadcast: getActiveBroadcast(config)
     },
     adminProfit: (() => {
@@ -588,7 +607,7 @@ async function handleAdminDashboard(env, config) {
       const totalSyp = Math.round(totalUsd * sypRate);
       return { totalPts, totalUsd, totalSyp, bySource: (adminStats && adminStats.bySource) || {} };
     })(),
-    pendingCashouts, recentAlerts, frozenPlayers,
+    pendingCashouts, pendingTopups, recentAlerts, frozenPlayers,
     weeklyTournaments: await getAllWeeklySummaries(env),
     framesCatalog: getEffectiveFramesCatalog(config)
   });
@@ -598,7 +617,12 @@ async function handleAdminUpdateConfig(env, body) {
   const updates = {};
   if (typeof body.killSwitch === 'boolean') updates.killSwitch = body.killSwitch;
   if (body.welcomePoints !== undefined) updates.welcomePoints = Math.max(0, Number(body.welcomePoints));
-  if (body.minCashoutPts !== undefined) updates.minCashoutPts = Math.max(100, Number(body.minCashoutPts));
+  if (body.minCashoutPts !== undefined) updates.minCashoutPts = Math.max(10, Math.floor(Number(body.minCashoutPts)));
+  if (body.minTopupSYP !== undefined) updates.minTopupSYP = Math.max(10, Math.floor(Number(body.minTopupSYP)));
+  if (typeof body.shamCashCashoutEnabled === 'boolean') updates.shamCashCashoutEnabled = body.shamCashCashoutEnabled;
+  if (typeof body.shamCashTopupEnabled === 'boolean') updates.shamCashTopupEnabled = body.shamCashTopupEnabled;
+  if (body.adminShamCashId !== undefined) updates.adminShamCashId = String(body.adminShamCashId || '').trim().slice(0, 80);
+  if (body.adminWhatsApp !== undefined) updates.adminWhatsApp = String(body.adminWhatsApp || '').replace(/[^0-9]/g, '').slice(0, 20);
   if (body.pvpHouseEdgePct !== undefined) updates.pvpHouseEdgePct = Math.min(30, Math.max(0, Number(body.pvpHouseEdgePct)));
   if (body.coinToUsdRate !== undefined) updates.coinToUsdRate = Math.max(0.0001, Number(body.coinToUsdRate));
   if (body.buyRateSYP !== undefined) updates.buyRateSYP = Math.max(1, Number(body.buyRateSYP));
@@ -735,14 +759,19 @@ async function handleProfile(env, player, config = {}) {
     dailyDeal: getTodayDailyDeal(),
     framesCatalog: getEffectiveFramesCatalog(config),
     economy: {
-      buyRateSYP: Number(config.buyRateSYP || 150),
-      usdToSypRate: Number(config.usdToSypRate || 15000),
-      coinToUsdRate: Number(config.coinToUsdRate || 0.01),
+      buyRateSYP: Number(config.buyRateSYP || 1),
+      usdToSypRate: Number(config.usdToSypRate || 150),
+      coinToUsdRate: Number(config.coinToUsdRate || (1 / Number(config.usdToSypRate || 150))),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
       autoRolloverWeekly: config.autoRolloverWeekly !== false,
       autoCashoutEnabled: Boolean(config.autoCashoutEnabled),
       autoCashoutMaxPts: Number(config.autoCashoutMaxPts || 200),
       autoCashoutMinWins: Number(config.autoCashoutMinWins || 3),
+      minTopupSYP: Number(config.minTopupSYP || 100),
+      shamCashCashoutEnabled: Boolean(config.shamCashCashoutEnabled),
+      shamCashTopupEnabled: Boolean(config.shamCashTopupEnabled),
+      adminShamCashId: String(config.adminShamCashId || ''),
+      adminWhatsApp: String(config.adminWhatsApp || '963965461504'),
       broadcast: getActiveBroadcast(config)
     },
     records
@@ -1230,10 +1259,20 @@ async function verifyRollingLedger(env, player) {
   return (Number(player.verifiedCheckpointBalance || 0) + sumDelta) === Number(player.points);
 }
 
-async function handleCashoutRequest(env, player, { tierPts }, config) {
-  const pts = Number(tierPts);
-  const minCashout = Number(config.minCashoutPts || 100);
-  if (!ALLOWED_CASHOUT_TIERS.includes(pts) || pts < minCashout) return jsonResponse({ code: 'ERR_TIER', message: `فئة غير مسموحة. الفئات: ${ALLOWED_CASHOUT_TIERS.join(', ')}` }, 400);
+async function handleCashoutRequest(env, player, { tierPts, method, shamCashId }, config) {
+  const pts = Math.floor(Number(tierPts || 0));
+  const minCashout = Math.max(10, Number(config.minCashoutPts || 100));
+  const payMethod = method === 'shamcash' ? 'shamcash' : 'store';
+  if (payMethod === 'shamcash' && !config.shamCashCashoutEnabled) {
+    return jsonResponse({ code: 'ERR_DISABLED', message: 'السحب عبر شام كاش غير مفعّل حالياً من الإدارة.' }, 403);
+  }
+  const cleanShamId = String(shamCashId || '').trim().slice(0, 80);
+  if (payMethod === 'shamcash' && cleanShamId.length < 4) {
+    return jsonResponse({ code: 'ERR_SHAM_ID', message: 'يرجى إدخال معرّف شام كاش صحيح.' }, 400);
+  }
+  if (!pts || pts < minCashout || pts > 5000000) {
+    return jsonResponse({ code: 'ERR_TIER', message: `الحد الأدنى للسحب هو ${minCashout.toLocaleString()} عملة (ل.س).` }, 400);
+  }
   if (player.points < pts) return jsonResponse({ code: 'ERR_FUNDS', message: 'الرصيد غير كافٍ.' }, 400);
 
   const auditOk = await verifyRollingLedger(env, player);
@@ -1242,16 +1281,22 @@ async function handleCashoutRequest(env, player, { tierPts }, config) {
     return jsonResponse({ code: 'ERR_AUDIT_FAIL', message: 'تم تجميد الحساب تلقائياً لعدم تطابق السجل.' }, 403);
   }
 
-  const txId = `cash_${crypto.randomUUID()}`;
+  const txId = `cash_${crypto.randomUUID().slice(0, 12)}`;
   const now = Date.now();
-  const usdAmount = Number((pts * Number(config.coinToUsdRate || 0.01)).toFixed(4));
-  await updatePlayerBalance(env, player, -pts, { txId, type: 'cashout_pending', delta: -pts, at: now });
+  const sypRate = Number(config.usdToSypRate || 150);
+  const usdAmount = Number((pts / sypRate).toFixed(4));
+  await updatePlayerBalance(env, player, -pts, { txId, type: `cashout_pending_${payMethod}`, delta: -pts, at: now });
   const isTrusted = Boolean(player.trusted) || (Number(player.wins || 0) >= Number(config.autoCashoutMinWins || 3) && Number(player.antiCheatFlags || 0) === 0 && !player.frozen);
-  const autoEligible = Boolean(config.autoCashoutEnabled) && isTrusted && pts <= Number(config.autoCashoutMaxPts || 200);
+  const autoEligible = payMethod === 'store' && Boolean(config.autoCashoutEnabled) && isTrusted && pts <= Number(config.autoCashoutMaxPts || 200);
   await fbPatch(env, `arena_world/pending_cashouts/${txId}`, {
-    phone: player.phone, pts, usdAmount, status: 'pending_audit', autoEligible, createdAt: now, releaseAt: now + CASHOUT_AUDIT_DELAY_MS
+    phone: player.phone, displayName: player.displayName || '', pts, sypAmount: pts, usdAmount,
+    method: payMethod, shamCashId: payMethod === 'shamcash' ? cleanShamId : '',
+    status: 'pending_audit', autoEligible, createdAt: now, releaseAt: now + CASHOUT_AUDIT_DELAY_MS
   });
-  return jsonResponse({ ok: true, txId, usdAmount, autoEligible, releaseAt: now + CASHOUT_AUDIT_DELAY_MS });
+  return jsonResponse({
+    ok: true, txId, pts, sypAmount: pts, usdAmount, method: payMethod,
+    shamCashId: cleanShamId, autoEligible, createdAt: now, releaseAt: now + CASHOUT_AUDIT_DELAY_MS
+  });
 }
 
 async function flagAndFreeze(env, player, reason, details) {
@@ -1506,8 +1551,8 @@ async function handleBridgeStoreInfo(env, { phone }, config) {
     fbGet(env, `arena_world/players/${phone}`),
     getAllWeeklySummaries(env, phone)
   ]);
-  const usdToSypRate = Number(config.usdToSypRate || 15000);
-  const buyRateSYP = Number(config.buyRateSYP || 150);
+  const usdToSypRate = Number(config.usdToSypRate || 150);
+  const buyRateSYP = Number(config.buyRateSYP || 1);
   const storeUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
   const availableSyp = Math.floor(storeUsd * usdToSypRate);
   let totalWeeklyPool = 0;
@@ -1742,4 +1787,134 @@ async function handleSendTaunt(env, player, { targetPhone, tauntId }) {
 async function handleReadNotifications(env, player) {
   await fbPatch(env, `arena_world/notifications/${player.phone}`, {});
   return jsonResponse({ ok: true });
+}
+
+
+// ============================================================================
+// المرحلة 5: شحن شام كاش بواتساب + التسجيل والدخول المشترك مع متجر معاذ (0% AI)
+// ============================================================================
+async function handleShamCashTopupRequest(env, player, { sypAmount }, config) {
+  if (!config.shamCashTopupEnabled) {
+    return jsonResponse({ code: 'ERR_DISABLED', message: 'شحن شام كاش غير مفعّل حالياً من الإدارة.' }, 403);
+  }
+  const minTopup = Math.max(10, Number(config.minTopupSYP || 100));
+  const syp = Math.floor(Number(sypAmount || 0));
+  if (!syp || syp < minTopup || syp > 5000000) {
+    return jsonResponse({ code: 'ERR_AMT', message: `الحد الأدنى للشحن هو ${minTopup.toLocaleString()} ل.س.` }, 400);
+  }
+
+  // حماية ضد الإغراق: حد أقصى طلبين معلقين لكل لاعب
+  const existing = (await fbGet(env, 'arena_world/pending_topups')) || {};
+  const myPending = Object.values(existing).filter((t) => t && t.phone === player.phone && t.status === 'pending');
+  if (myPending.length >= 2) {
+    return jsonResponse({ code: 'ERR_LIMIT', message: 'لديك طلبان معلقان بالفعل. يرجى انتظار اعتماد الإدارة.' }, 429);
+  }
+
+  const buyRate = Math.max(1, Number(config.buyRateSYP || 1));
+  const coins = Math.floor(syp / buyRate);
+  const txId = `SC-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+  const now = Date.now();
+  await fbPatch(env, `arena_world/pending_topups/${txId}`, {
+    txId, phone: player.phone, displayName: player.displayName || '',
+    sypAmount: syp, coins, method: 'shamcash', status: 'pending', createdAt: now
+  });
+
+  const adminShamId = String(config.adminShamCashId || '');
+  const adminWa = String(config.adminWhatsApp || '963965461504');
+  const waText = `🏆 طلب شحن عالم تحديات معاذ (شام كاش)\nرقم الطلب: ${txId}\nاللاعب: ${player.displayName || 'لاعب'} (${player.phone})\nالمبلغ المحوّل: ${syp.toLocaleString()} ل.س\nالعملات المطلوبة: ${coins.toLocaleString()} عملة\n(مرفق إشعار التحويل)`;
+
+  return jsonResponse({
+    ok: true, txId, sypAmount: syp, coins, adminShamCashId: adminShamId,
+    adminWhatsApp: adminWa, waUrl: `https://wa.me/${adminWa}?text=${encodeURIComponent(waText)}`,
+    createdAt: now
+  });
+}
+
+async function handleAdminResolveTopup(env, { txId, action }) {
+  if (!txId || !['approve', 'reject'].includes(action)) return jsonResponse({ code: 'ERR_PARAM', message: 'بيانات غير صالحة.' }, 400);
+  const topup = await fbGet(env, `arena_world/pending_topups/${txId}`);
+  if (!topup || topup.status !== 'pending') return jsonResponse({ code: 'ERR_TX_DONE', message: 'تمت معالجة طلب الشحن مسبقاً.' }, 400);
+
+  if (action === 'approve') {
+    const player = await fbGet(env, `arena_world/players/${topup.phone}`);
+    if (!player) return jsonResponse({ code: 'ERR_NO_PLAYER', message: 'اللاعب غير موجود.' }, 404);
+    await fbPatch(env, `arena_world/pending_topups/${txId}`, { status: 'approved', resolvedAt: Date.now() });
+    await updatePlayerBalance(env, player, Number(topup.coins || 0), {
+      txId, type: 'shamcash_topup_approved', delta: Number(topup.coins || 0), at: Date.now()
+    });
+    return jsonResponse({ ok: true, message: `✅ تم اعتماد الشحن وإضافة ${topup.coins} عملة للاعب ${topup.phone}.` });
+  } else {
+    await fbPatch(env, `arena_world/pending_topups/${txId}`, { status: 'rejected', resolvedAt: Date.now() });
+    return jsonResponse({ ok: true, message: 'تم رفض طلب الشحن.' });
+  }
+}
+
+async function hashPass(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('moaath_salt_' + String(str || '')));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleSharedRegister(env, { name, phone, password, deviceId }, config) {
+  const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
+  const cleanName = String(name || '').trim().slice(0, 40);
+  const cleanPass = String(password || '').trim();
+  if (cleanPhone.length < 8 || cleanName.length < 2 || cleanPass.length < 4 || !deviceId) {
+    return jsonResponse({ code: 'ERR_REG', message: 'يرجى إدخال الاسم، رقم هاتف صحيح، وكلمة مرور (4 أحرف على الأقل).' }, 400);
+  }
+  const existingUser = await fbGet(env, `users/${cleanPhone}`);
+  if (existingUser && existingUser.arenaPassHash) {
+    return jsonResponse({ code: 'ERR_EXISTS', message: 'هذا الرقم مسجل مسبقاً، استخدم تبويب تسجيل الدخول.' }, 409);
+  }
+  const passHash = await hashPass(cleanPass);
+  const now = Date.now();
+  await fbPatch(env, `users/${cleanPhone}`, {
+    name: cleanName, phone: cleanPhone, arenaPassHash: passHash,
+    prepaidBalanceUSD: Number((existingUser && existingUser.prepaidBalanceUSD) || 0),
+    createdAt: (existingUser && existingUser.createdAt) || now
+  });
+
+  const deviceToken = crypto.randomUUID() + '.' + now;
+  await fbPatch(env, `arena_world/devices/${deviceId}`, { phone: cleanPhone, token: deviceToken });
+  const existingPlayer = await fbGet(env, `arena_world/players/${cleanPhone}`);
+  if (!existingPlayer) {
+    const welcomePts = Number(config.welcomePoints || 0);
+    await fbPatch(env, `arena_world/players/${cleanPhone}`, {
+      phone: cleanPhone, displayName: cleanName, activeCharacterId: 'buddy', activeFrame: '',
+      points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
+      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
+    });
+  } else {
+    await fbPatch(env, `arena_world/players/${cleanPhone}`, { displayName: cleanName, deviceToken });
+  }
+  return jsonResponse({ ok: true, deviceToken, message: '🎉 تم إنشاء حسابك المشترك بين متجر معاذ وعالم التحديات بنجاح!' });
+}
+
+async function handleSharedLogin(env, { phone, password, deviceId }, config) {
+  const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
+  const cleanPass = String(password || '').trim();
+  if (cleanPhone.length < 8 || !cleanPass || !deviceId) {
+    return jsonResponse({ code: 'ERR_LOGIN', message: 'أدخل رقم الهاتف وكلمة المرور.' }, 400);
+  }
+  const storeUser = await fbGet(env, `users/${cleanPhone}`);
+  if (!storeUser || !storeUser.arenaPassHash) {
+    return jsonResponse({ code: 'ERR_NOT_FOUND', message: 'الحساب غير مسجل بكلمة مرور. استخدم «تسجيل جديد» أو «معرف الربط السري».' }, 404);
+  }
+  const passHash = await hashPass(cleanPass);
+  if (passHash !== storeUser.arenaPassHash) {
+    return jsonResponse({ code: 'ERR_BAD_PASS', message: 'كلمة المرور غير صحيحة.' }, 403);
+  }
+  const deviceToken = crypto.randomUUID() + '.' + Date.now();
+  await fbPatch(env, `arena_world/devices/${deviceId}`, { phone: cleanPhone, token: deviceToken });
+  const existingPlayer = await fbGet(env, `arena_world/players/${cleanPhone}`);
+  if (!existingPlayer) {
+    const welcomePts = Number(config.welcomePoints || 0);
+    await fbPatch(env, `arena_world/players/${cleanPhone}`, {
+      phone: cleanPhone, displayName: storeUser.name || `لاعب ${cleanPhone.slice(-4)}`, activeCharacterId: 'buddy', activeFrame: '',
+      points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
+      winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
+    });
+  } else {
+    await fbPatch(env, `arena_world/players/${cleanPhone}`, { deviceToken });
+  }
+  return jsonResponse({ ok: true, deviceToken, message: '✅ أهلاً بعودتك إلى عالم تحديات معاذ!' });
 }
