@@ -617,14 +617,6 @@ async function handleProfile(env, player, config = {}) {
       autoCashoutMinWins: Number(config.autoCashoutMinWins || 3),
       broadcast: getActiveBroadcast(config)
     },
-    adminProfit: (() => {
-      const totalPts = Number((adminStats && adminStats.totalRevenuePts) || 0);
-      const usdRate = Number(config.coinToUsdRate || 0.01);
-      const sypRate = Number(config.usdToSypRate || 15000);
-      const totalUsd = Number((totalPts * usdRate).toFixed(2));
-      const totalSyp = Math.round(totalUsd * sypRate);
-      return { totalPts, totalUsd, totalSyp, bySource: (adminStats && adminStats.bySource) || {} };
-    })(),
     records
   });
 }
