@@ -1007,6 +1007,10 @@
 
     <!-- ================= 2. اللوبي الرئيسي (مساحة برج التحدي المعزولة) ================= -->
     <section id="lobbyScreen" class="hidden">
+      <div id="begModeTopBar15" class="beg-mode-bar" style="margin: 10px 12px 0;">
+        <span id="begModeLabel15">🌱 وضع المبتدئ: واجهة مبسّطة</span>
+        <button type="button" id="begModeBtn15" class="beg-switch-btn" onclick="ArenaApp.toggleBeginnerMode()">عرض الكل ▾</button>
+      </div>
 
       <!-- التبويب 1: الرئيسية (منصة الصدارة الملكية + بطاقات الألعاب) -->
       <div id="tab-home">
@@ -4585,6 +4589,60 @@
       const origSync14 = ArenaApp.syncProfile.bind(ArenaApp);
       ArenaApp.syncProfile = async function(...args) {
         const res = await origSync14(...args);
+        this.applyBeginnerMode();
+        return res;
+      };
+    })();
+
+  
+    // === Phase 15: Guaranteed Visible Beginner / Full Mode Toggle Bar ===
+    (function ensureBeginnerBarVisible15() {
+      if (typeof ArenaApp === 'undefined') return;
+      const BEG_KEY = 'moaath_beginner_ui_mode_v1';
+
+      function computeBegActive() {
+        const saved = localStorage.getItem(BEG_KEY);
+        if (saved === '0') return false;
+        if (saved === '1') return true;
+        const p = ArenaApp.profile || {};
+        const rounds = Number(p.totalRoundsPlayed || p.wins || 0);
+        return rounds < 3;
+      }
+
+      ArenaApp.applyBeginnerMode = function() {
+        const active = computeBegActive();
+        document.body.classList.toggle('beginner-ui', active);
+        const lbl = document.getElementById('begModeLabel15');
+        const btn = document.getElementById('begModeBtn15');
+        if (lbl) {
+          lbl.textContent = active
+            ? '🌱 وضع المبتدئ: ركّز على اللعب الآن فقط'
+            : '⚡ الوضع الكامل: كل الأدوات والإحصائيات ظاهرة';
+        }
+        if (btn) {
+          btn.textContent = active ? 'عرض الكل ▾' : 'تبسيط للمبتدئ';
+        }
+        const cm = document.getElementById('comboMeter13');
+        if (active && cm) cm.classList.add('hidden');
+      };
+
+      ArenaApp.toggleBeginnerMode = function(forceVal = null) {
+        const next = forceVal !== null ? Boolean(forceVal) : !document.body.classList.contains('beginner-ui');
+        localStorage.setItem(BEG_KEY, next ? '1' : '0');
+        this.applyBeginnerMode();
+        this.toast(next ? '🌱 تم تفعيل الواجهة المبسّطة للمبتدئين' : '⚡ تم عرض جميع الأدوات المتقدمة');
+      };
+
+      const origInit15 = ArenaApp.init.bind(ArenaApp);
+      ArenaApp.init = function(...args) {
+        const r = origInit15(...args);
+        this.applyBeginnerMode();
+        return r;
+      };
+
+      const origSync15 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync15(...args);
         this.applyBeginnerMode();
         return res;
       };
