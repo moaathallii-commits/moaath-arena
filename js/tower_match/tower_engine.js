@@ -85,7 +85,8 @@
   class TowerEngine {
     constructor(config = {}) {
       if (!window.MoaathTowerBoard) throw new Error("MoaathTowerBoard is required.");
-      this.mode = config.mode || "record"; // 'record' | 'pvp' | 'practice' | 'daily_boss' | 'hardcore'
+      this.mode = config.mode || "record";
+      this.nemesisBoss = config.nemesisBoss || null; // 'record' | 'pvp' | 'practice' | 'daily_boss' | 'hardcore'
       this.seed = config.seed || (this.mode === "daily_boss" ? `daily_${getTodayKey()}` : `tower_${Date.now()}`);
       this.sessionId = config.sessionId || null;
       this.personaId = PERSONA_SKILLS[config.personaId] ? config.personaId : "buddy";
@@ -127,7 +128,7 @@
       this.floor = this.mode === "hardcore" ? 10 : 1;
       this.isBossFloor = this.floor % 5 === 0;
       this.bossTheme = window.MoaathTowerAssets
-        ? window.MoaathTowerAssets.getBossForFloor(this.floor)
+        ? window.MoaathTowerAssets.getBossForFloor(this.floor, this.floor >= 10 && this.mode === 'record' ? this.nemesisBoss : null)
         : { tier: 1, name: "حارس البوابة البرونزية", accent: "#f59e0b", bgTop: "#1c1917", bgBot: "#451a03" };
 
       this.maxTimeSec = 50;
@@ -192,7 +193,8 @@
     _calcFloorHp(floorNum) {
       const isBoss = floorNum % 5 === 0;
       const base = 90 + (floorNum - 1) * 28 + Math.floor(Math.pow(floorNum, 1.35) * 6);
-      return isBoss ? Math.round(base * 1.65) : base;
+      const nemesisMult = (isBoss && this.bossTheme && this.bossTheme.isNemesis) ? 1.45 : 1;
+      return isBoss ? Math.round(base * 1.65 * nemesisMult) : base;
     }
 
     start() {
@@ -301,7 +303,12 @@
       const tier = this.bossTheme?.tier || 1;
       let label = "";
       if (tier === 1) { this.board.applyBossLocks(2); label = "🔒 حارس البوابة أقفل قطعتين!"; }
-      else if (tier === 2) { this.board.bossSwapRandomPair(); label = "🔀 العملاق السيبراني قلب قطعتين!"; }
+      else if (tier === 2 || tier === 7) { this.board.bossSwapRandomPair(); label = "🔀 تبديل رقمي فاجأ اللوحة!"; }
+      else if (tier === 5) { this.board.applyBossLocks(2); label = "❄️ صقيع الزعيم الجليدي جمّد قطعتين!"; }
+      else if (tier === 6) { this.board.applyBossLocks(2); label = "🌑 زعيم الظل ألقى ظلامه على قطعتين!"; }
+      else if (tier === 8) { this.board.applyBossLocks(2); label = "🔥 لهب العنقاء النارية اشتعل في اللوحة!"; }
+      else if (tier === 9) { this.bossAttackCooldownSec = Math.max(4, this.bossAttackCooldownSec - 3); label = "⏳ حارس الزمن سرّع عدّاد الهجمة!"; }
+      else if (tier === 99) { this.board.applyBossLocks(3); this.board.bossSwapRandomPair(); label = "👁️ هجمة النسخة الشريرة للبطل السابق!"; }
       else if (tier === 3) { this.timeLeftSec = Math.max(1, this.timeLeftSec - 2.0); label = "🐉 تنين الزمرد استنزف ثانيتين!"; }
       else { this.board.applyIceObstacles(2, 2); label = "❄️ سيد البرج جمّد قطعتين!"; }
       this._emit("bossAttack", { tier, label, boardAfter: this.board.getSnapshot(), state: this.getPublicState() });
@@ -527,7 +534,7 @@
       this.isBossFloor = this.floor % 5 === 0;
       this.bossAttackCooldownSec = this.bossAttackMaxSec;
       this.bossTheme = window.MoaathTowerAssets
-        ? window.MoaathTowerAssets.getBossForFloor(this.floor)
+        ? window.MoaathTowerAssets.getBossForFloor(this.floor, this.floor >= 10 && this.mode === 'record' ? this.nemesisBoss : null)
         : { tier: 1, name: "حارس البرج", accent: "#f59e0b", bgTop: "#1c1917", bgBot: "#451a03" };
 
       // معدّل الطابق كل طابقين
