@@ -767,6 +767,55 @@
       filter: drop-shadow(0 0 8px rgba(250,204,21,0.5));
     }
 
+  
+    /* === Phase 12: Critical Fixes + AAA Enhancements === */
+    /* Fix #1: Completely hide old overlapping floating HUD */
+    #tmPhase10Hud { display: none !important; }
+
+    /* Fix #2: Keep floating damage/combo text over the board, never over the boss card */
+    .tm-float-dmg, .tm-floating-text, .tm-combo-pop {
+      top: 52% !important; z-index: 950 !important; pointer-events: none !important;
+    }
+
+    /* Fix #5: Countdown Spinner */
+    .cd-spinner {
+      width: 34px; height: 34px; margin: 10px auto 0;
+      border: 3px solid rgba(250,204,21,0.22); border-top-color: #fde047;
+      border-radius: 50%; animation: prSpin 0.7s linear infinite;
+    }
+
+    /* Skeleton Loader */
+    .skel-card {
+      height: 76px; border-radius: 16px; margin-bottom: 10px;
+      background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(56,189,248,0.14) 50%, rgba(30,41,59,0.5) 75%);
+      background-size: 200% 100%; animation: fxShimmer 1.3s linear infinite;
+    }
+
+    /* Quick 1-Thumb Tactical Tool Strip */
+    .quick-tool-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;
+    }
+    .qt-btn {
+      background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(148,163,184,0.25);
+      border-radius: 12px; padding: 6px 4px; text-align: center; cursor: pointer;
+      color: #cbd5e1; font-size: 0.68rem; font-weight: 800; position: relative;
+    }
+    .qt-btn.selected {
+      border-color: #fde047; background: rgba(250,204,21,0.16); color: #fde047;
+      box-shadow: 0 0 12px rgba(250,204,21,0.25);
+    }
+    .qt-btn.empty { opacity: 0.45; }
+    .qt-btn img { width: 30px; height: 30px; object-fit: contain; display: block; margin: 0 auto 3px; }
+    .qt-qty {
+      position: absolute; top: 3px; left: 4px; font-size: 0.62rem; font-weight: 900;
+      background: #0f172a; color: #4ade80; padding: 1px 5px; border-radius: 999px;
+      border: 1px solid rgba(74,222,128,0.5);
+    }
+
+    /* Lite FX / Battery Saver Mode */
+    body.lite-fx * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    body.lite-fx .prestige-aura-ring, body.lite-fx #fxCanvas { display: none !important; }
+
   </style>
 </head>
 <body>
@@ -832,7 +881,7 @@
         <input type="text" id="sharedRegName" placeholder="الاسم الكامل" />
         <input type="tel" id="sharedRegPhone" dir="ltr" placeholder="09xxxxxxxx" />
         <input type="password" id="sharedRegPass" placeholder="كلمة المرور (4 أحرف على الأقل)" />
-        <input type="text" id="sharedRegRefCode" dir="ltr" placeholder="🎁 كود الإحالة (اختياري — مثال: MTH8A3F)" style="font-family:monospace; letter-spacing:1px;" />
+        <input type="text" id="sharedRegRefCode" dir="auto" placeholder="🎁 كود الإحالة (اختياري — مثال: MTH8A3F)" style="font-family:monospace; letter-spacing:1px;" />
         <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedRegister()">✨ إنشاء حساب مشترك مع متجر معاذ</button>
       </div>
       <div id="authPaneBind">
@@ -840,7 +889,7 @@
         <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" style="margin:0; font-family:monospace; letter-spacing:1px;" oninput="ArenaApp.formatBindInput(this)" />
         <button type="button" class="paste-btn" onclick="ArenaApp.pasteBindKey()">📋 لصق</button>
       </div>
-      <input type="text" id="bindRefCodeInput" dir="ltr" placeholder="🎁 كود الإحالة (اختياري — إن وُجد)" style="font-family:monospace; letter-spacing:1px;" />
+      <input type="text" id="bindRefCodeInput" dir="auto" placeholder="🎁 كود الإحالة (اختياري — إن وُجد)" style="font-family:monospace; letter-spacing:1px;" />
       <button id="bindSubmitBtn" class="btn btn-gold" onclick="ArenaApp.bindDevice()">🚀 ربط الجهاز والدخول للساحة</button>
       </div>
       <button class="btn btn-outline btn-sm" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 ليس لدي معرف؟ افتح متجر معاذ</button>
@@ -1112,6 +1161,10 @@
             <label style="font-size:0.8rem; color:var(--silver); display:flex; align-items:center; gap:8px;">
               <input type="checkbox" id="dataSaverToggle" style="width:auto; margin:0;" onchange="ArenaApp.toggleDataSaver(this.checked)" />
               <span>وضع توفير البيانات (تقليل تحميل الأصوات)</span>
+            </label>
+            <label style="font-size:0.8rem; color:var(--silver); display:flex; align-items:center; gap:8px; margin-top:8px;">
+              <input type="checkbox" id="liteFxToggle" style="width:auto; margin:0;" onchange="ArenaApp.toggleLiteFx(this.checked)" />
+              <span>⚡ وضع توفير البطارية (تقليل المؤثرات الضوئية للأجهزة الضعيفة)</span>
             </label>
           </div>
         </div>
@@ -1805,7 +1858,7 @@
           return `
             <div class="char-card ${isVip ? 'vip' : ''} ${isSelected ? 'selected' : ''}">
               <span class="char-badge ${isVip ? 'badge-vip' : 'badge-basic'}">${isVip ? 'VIP' : 'أساسية'}</span>
-              <div class="char-thumb"><img src="${imgUrl}" alt="${ch.name}" loading="lazy" /></div>
+              <div class="char-thumb"><img src="${imgUrl}" alt="${ch.name}" loading="lazy" onerror="this.onerror=null;this.src='./assets/chars/buddy.jpg';" /></div>
               <strong style="color:${isVip ? 'var(--gold-light)' : '#fff'}; font-size:0.86rem;">${ch.name}</strong>
               <p style="font-size:0.72rem; color:var(--silver); margin:5px 0; min-height:30px;">${ch.skillDesc}</p>
               ${isSelected
@@ -3818,6 +3871,288 @@
           return r;
         };
       }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 12: حزمة الإصلاح الحرج (9 إصلاحات) + تحسينات AAA (Pre-fetch + Skeleton + Quick Tools + Lite FX + Practice)
+    // ========================================================================
+    (function extendArenaAppPhase12() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // A. Battery Saver / Lite FX
+      ArenaApp.toggleLiteFx = function(enabled) {
+        localStorage.setItem('arena_lite_fx', enabled ? '1' : '0');
+        document.body.classList.toggle('lite-fx', Boolean(enabled));
+      };
+      if (localStorage.getItem('arena_lite_fx') === '1') {
+        document.body.classList.add('lite-fx');
+        const el = document.getElementById('liteFxToggle');
+        if (el) el.checked = true;
+      }
+
+      // B. Pitch-Shifted Combo Audio in MythicFX
+      if (typeof MythicFX !== 'undefined') {
+        MythicFX.playCombo = function(combo) {
+          const base = 360 + Math.min(8, Number(combo || 1)) * 75;
+          this.tone(base, 0.14, 'triangle', 0.13, 0);
+          this.tone(base * 1.25, 0.16, 'sine', 0.1, 0.05);
+        };
+      }
+
+      // C. Fix #8: Hide 3 bind steps when switching to Login or Register tab
+      const origAuthTab12 = ArenaApp.switchAuthTab ? ArenaApp.switchAuthTab.bind(ArenaApp) : null;
+      if (origAuthTab12) {
+        ArenaApp.switchAuthTab = function(tab) {
+          origAuthTab12(tab);
+          const steps = document.querySelector('#loginScreen .login-steps');
+          if (steps) steps.classList.toggle('hidden', tab !== 'bind');
+        };
+      }
+
+      // D. Fix #7: Strictly hide #liveCountdownStrip outside Weekly Room
+      const origSwitchTab12 = ArenaApp.switchTab.bind(ArenaApp);
+      ArenaApp.switchTab = function(tab) {
+        origSwitchTab12(tab);
+        const strip = document.getElementById('liveCountdownStrip');
+        if (strip) strip.classList.toggle('hidden', !(tab === 'home' && this.towerRoom === 'weekly'));
+      };
+
+      // E. Fix #5 & #9: Pre-fetch /session/start at second 1 of countdown + Idempotency Key + Spinner
+      ArenaApp.startFlow = function(gameId, mode, stakePts, pvpMatchId = null) {
+        this.lastSessionCtx = { gameId, mode, stakePts, pvpMatchId };
+        const useItem = document.getElementById('tacticalItemSelect')?.value || null;
+        const usePass = mode === 'record' && document.getElementById('usePassCheckbox')?.checked;
+        if (this.profile && window.ArenaVoice) window.ArenaVoice.speak(this.profile.activeCharacterId, 'start');
+
+        let sec = 5;
+        let cancelled = false;
+        let prefetchedPromise = null;
+        const idempotencyKey = `run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+        const overlay = document.getElementById('countdownOverlay');
+        const numEl = document.getElementById('countdownNumber');
+        const cancelBtn = document.getElementById('cancelMatchBtn');
+        numEl.innerHTML = sec;
+        cancelBtn.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+
+        this._cancelCb12 = () => { cancelled = true; };
+
+        const fireStartRequest = () => {
+          let endpoint = '/session/start';
+          let payload = { gameId, mode, stakePts, useItem, usePass, idempotencyKey };
+          if (mode === 'pvp_create') { endpoint = '/pvp/create'; payload = { gameId, stakePts, useItem, idempotencyKey }; }
+          if (mode === 'pvp_join') { endpoint = '/pvp/join'; payload = { matchId: pvpMatchId, useItem, idempotencyKey }; }
+          return this.api(endpoint, payload);
+        };
+
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = setInterval(async () => {
+          if (cancelled) { clearInterval(this.countdownTimer); return; }
+          sec--;
+          if (sec === 1 && !prefetchedPromise) {
+            // Pre-fetch at 1s so game starts instantaneously at 0s!
+            cancelBtn.classList.add('hidden');
+            prefetchedPromise = fireStartRequest();
+          }
+          if (sec > 0) {
+            numEl.textContent = sec;
+          } else {
+            clearInterval(this.countdownTimer);
+            cancelBtn.classList.add('hidden');
+            numEl.innerHTML = `انطلق!<div class="cd-spinner"></div>`;
+            const session = await (prefetchedPromise || fireStartRequest());
+            overlay.classList.add('hidden');
+            if (!cancelled && session && session.sessionId) {
+              this.launchGame(gameId, mode, stakePts, session);
+            }
+          }
+        }, 1000);
+      };
+
+      const origCancel12 = ArenaApp.cancelCountdown.bind(ArenaApp);
+      ArenaApp.cancelCountdown = function() {
+        if (this._cancelCb12) this._cancelCb12();
+        origCancel12();
+      };
+
+      // F. Fix #6: Single clean /pvp/list call (eliminates double API call) + Skeleton Loader + Opponent Profile Modal
+      ArenaApp.openOpponentProfile = function(name, charId, defenses, bounty) {
+        const av = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(charId || 'buddy') : './assets/chars/buddy.jpg';
+        ArenaModal.show({
+          theme: 'gold', icon: '👤', title: `بطاقة المنافس: ${name}`,
+          bodyHtml: `
+            <img src="${av}" style="width:72px;height:72px;border-radius:50%;border:2px solid #fde047;margin:6px auto;display:block;" onerror="this.src='./assets/chars/buddy.jpg'" />
+            <div style="margin-top:8px;">💀 ضحايا تحديه الدائم: <b style="color:#fda4af;">${defenses}</b></div>
+            <div>🎯 جائزة الصيد المتراكمة: <b style="color:#fde047;">+${bounty} عملة</b></div>
+          `
+        });
+      };
+
+      ArenaApp.loadPvpList = async function() {
+        const box = document.getElementById('pvpListContainer');
+        if (!box) return;
+        const filterHtml = `
+          <div class="filter-row" style="margin-bottom:8px;">
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'all' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('all')">الكل</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'low' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('low')">≤ 50</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'mid' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('mid')">50–200</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'high' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('high')">+200</button>
+          </div>
+        `;
+        box.innerHTML = filterHtml + '<div class="skel-card"></div><div class="skel-card"></div>';
+        const res = await this.api('/pvp/list');
+        if (!res || !res.matches || res.matches.length === 0) {
+          box.innerHTML = filterHtml + '<div style="text-align:center; padding:14px; color:#94a3b8;">لا توجد تحديات دائمة مفتوحة حالياً — كن أول «مطلوب للعدالة»!</div>';
+          return;
+        }
+        const filtered = res.matches.filter((m) => {
+          const s = Number(m.stakePts || 0);
+          if (this.pvpStakeFilter === 'low') return s <= 50;
+          if (this.pvpStakeFilter === 'mid') return s > 50 && s <= 200;
+          if (this.pvpStakeFilter === 'high') return s > 200;
+          return true;
+        });
+        const allPres = [...(this.profile?.pvpDefenseCatalog || []), ...(this.profile?.pvpStreakCatalog || [])];
+        box.innerHTML = filterHtml + `
+          <div style="display:flex; justify-content:space-between; font-size:0.74rem; color:#fde047; font-weight:900; margin-bottom:8px;">
+            <span>🎯 مطلوبون للعدالة (${filtered.length})</span>
+            <span style="color:#4ade80;">🟢 الساحة نشطة الآن</span>
+          </div>
+          ${filtered.length === 0 ? '<div style="text-align:center;color:#94a3b8;padding:10px;">لا توجد تحديات ضمن هذا النطاق المالي.</div>' : filtered.map((m) => {
+            const winReward = Math.floor(m.stakePts * 2 * 0.80) + Number(m.bountyPts || 0);
+            const isHot = m.bountyPts > 0 || m.defensesCount >= 3;
+            const avUrl = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(m.creatorCharId || 'buddy') : './assets/chars/buddy.jpg';
+            const presObj = m.creatorPrestigeId ? allPres.find((x) => x.id === m.creatorPrestigeId) : null;
+            const presImg = presObj && presObj.file ? `<img src="${presObj.file}" class="prestige-mini-ico fx-pr-${presObj.rarity || 'rare'}" title="${presObj.name}" onerror="this.style.display='none'" />` : '';
+            const safeName = String(m.creatorName || '').replace(/'/g, '');
+            let actionHtml = '';
+            if (m.isMine) {
+              actionHtml = m.inBattle
+                ? `<div class="in-battle-pill" style="margin-top:8px;">⚔️ في منافسة حالياً</div>`
+                : `<button class="btn btn-outline btn-sm" style="border-color:#f43f5e;color:#fda4af;margin-top:8px;" onclick="ArenaApp.confirmCancelPvp('${m.matchId}', ${m.stakePts})">🚫 إلغاء التحدي (استرداد 50% = ${Math.floor(m.stakePts * 0.5).toLocaleString()} عملة)</button>`;
+            } else if (m.inBattle) {
+              actionHtml = `<div class="in-battle-pill" style="margin-top:8px;">⚔️ في منافسة حالياً — انتظر انتهاء الجولة</div>`;
+            } else {
+              actionHtml = `
+                <div style="display:flex; gap:6px; margin-top:8px;">
+                  <button class="btn btn-gold btn-sm" style="flex:1; margin:0;" onclick="ArenaApp._pvpActiveOpponent={name:'${safeName}',charId:'${m.creatorCharId || 'buddy'}',stakePts:${m.stakePts}}; ArenaApp.startFlow('${m.gameId}', 'pvp_join', ${m.stakePts}, '${m.matchId}')">⚔️ اقبل (${m.stakePts} ← اربح ${winReward.toLocaleString()})</button>
+                  <button class="btn btn-outline btn-sm" style="width:auto; margin:0; padding:6px 10px;" title="إرسال استفزاز" onclick="ArenaApp.sendQuickPvpTaunt('${m.creatorPhone || ''}')">😏</button>
+                </div>`;
+            }
+            return `
+              <div class="bounty-card ${isHot ? 'hot' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                  <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="ArenaApp.openOpponentProfile('${safeName}','${m.creatorCharId || 'buddy'}',${m.defensesCount || 0},${m.bountyPts || 0})">
+                    <img src="${avUrl}" class="pvp-challenger-av" onerror="this.src='./assets/chars/buddy.jpg'" />
+                    <div>
+                      <strong style="color:#fff; font-size:0.9rem;">${presImg}${m.creatorName} ${m.isMine ? '<small style="color:#4ade80;">(تحديك)</small>' : ''}</strong>
+                      <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">قيمة التحدي: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    <span class="skull-pill">💀 ${m.defensesCount || 0} ضحايا</span>
+                    ${m.bountyPts > 0 ? `<span class="bounty-pill">🎯 صيد +${m.bountyPts.toLocaleString()}</span>` : ''}
+                  </div>
+                </div>
+                ${actionHtml}
+              </div>
+            `;
+          }).join('')}
+        `;
+      };
+
+      // G. Quick 1-Thumb Tactical Tool Icon Strip + Quick Free Practice Button
+      ArenaApp.renderQuickToolStrip = function() {
+        const sel = document.getElementById('tacticalItemSelect');
+        if (!sel || !sel.parentElement) return;
+        let strip = document.getElementById('quickToolStrip12');
+        if (!strip) {
+          strip = document.createElement('div');
+          strip.id = 'quickToolStrip12';
+          strip.className = 'quick-tool-strip';
+          sel.parentElement.parentElement.appendChild(strip);
+        }
+        const inv = this.profile?.inventory || {};
+        const tools = [
+          { id: 'tower_bomb', label: 'قنبلة', img: './assets/shop/tower_bomb.png' },
+          { id: 'tower_row', label: 'مدفع صف', img: './assets/shop/tower_row.png' },
+          { id: 'tower_wildcard', label: 'جوكر', img: './assets/shop/tower_wildcard.png' },
+          { id: 'double_xp', label: '2x XP', img: './assets/shop/double_xp.png' }
+        ];
+        strip.innerHTML = tools.map((t) => {
+          const qty = Number(inv[t.id] || 0);
+          const selected = sel.value === t.id;
+          return `
+            <div class="qt-btn ${selected ? 'selected' : ''} ${qty <= 0 ? 'empty' : ''}" onclick="ArenaApp.selectQuickTool('${t.id}', ${qty})">
+              <span class="qt-qty">${qty}</span>
+              <img src="${t.img}" alt="${t.label}" onerror="this.style.display='none'" />
+              <div>${t.label}</div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      ArenaApp.selectQuickTool = function(id, qty) {
+        if (qty <= 0) {
+          this.toast('🛒 لا تملك هذه الأداة — انتقل للمتجر لشرائها وتجهيزها!');
+          return;
+        }
+        const sel = document.getElementById('tacticalItemSelect');
+        if (sel) {
+          sel.value = sel.value === id ? '' : id;
+          this.renderQuickToolStrip();
+          this.toast(sel.value ? '✅ تم تجهيز الأداة لجولتك القادمة!' : 'تم إلغاء تجهيز الأداة.');
+        }
+      };
+
+      ArenaApp.startFreePractice = function() {
+        if (!window.MoaathTowerUI) return;
+        window.MoaathTowerUI.launch({
+          mode: 'practice',
+          seed: 'practice_' + Date.now(),
+          personaId: this.profile?.activeCharacterId || 'buddy',
+          onComplete: (summary) => {
+            ArenaModal.show({
+              theme: 'cyber', icon: '🎯', title: 'انتهى التدريب السريع!',
+              bodyHtml: `نتيجتك التدريبية: <b style="color:#fde047;">${Number(summary.score || 0).toLocaleString()} نقطة</b><br/>أنت جاهز الآن للمنافسة الحقيقية على الجوائز!`
+            });
+          }
+        });
+      };
+
+      // Add idempotencyKey to executeBuy
+      const origExecBuy12 = ArenaApp.executeBuy.bind(ArenaApp);
+      ArenaApp.executeBuy = async function(itemId) {
+        const res = await this.api('/shop/buy', { itemId, idempotencyKey: `buy_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` });
+        if (res && res.ok) {
+          this.toast(res.message);
+          if (this.profile && window.ArenaVoice) window.ArenaVoice.speak(this.profile.activeCharacterId, 'shop');
+          await this.syncProfile();
+          this.renderShop();
+        }
+      };
+
+      // Hook into syncProfile to render Quick Tool Strip + Practice button
+      const origSync12 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync12(...args);
+        if (this.profile) {
+          this.renderQuickToolStrip();
+          const tc = document.querySelector('#tab-home .hero-game-card.tower');
+          if (tc && !document.getElementById('freePracticeBtn12')) {
+            const pBtn = document.createElement('button');
+            pBtn.id = 'freePracticeBtn12';
+            pBtn.type = 'button';
+            pBtn.className = 'btn btn-outline btn-sm';
+            pBtn.textContent = '🎯 تدريب سريع مجاني (بدون جوائز)';
+            pBtn.onclick = () => this.startFreePractice();
+            tc.appendChild(pBtn);
+          }
+        }
+        return res;
+      };
     })();
 
   </script>
