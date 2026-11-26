@@ -390,6 +390,75 @@
       animation: frGalaxy 4.5s linear reverse infinite;
     }
 
+  
+    /* === Phase 6: AAA Minimalist Sci-Fi Redesign === */
+    body {
+      background: radial-gradient(circle at 50% -10%, #102040 0%, #050a16 52%, #02050b 100%);
+      padding-bottom: 88px;
+    }
+    header {
+      background: rgba(6, 11, 24, 0.88);
+      border-bottom: 1px solid rgba(245, 197, 66, 0.25);
+      padding: 9px 12px;
+    }
+    .wallet-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: linear-gradient(135deg, rgba(245,197,66,0.16), rgba(15,23,42,0.92));
+      border: 1px solid rgba(245,197,66,0.55); padding: 4px 10px 4px 6px;
+    }
+    .coin-ico-sm { width: 20px; height: 20px; object-fit: contain; vertical-align: middle; filter: drop-shadow(0 0 4px rgba(250,204,21,0.65)); }
+    .hdr-act-btn {
+      height: 30px; padding: 0 9px; border-radius: 999px; border: 1px solid rgba(56,189,248,0.45);
+      background: rgba(56,189,248,0.14); color: #7dd3fc; font-weight: 900; font-size: 0.74rem;
+      display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+    }
+    .hdr-act-btn.withdraw { border-color: rgba(34,197,94,0.55); background: rgba(34,197,94,0.16); color: #4ade80; }
+    .card, .hub-card, .hero-game-card, .podium-card {
+      border-radius: 20px !important;
+      background: linear-gradient(160deg, rgba(16, 26, 48, 0.9), rgba(7, 13, 26, 0.94)) !important;
+      border: 1px solid rgba(255, 255, 255, 0.09) !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45) !important;
+    }
+    .hero-game-card.tower { border-color: rgba(245, 197, 66, 0.45) !important; }
+    .bottom-dock {
+      bottom: 10px !important; left: 10px !important; right: 10px !important;
+      border-radius: 22px !important; border: 1px solid rgba(245, 197, 66, 0.35) !important;
+      background: rgba(8, 14, 28, 0.92) !important;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+      padding: 6px !important;
+    }
+    .dock-btn.active {
+      background: linear-gradient(135deg, rgba(245,197,66,0.22), rgba(56,189,248,0.12)) !important;
+      box-shadow: inset 0 -2px 0 #fde047;
+    }
+    .filter-pill {
+      padding: 7px 8px !important; font-size: 0.72rem !important; min-width: 60px !important;
+      border-radius: 12px !important;
+    }
+    /* Standalone Futuristic Withdraw & Top-Up Vaults */
+    .vault-modal-box {
+      width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto;
+      background: linear-gradient(165deg, #0f1c36, #060b16);
+      border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 24px; padding: 18px;
+      box-shadow: 0 0 42px rgba(56, 189, 248, 0.22), 0 20px 50px rgba(0, 0, 0, 0.75);
+      text-align: right;
+    }
+    .vault-method-card {
+      display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer; margin-bottom: 9px; transition: border-color 0.2s, background 0.2s;
+    }
+    .vault-method-card.selected {
+      border-color: #4ade80; background: rgba(34, 197, 94, 0.12);
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.18);
+    }
+    .vault-method-card img { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .vault-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+    .vault-preset-btn {
+      padding: 7px 4px; border-radius: 10px; border: 1px solid rgba(56,189,248,0.4);
+      background: rgba(56,189,248,0.12); color: #7dd3fc; font-weight: 800; font-size: 0.74rem; cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -400,8 +469,12 @@
   <header>
     <div class="brand">🏆 عالم تحديات معاذ</div>
     <div class="wallet-wrap">
-      <div class="wallet-badge"><span id="coinsDisplay">0</span> عملة</div>
-      <button type="button" class="topup-plus" title="شحن من متجر معاذ" onclick="ArenaApp.openStoreTopupHint()">+</button>
+      <div class="wallet-badge" onclick="ArenaApp.openTopupVault()" style="cursor:pointer;">
+        <img src="./assets/ui/coin_moaath.png" class="coin-ico-sm" alt="" onerror="this.style.display='none'" />
+        <span id="coinsDisplay">0</span>
+      </div>
+      <button type="button" class="hdr-act-btn" title="شحن الرصيد" onclick="ArenaApp.openTopupVault()">+ شحن</button>
+      <button type="button" class="hdr-act-btn withdraw" title="سحب الأرباح" onclick="ArenaApp.openWithdrawVault()">💸 سحب</button>
     </div>
   </header>
   <div id="broadcastBanner" class="broadcast-bar hidden">
@@ -470,8 +543,8 @@
         <div style="font-size:0.78rem; color:#94a3b8;">المحفظة الموحدة المرتبطة بمتجر معاذ</div>
         <div style="font-size:1.35rem; font-weight:900; color:#4ade80; margin:4px 0;"><span id="hubCoinsVal">0</span> عملة معاذ</div>
         <div style="display:flex; justify-content:center; gap:8px; margin-top:8px;">
-          <button class="btn btn-gold btn-sm" style="margin:0; width:auto; padding:7px 14px;" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">💳 شحن بالليرة من المتجر</button>
-          <button class="btn btn-outline btn-sm" style="margin:0; width:auto; padding:7px 14px;" onclick="ArenaApp.enterTowerWorkspace('profile')">💸 السحب وملفي</button>
+          <button class="btn btn-gold btn-sm" style="margin:0; width:auto; padding:8px 14px;" onclick="ArenaApp.openTopupVault()">💳 شحن الرصيد</button>
+          <button class="btn btn-blue btn-sm" style="margin:0; width:auto; padding:8px 14px;" onclick="ArenaApp.openWithdrawVault()">💸 سحب الأرباح</button>
         </div>
       </div>
 
@@ -654,11 +727,11 @@
         </div>
 
         <div class="filter-row">
-          <button class="filter-pill active" onclick="ArenaApp.setShopTab('frames', this)">🖼️ الإطارات (15)</button>
+          <button class="filter-pill active" onclick="ArenaApp.setShopTab('frames', this)">🖼️ إطارات</button>
           <button class="filter-pill" onclick="ArenaApp.setShopTab('tactical', this)">🛡️ أدوات</button>
           <button class="filter-pill" onclick="ArenaApp.setShopTab('bundles', this)">📦 باقات</button>
-          <button class="filter-pill" onclick="ArenaApp.setShopTab('deal', this)">🔥 عرض اليوم</button>
-          <button class="filter-pill" onclick="ArenaApp.setShopTab('taunts', this)">😏 استفزاز (50)</button>
+          <button class="filter-pill" onclick="ArenaApp.setShopTab('deal', this)">🔥 اليوم</button>
+          <button class="filter-pill" onclick="ArenaApp.setShopTab('taunts', this)">🎁 صناديق</button>
         </div>
 
         <div id="shopContainer"></div>
@@ -814,6 +887,104 @@
       <h3 id="afmTitle" style="color:#fde047; margin-bottom:8px;">إشعار</h3>
       <div id="afmBody" style="font-size:0.84rem; color:#e2e8f0; line-height:1.55; margin-bottom:14px;"></div>
       <div id="afmActions" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+  </div>
+
+
+  <!-- نافذة السحب المستقلة المستقبلية (Withdraw Vault) -->
+  <div id="withdrawVaultModal" class="overlay hidden" style="z-index:2600;">
+    <div class="vault-modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <img src="./assets/ui/coin_moaath.png" style="width:28px;height:28px;object-fit:contain;" alt="" />
+          <h3 style="color:#4ade80; margin:0; font-size:1.05rem;">خزينة سحب الأرباح</h3>
+        </div>
+        <button type="button" class="ws-back-btn" style="padding:4px 10px;" onclick="ArenaApp.closeWithdrawVault()">✕</button>
+      </div>
+
+      <div style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.35); border-radius:14px; padding:10px; text-align:center; margin-bottom:12px;">
+        <div style="font-size:0.74rem; color:#94a3b8;">رصيدك المتاح للسحب الآن</div>
+        <div style="font-size:1.3rem; font-weight:900; color:#fde047;"><span id="wvBalCoins">0</span> عملة <small style="font-size:0.78rem; color:#4ade80;">(≈ <span id="wvBalSyp">0</span> ل.س)</small></div>
+      </div>
+
+      <div style="font-size:0.78rem; color:#cbd5e1; margin-bottom:6px; font-weight:800;">1. اختر وسيلة السحب:</div>
+      <div id="wvMethodSham" class="vault-method-card selected" onclick="ArenaApp.selectWithdrawMethod('shamcash')">
+        <img src="./assets/ui/shamcash.png" alt="شام كاش" onerror="this.style.display='none'" />
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#fff; font-size:0.88rem;">شام كاش (Sham Cash)</strong>
+            <span id="wvShamStatusBadge" style="font-size:0.68rem; padding:2px 7px; border-radius:999px; background:rgba(34,197,94,0.2); color:#4ade80;">مفعّل</span>
+          </div>
+          <div style="font-size:0.72rem; color:#94a3b8;">تحويل مباشر إلى معرّف شام كاش الخاص بك مع إيصال محمي</div>
+        </div>
+      </div>
+      <div id="wvMethodStore" class="vault-method-card" onclick="ArenaApp.selectWithdrawMethod('store')">
+        <div style="width:44px;height:44px;border-radius:10px;background:rgba(245,197,66,0.16);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🛒</div>
+        <div style="flex:1;">
+          <strong style="color:#fff; font-size:0.88rem;">محفظة متجر معاذ</strong>
+          <div style="font-size:0.72rem; color:#94a3b8;">إضافة الرصيد مباشرة لمحفظتك للتسوق من متجر معاذ</div>
+        </div>
+      </div>
+
+      <div id="wvShamIdWrap" style="margin:8px 0;">
+        <div style="font-size:0.76rem; color:#7dd3fc; margin-bottom:3px; font-weight:800;">معرّف شام كاش الخاص بك:</div>
+        <input type="text" id="wvShamIdInput" placeholder="أدخل معرّف شام كاش بدقة..." style="margin:0;" />
+      </div>
+
+      <div style="font-size:0.78rem; color:#cbd5e1; margin:10px 0 4px; font-weight:800;">2. المبلغ المراد سحبه (عملة):</div>
+      <div class="vault-presets">
+        <button type="button" class="vault-preset-btn" onclick="ArenaApp.setWithdrawPreset(500)">500</button>
+        <button type="button" class="vault-preset-btn" onclick="ArenaApp.setWithdrawPreset(1000)">1,000</button>
+        <button type="button" class="vault-preset-btn" onclick="ArenaApp.setWithdrawPreset(5000)">5,000</button>
+        <button type="button" class="vault-preset-btn" onclick="ArenaApp.setWithdrawPreset(10000)">10,000</button>
+      </div>
+      <input type="number" id="wvAmountInput" value="500" min="100" oninput="ArenaApp.updateWithdrawPreview()" placeholder="أدخل عدد العملات" />
+      <div id="wvPreviewCalc" style="text-align:center; font-size:0.82rem; font-weight:900; color:#4ade80; margin:4px 0 10px;">ستستلم: 500 ل.س</div>
+
+      <button type="button" class="btn btn-gold" onclick="ArenaApp.submitWithdrawVault()">🚀 تأكيد طلب السحب الآن</button>
+
+      <div style="margin-top:14px; background:#070c18; border:1px solid rgba(56,189,248,0.25); border-radius:14px; padding:10px;">
+        <div style="font-size:0.78rem; font-weight:900; color:#7dd3fc; margin-bottom:6px;">🔒 سجل إيصالاتك المحمي على هاتفك (غير قابل للتعديل)</div>
+        <div id="wvImmutableLedger"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة الشحن المستقلة المستقبلية (Top-Up Vault) -->
+  <div id="topupVaultModal" class="overlay hidden" style="z-index:2600;">
+    <div class="vault-modal-box" style="border-color:rgba(245,197,66,0.55);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <img src="./assets/ui/coin_moaath.png" style="width:28px;height:28px;object-fit:contain;" alt="" />
+          <h3 style="color:#fde047; margin:0; font-size:1.05rem;">خزينة شحن العملات</h3>
+        </div>
+        <button type="button" class="ws-back-btn" style="padding:4px 10px;" onclick="document.getElementById('topupVaultModal').classList.add('hidden')">✕</button>
+      </div>
+
+      <div id="tvShamSection" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.35); border-radius:16px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <img src="./assets/ui/shamcash.png" style="width:42px;height:42px;object-fit:contain;" alt="شام كاش" />
+          <div style="flex:1;">
+            <strong style="color:#fff; font-size:0.9rem;">شحن مباشر عبر شام كاش</strong>
+            <div id="tvShamStatusLine" style="font-size:0.72rem; color:#4ade80;">1 ل.س = 1 عملة • رسالة واتساب تلقائية للإدارة</div>
+          </div>
+        </div>
+        <div id="tvAdminShamBox" style="background:#070c18; border-radius:10px; padding:8px; text-align:center; margin-bottom:8px;">
+          <div style="font-size:0.7rem; color:#94a3b8;">معرّف شام كاش الإدارة:</div>
+          <div id="tvAdminShamId" style="font-family:monospace; font-size:1rem; color:#fde047; margin:3px 0;">—</div>
+          <button type="button" class="btn btn-outline btn-sm" style="width:auto; margin:0; padding:4px 12px;" onclick="ArenaApp.copyAdminShamId()">📋 نسخ المعرّف</button>
+        </div>
+        <div class="vault-presets">
+          <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=1000">1,000</button>
+          <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=5000">5,000</button>
+          <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=10000">10,000</button>
+          <button type="button" class="vault-preset-btn" onclick="document.getElementById('tvSypInput').value=25000">25,000</button>
+        </div>
+        <input type="number" id="tvSypInput" value="5000" min="100" placeholder="المبلغ بالليرة السورية (ل.س)" />
+        <button id="tvShamSubmitBtn" type="button" class="btn btn-gold" onclick="ArenaApp.submitTopupVaultSham()">📲 تأكيد وإرسال الطلب عبر واتساب</button>
+      </div>
+
+      <button type="button" class="btn btn-blue" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 أو الشحن من محفظة متجر معاذ</button>
     </div>
   </div>
 
@@ -2293,6 +2464,159 @@
 
         box.innerHTML = `<div class="card"><h3>🎁 صناديق الاستفزاز الاحترافية</h3>${cratesHtml}</div><div class="card"><h3>😏 مكتبة الاستفزازات (50 بطاقة)</h3>${listHtml}</div>`;
       };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 6: خزينة السحب والشحن المستقلة + ربط الأيقونات الاحترافية الجديدة
+    // ========================================================================
+    (function extendArenaAppPhase6() {
+      if (typeof ArenaApp === 'undefined') return;
+      ArenaApp.withdrawMethod = 'shamcash';
+
+      // Override shop tool image URLs to use our new transparent PNGs
+      if (window.ArenaVoice && typeof window.ArenaVoice.getShopImgUrl === 'function') {
+        const pngShopSet = new Set(['shield_1', 'double_xp', 'arena_pass']);
+        const origGetShop = window.ArenaVoice.getShopImgUrl.bind(window.ArenaVoice);
+        window.ArenaVoice.getShopImgUrl = function(item) {
+          if (item && pngShopSet.has(item.id)) return `./assets/shop/${item.id}.png`;
+          return origGetShop(item);
+        };
+      }
+
+      // Hide weekly countdown strip outside Weekly Room for zero clutter
+      const origSwitchRoom = ArenaApp.switchTowerRoom ? ArenaApp.switchTowerRoom.bind(ArenaApp) : null;
+      if (origSwitchRoom) {
+        ArenaApp.switchTowerRoom = function(room) {
+          origSwitchRoom(room);
+          const strip = document.getElementById('liveCountdownStrip');
+          if (strip) strip.classList.toggle('hidden', room !== 'weekly');
+        };
+      }
+
+      ArenaApp.openTopupVault = function() {
+        const eco = this.profile?.economy || {};
+        const shamOn = Boolean(eco.shamCashTopupEnabled);
+        const minT = Number(eco.minTopupSYP || 100);
+        const adminId = eco.adminShamCashId || 'غير مضاف بعد في لوحة الإدارة';
+        document.getElementById('tvAdminShamId').textContent = adminId;
+        const inp = document.getElementById('tvSypInput');
+        if (inp) { inp.min = minT; if (Number(inp.value) < minT) inp.value = minT; }
+        const stLine = document.getElementById('tvShamStatusLine');
+        const subBtn = document.getElementById('tvShamSubmitBtn');
+        if (stLine) stLine.textContent = shamOn
+          ? `1 ل.س = 1 عملة • الحد الأدنى ${minT.toLocaleString()} ل.س`
+          : '⚠️ شحن شام كاش متوقف مؤقتاً من لوحة الإدارة';
+        if (subBtn) { subBtn.disabled = !shamOn; subBtn.style.opacity = shamOn ? '1' : '0.45'; }
+        document.getElementById('topupVaultModal')?.classList.remove('hidden');
+      };
+
+      ArenaApp.copyAdminShamId = function() {
+        const id = document.getElementById('tvAdminShamId')?.textContent?.trim() || '';
+        if (!id || id.includes('غير مضاف')) return this.toast('لم تقم الإدارة بإضافة معرّف شام كاش بعد.');
+        navigator.clipboard?.writeText(id).then(() => this.toast('✅ تم نسخ معرّف شام كاش الإدارة!'));
+      };
+
+      ArenaApp.submitTopupVaultSham = async function() {
+        const sypAmount = Number(document.getElementById('tvSypInput')?.value || 0);
+        const res = await this.api('/bridge/shamcash-topup-request', { sypAmount });
+        if (res && res.ok) {
+          await ShamLedger.append({ txId: res.txId, kind: 'شحن شام كاش', amount: res.sypAmount, shamCashId: res.adminShamCashId, createdAt: res.createdAt });
+          document.getElementById('topupVaultModal')?.classList.add('hidden');
+          window.open(res.waUrl, '_blank');
+          this.toast(`✅ تم تسجيل طلب الشحن (${res.txId}) وحفظ إيصاله في هاتفك!`);
+        }
+      };
+
+      ArenaApp.openWithdrawVault = function() {
+        const p = this.profile || {};
+        const eco = p.economy || {};
+        const rate = Number(eco.cashoutRateSYP || 1);
+        const minC = Number(eco.minCashoutPts || 100);
+        const shamOn = Boolean(eco.shamCashCashoutEnabled);
+
+        document.getElementById('wvBalCoins').textContent = Number(p.points || 0).toLocaleString();
+        document.getElementById('wvBalSyp').textContent = Math.round(Number(p.points || 0) * rate).toLocaleString();
+        const badge = document.getElementById('wvShamStatusBadge');
+        if (badge) {
+          badge.textContent = shamOn ? 'مفعّل ✓' : 'متوقف من الإدارة';
+          badge.style.color = shamOn ? '#4ade80' : '#f87171';
+          badge.style.background = shamOn ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)';
+        }
+        const inp = document.getElementById('wvAmountInput');
+        if (inp) { inp.min = minC; if (Number(inp.value) < minC) inp.value = minC; }
+
+        this.selectWithdrawMethod(shamOn ? 'shamcash' : 'store');
+        this.updateWithdrawPreview();
+        this.renderWithdrawLedger();
+        document.getElementById('withdrawVaultModal')?.classList.remove('hidden');
+      };
+
+      ArenaApp.closeWithdrawVault = function() {
+        document.getElementById('withdrawVaultModal')?.classList.add('hidden');
+      };
+
+      ArenaApp.selectWithdrawMethod = function(m) {
+        this.withdrawMethod = m;
+        document.getElementById('wvMethodSham')?.classList.toggle('selected', m === 'shamcash');
+        document.getElementById('wvMethodStore')?.classList.toggle('selected', m === 'store');
+        document.getElementById('wvShamIdWrap')?.classList.toggle('hidden', m !== 'shamcash');
+      };
+
+      ArenaApp.setWithdrawPreset = function(val) {
+        const inp = document.getElementById('wvAmountInput');
+        if (inp) { inp.value = val; this.updateWithdrawPreview(); }
+      };
+
+      ArenaApp.updateWithdrawPreview = function() {
+        const pts = Math.max(0, Math.floor(Number(document.getElementById('wvAmountInput')?.value || 0)));
+        const rate = Number(this.profile?.economy?.cashoutRateSYP || 1);
+        const syp = Math.round(pts * rate);
+        const el = document.getElementById('wvPreviewCalc');
+        if (el) el.textContent = `ستستلم: ${syp.toLocaleString()} ل.س (السعر: ${rate} ل.س/عملة)`;
+      };
+
+      ArenaApp.renderWithdrawLedger = function() {
+        const box = document.getElementById('wvImmutableLedger');
+        if (!box) return;
+        const rows = ShamLedger.list();
+        box.innerHTML = rows.length === 0
+          ? '<div style="font-size:0.74rem;color:#64748b;text-align:center;">لا توجد إيصالات مسجلة على هاتفك بعد.</div>'
+          : rows.map((r) => `
+              <div style="border-top:1px solid rgba(255,255,255,0.08);padding:6px 0;font-size:0.74rem;">
+                <div style="display:flex;justify-content:space-between;">
+                  <strong style="color:#fde047;">${r.kind} (${r.txId})</strong>
+                  <span style="color:#4ade80;">${Number(r.amount).toLocaleString()} ل.س ✓</span>
+                </div>
+                ${r.shamCashId ? `<div style="color:#94a3b8;">المعرّف: ${r.shamCashId}</div>` : ''}
+              </div>
+            `).join('');
+      };
+
+      ArenaApp.submitWithdrawVault = async function() {
+        const tierPts = Number(document.getElementById('wvAmountInput')?.value || 0);
+        const method = this.withdrawMethod;
+        const shamCashId = method === 'shamcash' ? (document.getElementById('wvShamIdInput')?.value.trim() || '') : '';
+        const res = await this.api('/bridge/cashout', { tierPts, method, shamCashId });
+        if (res && res.ok) {
+          await ShamLedger.append({
+            txId: res.txId,
+            kind: method === 'shamcash' ? 'سحب شام كاش' : 'سحب للمتجر',
+            amount: res.sypAmount || res.pts,
+            shamCashId,
+            createdAt: res.createdAt
+          });
+          this.closeWithdrawVault();
+          ArenaModal.show({
+            theme: 'emerald', icon: '✅', title: 'تم استلام طلب السحب بنجاح',
+            bodyHtml: `رقم الإيصال: <b>${res.txId}</b><br/>المبلغ: <b>${Number(res.sypAmount || res.pts).toLocaleString()} ل.س</b><br/>تم حفظ إيصال غير قابل للتعديل على هاتفك.`
+          });
+          this.syncProfile();
+        }
+      };
+
+      // Also link openStoreTopupHint to the new Top-Up Vault
+      ArenaApp.openStoreTopupHint = () => ArenaApp.openTopupVault();
     })();
 
   </script>
