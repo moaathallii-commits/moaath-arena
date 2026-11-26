@@ -561,6 +561,152 @@
     }
     .prestige-chip.locked { opacity: 0.45; filter: grayscale(0.8); border-color: #475569; color: #94a3b8; }
 
+  
+    /* === Phase 9: Complete 60-Point UX Polish + PvP Prestige Graphics === */
+    .mode-rule-bar {
+      background: rgba(250, 204, 21, 0.08); border: 1px solid rgba(250, 204, 21, 0.3);
+      border-radius: 12px; padding: 8px 10px; font-size: 0.75rem; color: #fef08a;
+      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .mode-rule-bar.weekly {
+      background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.38); color: #bae6fd;
+    }
+    .gap-nudge-pill {
+      background: linear-gradient(90deg, rgba(34,197,94,0.16), rgba(250,204,21,0.16));
+      border: 1px solid rgba(74,222,128,0.45); border-radius: 10px; padding: 6px 10px;
+      font-size: 0.74rem; color: #86efac; font-weight: 800; margin-top: 8px; text-align: center;
+    }
+    .prestige-grid-9 {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px;
+    }
+    .prestige-card-9 {
+      background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 14px; padding: 9px; text-align: center;
+    }
+    .prestige-card-9.owned { border-color: rgba(250, 204, 21, 0.65); background: linear-gradient(160deg, rgba(250,204,21,0.12), rgba(15,23,42,0.94)); }
+    .prestige-card-9.equipped { border: 2px solid #4ade80; box-shadow: 0 0 14px rgba(74,222,128,0.22); }
+    .prestige-card-9 img { width: 54px; height: 54px; object-fit: contain; margin: 2px auto 6px; display: block; }
+    .prestige-mini-ico { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-left: 4px; filter: drop-shadow(0 0 5px rgba(250,204,21,0.65)); }
+    .urgency-pulse { animation: frFlame 1.4s ease-in-out infinite; color: #fda4af !important; }
+
+  
+    /* === Phase 9 FX: Prominent 60fps GPU Prestige Badge Visual Effects === */
+    .prestige-stage-wrap {
+      position: relative; width: 76px; height: 76px; margin: 4px auto 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .prestige-aura-ring {
+      position: absolute; inset: -4px; border-radius: 50%; pointer-events: none; z-index: 1;
+      opacity: 0.9;
+    }
+    .prestige-aura-ring.rare {
+      background: conic-gradient(from 0deg, rgba(56,189,248,0.85), transparent 40%, rgba(14,165,233,0.75), transparent 80%);
+      animation: prSpin 3.6s linear infinite;
+      filter: blur(4px);
+    }
+    .prestige-aura-ring.epic {
+      background: conic-gradient(from 0deg, rgba(168,85,247,0.95), rgba(56,189,248,0.75), transparent 45%, rgba(232,121,249,0.9), transparent 85%);
+      animation: prSpin 2.6s linear infinite;
+      filter: blur(5px);
+    }
+    .prestige-aura-ring.legendary {
+      background: conic-gradient(from 0deg, #fde047, #f97316, transparent 35%, #ef4444, #facc15, transparent 75%);
+      animation: prSpin 2.1s linear infinite;
+      filter: blur(5px);
+    }
+    .prestige-aura-ring.mythic {
+      background: conic-gradient(from 0deg, #facc15, #ec4899, #a855f7, #38bdf8, #facc15);
+      animation: prSpin 1.6s linear infinite;
+      filter: blur(6px);
+    }
+    .prestige-img-fx {
+      position: relative; z-index: 2; width: 66px !important; height: 66px !important;
+      object-fit: contain; margin: 0 !important;
+    }
+    .prestige-img-fx.fx-pr-rare {
+      animation: prFloatRare 2.4s ease-in-out infinite;
+    }
+    .prestige-img-fx.fx-pr-epic {
+      animation: prFloatEpic 2.0s ease-in-out infinite;
+    }
+    .prestige-img-fx.fx-pr-legendary {
+      animation: prFloatLeg 1.7s ease-in-out infinite;
+    }
+    .prestige-img-fx.fx-pr-mythic {
+      animation: prFloatMythic 1.5s ease-in-out infinite;
+    }
+    .prestige-mini-ico.fx-pr-rare { filter: drop-shadow(0 0 6px #38bdf8); animation: prMiniPulse 2s ease-in-out infinite; }
+    .prestige-mini-ico.fx-pr-epic { filter: drop-shadow(0 0 8px #c084fc); animation: prMiniPulse 1.7s ease-in-out infinite; }
+    .prestige-mini-ico.fx-pr-legendary { filter: drop-shadow(0 0 10px #facc15); animation: prMiniPulse 1.4s ease-in-out infinite; }
+    .prestige-mini-ico.fx-pr-mythic { filter: drop-shadow(0 0 12px #ec4899); animation: prMythicMini 1.3s ease-in-out infinite; }
+
+    @keyframes prSpin { 0%{transform:rotate(0deg) scale(0.96)} 50%{transform:rotate(180deg) scale(1.08)} 100%{transform:rotate(360deg) scale(0.96)} }
+    @keyframes prFloatRare {
+      0%,100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 8px #38bdf8) brightness(1.05); }
+      50% { transform: translateY(-4px) scale(1.06); filter: drop-shadow(0 0 18px #7dd3fc) brightness(1.22); }
+    }
+    @keyframes prFloatEpic {
+      0%,100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 10px #a855f7) brightness(1.08); }
+      50% { transform: translateY(-5px) scale(1.08); filter: drop-shadow(0 0 22px #e879f9) brightness(1.28); }
+    }
+    @keyframes prFloatLeg {
+      0%,100% { transform: translateY(0) scale(1) rotate(-1.5deg); filter: drop-shadow(0 0 12px #facc15) drop-shadow(0 0 22px #f97316) brightness(1.1); }
+      50% { transform: translateY(-6px) scale(1.1) rotate(1.5deg); filter: drop-shadow(0 0 18px #fef08a) drop-shadow(0 0 30px #ef4444) brightness(1.32); }
+    }
+    @keyframes prFloatMythic {
+      0%,100% { transform: translateY(0) scale(1.02) rotate(-2deg); filter: drop-shadow(0 0 14px #facc15) drop-shadow(0 0 26px #a855f7) hue-rotate(0deg) brightness(1.15); }
+      50% { transform: translateY(-6px) scale(1.12) rotate(2deg); filter: drop-shadow(0 0 20px #38bdf8) drop-shadow(0 0 34px #ec4899) hue-rotate(24deg) brightness(1.38); }
+    }
+    @keyframes prMiniPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+    @keyframes prMythicMini { 0%,100%{transform:scale(1) rotate(-4deg); filter:drop-shadow(0 0 8px #facc15)} 50%{transform:scale(1.24) rotate(4deg); filter:drop-shadow(0 0 14px #ec4899)} }
+
+  
+    /* === Phase 10: Final 100% UX Polish (In-Game HUD, Shop Deal Timer, PvP VS Card) === */
+    #tmPhase10Hud {
+      position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+      z-index: 2100000; width: 92%; max-width: 440px; pointer-events: none;
+      display: flex; flex-direction: column; gap: 5px; direction: rtl;
+    }
+    .tm10-chase-bar {
+      background: rgba(8, 14, 28, 0.9); border: 1.5px solid rgba(250, 204, 21, 0.55);
+      border-radius: 12px; padding: 5px 10px; font-size: 0.74rem; font-weight: 900;
+      color: #fde047; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .tm10-chase-bar.hot {
+      border-color: #4ade80; background: linear-gradient(90deg, rgba(22,163,74,0.3), rgba(250,204,21,0.28));
+      color: #fef08a; animation: frFlame 1.4s ease-in-out infinite;
+    }
+    .tm10-boss-tip {
+      background: rgba(30, 27, 75, 0.92); border: 1px solid rgba(192, 132, 252, 0.6);
+      border-radius: 10px; padding: 5px 9px; font-size: 0.72rem; color: #e9d5ff;
+      text-align: center; font-weight: 800;
+    }
+    .tm10-boss-tip.nemesis {
+      background: linear-gradient(90deg, rgba(136,19,55,0.92), rgba(46,16,101,0.92));
+      border-color: #f43f5e; color: #fecdd3; box-shadow: 0 0 18px rgba(244,63,94,0.45);
+    }
+    .pvp-vs-box {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
+      background: rgba(7, 12, 24, 0.85); border: 1.5px solid rgba(250, 204, 21, 0.45);
+      border-radius: 16px; padding: 12px; margin: 10px auto; max-width: 340px; width: 100%;
+    }
+    .pvp-vs-side { text-align: center; }
+    .pvp-vs-side img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #fde047; }
+    .pvp-vs-badge {
+      font-weight: 900; font-size: 1rem; color: #f43f5e;
+      background: rgba(244,63,94,0.16); border: 1px solid #f43f5e;
+      border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    }
+    .pvp-challenger-av {
+      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+      border: 1.5px solid #fde047; flex-shrink: 0; background: #070c18;
+    }
+    .close-chance-tag {
+      display: inline-block; font-size: 0.64rem; font-weight: 900; padding: 1px 6px;
+      border-radius: 999px; background: rgba(249,115,22,0.2); border: 1px solid #fb923c;
+      color: #fdba74; margin-right: 4px;
+    }
+
   </style>
 </head>
 <body>
@@ -2964,6 +3110,508 @@
         }
         return res;
       };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 9: استكمال تحسينات الـ UX الستة + رسوميات وأوسمة الصمود وسلسلة PvP
+    // ========================================================================
+    (function extendArenaAppPhase9() {
+      if (typeof ArenaApp === 'undefined') return;
+      ArenaApp.pvpStakeFilter = 'all';
+      ArenaApp._lastTauntSentAt = 0;
+
+      // 1. Contextual First-Time Tooltips (shown once per feature)
+      ArenaApp.showContextTipOnce = function(key, title, body) {
+        const storageKey = 'moaath_ctx_tip_' + key;
+        if (localStorage.getItem(storageKey) === '1') return;
+        localStorage.setItem(storageKey, '1');
+        this.toast(`💡 ${title}: ${body}`);
+      };
+
+      // 2. Room Mode Rule Bar + Ambient Color + Personal Best & Gap Nudge + Last Attempt
+      const origSwitchRoom9 = ArenaApp.switchTowerRoom ? ArenaApp.switchTowerRoom.bind(ArenaApp) : null;
+      if (origSwitchRoom9) {
+        ArenaApp.switchTowerRoom = function(room) {
+          origSwitchRoom9(room);
+          let ruleBar = document.getElementById('modeRuleBar9');
+          const swBar = document.getElementById('roomSwitchBar');
+          if (swBar && !ruleBar) {
+            ruleBar = document.createElement('div');
+            ruleBar.id = 'modeRuleBar9';
+            swBar.parentElement.insertBefore(ruleBar, swBar.nextSibling);
+          }
+          if (ruleBar) {
+            if (room === 'record') {
+              ruleBar.className = 'mode-rule-bar';
+              const bestRec = Number(this.profile?.personalBestRecord || 0);
+              const curRec = Number(this.profile?.records?.tower_match?.currentRecord || 0);
+              const gap = curRec > bestRec ? (curRec - bestRec + 1) : 0;
+              ruleBar.innerHTML = `<span>👑 <b>كسر الرقم:</b> تجاوز الرقم القياسي واحصد الجائزة فوراً! ${bestRec > 0 ? `(أفضل رقم لك: ${bestRec.toLocaleString()})` : ''}</span>` +
+                (this.profile?.lastAttempt ? `<button type="button" class="ws-back-btn" style="padding:3px 7px;font-size:0.68rem;" onclick="ArenaApp.showLastAttemptModal()">آخر محاولة</button>` : '');
+              if (gap > 0 && bestRec > 0) {
+                let gEl = document.getElementById('recordGapNudge9');
+                const tc = document.querySelector('#tab-home .hero-game-card.tower');
+                if (tc && !gEl) { gEl = document.createElement('div'); gEl.id = 'recordGapNudge9'; gEl.className = 'gap-nudge-pill'; tc.appendChild(gEl); }
+                if (gEl) gEl.textContent = `🔥 متبقي لك ${gap.toLocaleString()} نقطة فقط لتلامس العرش وتحطم الرقم القياسي!`;
+              }
+            } else {
+              ruleBar.className = 'mode-rule-bar weekly';
+              ruleBar.innerHTML = `<span>🏆 <b>الأسبوعية:</b> تُحتسب أعلى نتيجة لك حتى نهاية الدورة — عند التعادل تُحسم الأسبقية بالوقت.</span>`;
+            }
+          }
+          if (room === 'record') this.showContextTipOnce('record_room', 'غرفة كسر الرقم', 'اهزم ظل البطل السابق في الطوابق العليا لتنتزع الجائزة الكبرى!');
+        };
+      }
+
+      ArenaApp.showLastAttemptModal = function() {
+        const la = this.profile?.lastAttempt;
+        if (!la) return this.toast('لا توجد محاولة مسجلة بعد.');
+        const modeAr = la.mode === 'record' ? 'كسر الرقم القياسي' : (la.mode === 'weekly' ? 'البطولة الأسبوعية' : 'تحدي PvP');
+        ArenaModal.show({
+          theme: 'cyber', icon: '📊', title: 'تفاصيل آخر محاولة لك',
+          bodyHtml: `النمط: <b>${modeAr}</b><br/>النتيجة: <b style="color:#fde047;">${Number(la.score || 0).toLocaleString()} نقطة</b><br/>الحالة: <b>${la.won ? '🏆 فوز / رقم جديد' : '🔄 محاولة قوية'}</b>`
+        });
+      };
+
+      // 3. Leaderboard Gap-to-Next-Rank & Urgency Pulse
+      const origRenderPodium9 = ArenaApp.renderRoyalPodium.bind(ArenaApp);
+      ArenaApp.renderRoyalPodium = function() {
+        origRenderPodium9();
+        const w = this.weeklyData && this.weeklyData[this.podiumGame];
+        if (!w) return;
+        const strip = document.getElementById('liveCountdownStrip');
+        if (strip && w.endAt && (w.endAt - Date.now()) < 6 * 3600000) {
+          strip.classList.add('urgency-pulse');
+        }
+        const myBar = document.getElementById('podiumMyRank');
+        if (myBar && w.myRank && w.myRank > 1 && Array.isArray(w.top7)) {
+          const above = w.top7[w.myRank - 2];
+          if (above) {
+            const diff = Math.max(1, Number(above.bestScore) - Number(w.myBest) + 1);
+            myBar.innerHTML = `<span>🏅 مركزك: <b>#${w.myRank}</b> (${w.myBest})</span><span style="color:#fde047;">🔥 ينقصك <b>${diff}</b> للمركز #${w.myRank - 1}</span>`;
+          }
+        }
+      };
+
+      // 4. PvP Stake Filters + Quick Taunt Send + Equipped Prestige Icon on Bounty Cards
+      ArenaApp.setPvpStakeFilter = function(f) {
+        this.pvpStakeFilter = f;
+        this.loadPvpList();
+      };
+
+      ArenaApp.sendQuickPvpTaunt = async function(targetPhone) {
+        const now = Date.now();
+        if (now - this._lastTauntSentAt < 10000) return this.toast('⏳ انتظر بضع ثوانٍ قبل إرسال استفزاز جديد.');
+        const activeT = this.profile?.activeTauntId || '';
+        if (!activeT) return this.toast('🎁 افتح صندوق استفزاز من المتجر وجهّز بطاقة أولاً!');
+        this._lastTauntSentAt = now;
+        const res = await this.api('/tower/taunt/send', { targetPhone, tauntId: activeT });
+        if (res && res.ok) this.toast('😏 تم إرسال الاستفزاز للمنافس بنجاح!');
+      };
+
+      const origLoadPvp9 = ArenaApp.loadPvpList.bind(ArenaApp);
+      ArenaApp.loadPvpList = async function() {
+        const box = document.getElementById('pvpListContainer');
+        if (!box) return origLoadPvp9();
+        box.textContent = 'جاري تحميل مطلوبين الساحة...';
+        const res = await this.api('/pvp/list');
+        const filterHtml = `
+          <div class="filter-row" style="margin-bottom:8px;">
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'all' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('all')">الكل</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'low' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('low')">≤ 50</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'mid' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('mid')">50–200</button>
+            <button type="button" class="filter-pill ${this.pvpStakeFilter === 'high' ? 'active' : ''}" onclick="ArenaApp.setPvpStakeFilter('high')">+200</button>
+          </div>
+        `;
+        if (!res || !res.matches || res.matches.length === 0) {
+          box.innerHTML = filterHtml + '<div style="text-align:center; padding:14px; color:#94a3b8;">لا توجد تحديات دائمة مفتوحة حالياً — كن أول «مطلوب للعدالة»!</div>';
+          return;
+        }
+        const filtered = res.matches.filter((m) => {
+          const s = Number(m.stakePts || 0);
+          if (this.pvpStakeFilter === 'low') return s <= 50;
+          if (this.pvpStakeFilter === 'mid') return s > 50 && s <= 200;
+          if (this.pvpStakeFilter === 'high') return s > 200;
+          return true;
+        });
+        const allPres = [...(this.profile?.pvpDefenseCatalog || []), ...(this.profile?.pvpStreakCatalog || [])];
+        box.innerHTML = filterHtml + `
+          <div style="font-size:0.76rem; color:#fde047; font-weight:900; margin-bottom:8px;">🎯 مطلوبون للعدالة (${filtered.length})</div>
+          ${filtered.length === 0 ? '<div style="text-align:center;color:#94a3b8;padding:10px;">لا توجد تحديات ضمن هذا النطاق المالي.</div>' : filtered.map((m) => {
+            const winReward = Math.floor(m.stakePts * 2 * 0.80) + Number(m.bountyPts || 0);
+            const isHot = m.bountyPts > 0 || m.defensesCount >= 3;
+            const presObj = m.creatorPrestigeId ? allPres.find((x) => x.id === m.creatorPrestigeId) : null;
+            const presImg = presObj && presObj.file ? `<img src="${presObj.file}" class="prestige-mini-ico fx-pr-${presObj.rarity || 'rare'}" title="${presObj.name}" onerror="this.style.display='none'" />` : '';
+            let actionHtml = '';
+            if (m.isMine) {
+              actionHtml = m.inBattle
+                ? `<div class="in-battle-pill">⚔️ في منافسة حالياً</div>`
+                : `<button class="btn btn-outline btn-sm" style="border-color:#f43f5e;color:#fda4af;margin-top:8px;" onclick="ArenaApp.confirmCancelPvp('${m.matchId}', ${m.stakePts})">🚫 إلغاء التحدي (استرداد 50% = ${Math.floor(m.stakePts * 0.5).toLocaleString()} عملة)</button>`;
+            } else if (m.inBattle) {
+              actionHtml = `<div class="in-battle-pill" style="margin-top:8px;">⚔️ في منافسة حالياً — انتظر انتهاء الجولة</div>`;
+            } else {
+              actionHtml = `
+                <div style="display:flex; gap:6px; margin-top:8px;">
+                  <button class="btn btn-gold btn-sm" style="flex:1; margin:0;" onclick="ArenaApp.startFlow('${m.gameId}', 'pvp_join', ${m.stakePts}, '${m.matchId}')">⚔️ اقبل (${m.stakePts} ← اربح ${winReward.toLocaleString()})</button>
+                  <button class="btn btn-outline btn-sm" style="width:auto; margin:0; padding:6px 10px;" title="إرسال استفزاز" onclick="ArenaApp.sendQuickPvpTaunt('${m.creatorPhone || ''}')">😏</button>
+                </div>`;
+            }
+            return `
+              <div class="bounty-card ${isHot ? 'hot' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                  <div>
+                    <strong style="color:#fff; font-size:0.92rem;">${presImg}${m.creatorName} ${m.isMine ? '<small style="color:#4ade80;">(تحديك)</small>' : ''}</strong>
+                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">الرهان: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    <span class="skull-pill">💀 ${m.defensesCount || 0} ضحايا</span>
+                    ${m.bountyPts > 0 ? `<span class="bounty-pill">🎯 صيد +${m.bountyPts.toLocaleString()}</span>` : ''}
+                  </div>
+                </div>
+                ${actionHtml}
+              </div>
+            `;
+          }).join('')}
+        `;
+      };
+
+      // 5. Upgrade PvP Prestige Display to Visual 2-Column PNG Grid + Equip Button
+      ArenaApp.equipPvpPrestige = async function(prestigeId) {
+        const res = await this.api('/pvp/prestige/equip', { prestigeId });
+        if (res && res.ok) {
+          MythicFX.playBadgeUnlock();
+          this.toast(res.message);
+          await this.syncProfile();
+        }
+      };
+
+      const origRenderRef9 = ArenaApp.renderReferralAndPrestige ? ArenaApp.renderReferralAndPrestige.bind(ArenaApp) : null;
+      if (origRenderRef9) {
+        ArenaApp.renderReferralAndPrestige = function() {
+          origRenderRef9();
+          const p = this.profile;
+          const pBox = document.getElementById('pvpPrestigeBadgesBox');
+          if (!p || !pBox) return;
+          const owned = p.pvpPrestige || {};
+          const activeP = p.activePvpPrestige || '';
+          const all = [...(p.pvpDefenseCatalog || []), ...(p.pvpStreakCatalog || [])];
+          pBox.innerHTML = `<div class="prestige-grid-9">` + all.map((it) => {
+            const has = Boolean(owned[it.id]);
+            const eq = activeP === it.id;
+            return `
+              <div class="prestige-card-9 ${has ? 'owned' : ''} ${eq ? 'equipped' : ''}">
+                <div class="prestige-stage-wrap">
+                  ${has ? `<div class="prestige-aura-ring ${it.rarity || 'rare'}"></div>` : ''}
+                  <img src="${it.file || ''}" alt="${it.name}" class="prestige-img-fx ${has ? 'fx-pr-' + (it.rarity || 'rare') : ''}" style="${has ? '' : 'filter:grayscale(1) opacity(0.35);'}" onerror="this.style.display='none'" />
+                </div>
+                <div style="font-size:0.75rem; font-weight:900; color:${has ? '#fde047' : '#94a3b8'};">${it.name}</div>
+                ${has
+                  ? `<button type="button" class="btn ${eq ? 'btn-outline' : 'btn-gold'} btn-sm" style="margin-top:6px;padding:4px 8px;font-size:0.7rem;" onclick="ArenaApp.equipPvpPrestige('${eq ? '' : it.id}')">${eq ? 'مُجهّز ✓' : 'تجهيز الوسام'}</button>`
+                  : `<div style="font-size:0.68rem; color:#64748b; margin-top:4px;">🔒 يُفتح بالإنجاز</div>`}
+              </div>
+            `;
+          }).join('') + `</div>`;
+        };
+      }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 10 (الصقل النهائي 100%): HUD حيّ داخل اللعب + المتجر + PvP VS + المتصدرين + الدليل
+    // ========================================================================
+    (function extendArenaAppPhase10() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Add 4th Onboarding Slide (Unified 1:1 SYP Economy + Sham Cash) & Contextual Tooltips
+      const origOpenOb = ArenaApp.openOnboarding ? ArenaApp.openOnboarding.bind(ArenaApp) : null;
+      const SLIDES_10 = [
+        { icon: '🏰', title: 'اصعد البرج واهزم الزعماء التسعة!', desc: 'طابق المكعبات بسرعة، فعّل مهارة شخصيتك، وتجاوز الزعماء في الطوابق الحاسمة. احذر من «ظل البطل السابق» الذي يحرس الرقم القياسي!' },
+        { icon: '⚔️', title: '3 ساحات تنافسية وجوائز بالليرة (1:1)', desc: 'اختر بين «كسر الرقم» للجائزة الكبرى الفورية، «الساحة الأسبوعية» لتصدر المراكز السبعة، أو «التحدي الدائم PvP» لصيد الجوائز والجماجم 💀!' },
+        { icon: '🎁', title: 'متجر البرج + مسار 360 + دعوة الأصدقاء', desc: 'جهّز أداة واحدة تكتيكية (قنبلة / مدفع صف / جوكر)، افتح صناديق الاستفزاز، وشارك رابط دعوتك لتربح 5% من شحن أصدقائك الفعلي!' },
+        { icon: '💳', title: 'اقتصاد موحّد (1 ل.س = 1 عملة) وشام كاش', desc: 'كل عملة في اللعبة تساوي 1 ليرة سورية! يمكنك الشحن والسحب بسهولة وأمان عبر «شام كاش» أو محفظة «متجر معاذ» مع سجل إيصالات محمي على هاتفك.' }
+      ];
+      if (origOpenOb) {
+        ArenaApp._renderOnboardingSlide = function() {
+          const s = SLIDES_10[this._obIdx] || SLIDES_10[0];
+          document.getElementById('obIcon').textContent = s.icon;
+          document.getElementById('obTitle').textContent = s.title;
+          document.getElementById('obDesc').textContent = s.desc;
+          document.getElementById('obNextBtn').textContent = this._obIdx >= SLIDES_10.length - 1 ? '🚀 انطلق للعب!' : 'التالي ←';
+          const dots = document.getElementById('obDots');
+          if (dots) dots.innerHTML = SLIDES_10.map((_, i) => `<span class="onboard-dot ${i === this._obIdx ? 'active' : ''}"></span>`).join('');
+        };
+        ArenaApp.nextOnboardingStep = function() {
+          if (this._obIdx < SLIDES_10.length - 1) { this._obIdx++; this._renderOnboardingSlide(); }
+          else this.closeOnboarding();
+        };
+      }
+
+      // Contextual tooltips for Boss Codex & Taunt Crates
+      if (typeof ArenaApp.openBossCodex === 'function') {
+        const origCodex = ArenaApp.openBossCodex.bind(ArenaApp);
+        ArenaApp.openBossCodex = function() {
+          origCodex();
+          this.showContextTipOnce && this.showContextTipOnce('boss_codex', 'موسوعة الزعماء', 'ادرس قدرة كل زعيم قبل مواجهته لتستخدم القنبلة أو الإذهال في الوقت المثالي!');
+        };
+      }
+      if (typeof ArenaApp.setShopTab === 'function') {
+        const origShopTab = ArenaApp.setShopTab.bind(ArenaApp);
+        ArenaApp.setShopTab = function(tab, btn) {
+          origShopTab(tab, btn);
+          if (tab === 'taunts') {
+            this.showContextTipOnce && this.showContextTipOnce('taunts_shop', 'صناديق الاستفزاز', 'افتح الصناديق لجمع 50 بطاقة استفزاز وأرسلها لمنافسيك في ساحة PvP!');
+          }
+        };
+      }
+
+      // 2. Shop Enhancements: Owned Qty Badge + Buy & Equip Instant Button + Daily Deal Countdown & Strikethrough Price
+      ArenaApp.buyAndEquipNow = async function(itemId) {
+        const res = await this.api('/shop/buy', { itemId });
+        if (res && res.ok) {
+          await this.syncProfile();
+          this.quickEquipItem(itemId);
+          this.renderShop();
+          this.toast('⚡ تم الشراء والتجهيز الفوري لجولتك القادمة!');
+        }
+      };
+
+      const origRenderShop10 = ArenaApp.renderShop.bind(ArenaApp);
+      ArenaApp.renderShop = function() {
+        origRenderShop10();
+        if (this.shopTab === 'frames' || this.shopTab === 'taunts') return;
+        const box = document.getElementById('shopContainer');
+        if (!box || !this.profile) return;
+        const inv = this.profile.inventory || {};
+        const deal = this.profile.dailyDeal;
+
+        // Add live countdown timer to Daily Deal header
+        if (this.shopTab === 'deal' && deal && deal.expiresAt) {
+          const firstCard = box.querySelector('.card');
+          if (firstCard && !document.getElementById('dealCountdownSpan10')) {
+            const cd = document.createElement('div');
+            cd.id = 'dealCountdownSpan10';
+            cd.style.cssText = 'font-size:0.74rem; color:#7dd3fc; margin-top:4px; font-weight:800;';
+            firstCard.appendChild(cd);
+            const upd = () => {
+              const el = document.getElementById('dealCountdownSpan10');
+              if (!el) return clearInterval(this.dealTimer);
+              const left = Math.max(0, Number(deal.expiresAt) - Date.now());
+              const h = String(Math.floor(left / 3600000)).padStart(2, '0');
+              const m = String(Math.floor((left % 3600000) / 60000)).padStart(2, '0');
+              const s = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
+              el.textContent = `⏳ ينتهي العرض خلال: ${h}:${m}:${s}`;
+            };
+            upd();
+            this.dealTimer = setInterval(upd, 1000);
+          }
+        }
+
+        // Enhance each shop card with Owned Qty, Strikethrough Price on Deal, and Buy & Equip button
+        const itemsShown = this.shopTab === 'deal' && deal
+          ? window.ARENA_SHOP_ITEMS.filter((i) => i.id === deal.itemId)
+          : window.ARENA_SHOP_ITEMS.filter((i) => i.category === this.shopTab && i.type !== 'cosmetic' && (!i.games || i.games.includes('tower_match')));
+
+        const cards = box.querySelectorAll('.shop-card');
+        cards.forEach((cardEl, idx) => {
+          const item = itemsShown[idx];
+          if (!item) return;
+          const qty = Number(inv[item.id] || 0);
+          const finalP = this.getFinalShopPrice(item);
+          const priceEl = cardEl.querySelector('.price-new');
+          if (priceEl) {
+            const oldHtml = finalP < item.price ? `<span class="price-old">${item.price} عملة</span>` : '';
+            const qtyHtml = qty > 0 ? `<span style="margin-right:8px; font-size:0.72rem; color:#7dd3fc;">(لديك: ${qty})</span>` : '';
+            priceEl.innerHTML = `${oldHtml}${finalP} عملة ${qtyHtml}`;
+          }
+          if (item.type === 'tactical' && !cardEl.querySelector('.buy-equip-btn10')) {
+            const beBtn = document.createElement('button');
+            beBtn.type = 'button';
+            beBtn.className = 'btn btn-blue btn-sm buy-equip-btn10';
+            beBtn.textContent = '⚡ شراء وتجهيز فوري';
+            beBtn.onclick = () => this.buyAndEquipNow(item.id);
+            cardEl.querySelector('div[style*="flex:1"]')?.appendChild(beBtn);
+          }
+        });
+      };
+
+      // 3. Leaderboard Enhancements: Rank-Up Celebration + "🔥 فرصة قريبة" Badge
+      const origRenderPodium10 = ArenaApp.renderRoyalPodium.bind(ArenaApp);
+      ArenaApp.renderRoyalPodium = function() {
+        origRenderPodium10();
+        const w = this.weeklyData && this.weeklyData[this.podiumGame];
+        if (!w) return;
+        if (w.myRank) {
+          const prevKey = 'moaath_last_rank_' + w.gameId;
+          const prevRank = Number(localStorage.getItem(prevKey) || 0);
+          if (prevRank > 0 && w.myRank < prevRank) {
+            MythicFX.playBadgeUnlock();
+            this.toast(`🎉 تقدّم رائع! صعدت من المركز #${prevRank} إلى المركز #${w.myRank}!`);
+          }
+          localStorage.setItem(prevKey, String(w.myRank));
+        }
+        // Add "فرصة قريبة" badge on rows 4..7 if within 15% of rank above
+        const restBox = document.getElementById('podiumRestList');
+        if (restBox && Array.isArray(w.top7) && w.top7.length > 3) {
+          const rowEls = restBox.querySelectorAll('.stat-row');
+          w.top7.slice(3, 7).forEach((r, i) => {
+            const above = w.top7[i + 2];
+            if (above && rowEls[i] && Number(above.bestScore) > 0) {
+              const diffRatio = (Number(above.bestScore) - Number(r.bestScore)) / Number(above.bestScore);
+              if (diffRatio <= 0.15) {
+                const span = rowEls[i].querySelector('span');
+                if (span && !span.querySelector('.close-chance-tag')) {
+                  span.insertAdjacentHTML('beforeend', `<span class="close-chance-tag">🔥 فرصة قريبة</span>`);
+                }
+              }
+            }
+          });
+        }
+      };
+
+      // 4. PvP Enhancements: Challenger Avatar on Bounty Cards + Visual "أنت VS الخصم" Result Card
+      ArenaApp._pvpActiveOpponent = null;
+      const origLoadPvp10 = ArenaApp.loadPvpList.bind(ArenaApp);
+      ArenaApp.loadPvpList = async function() {
+        await origLoadPvp10();
+        const box = document.getElementById('pvpListContainer');
+        if (!box) return;
+        const res = await this.api('/pvp/list');
+        if (!res || !Array.isArray(res.matches)) return;
+        const cards = box.querySelectorAll('.bounty-card');
+        const filtered = res.matches.filter((m) => {
+          const s = Number(m.stakePts || 0);
+          if (this.pvpStakeFilter === 'low') return s <= 50;
+          if (this.pvpStakeFilter === 'mid') return s > 50 && s <= 200;
+          if (this.pvpStakeFilter === 'high') return s > 200;
+          return true;
+        });
+        cards.forEach((cardEl, idx) => {
+          const m = filtered[idx];
+          if (!m || cardEl.querySelector('.pvp-challenger-av')) return;
+          const leftWrap = cardEl.querySelector('div > div');
+          if (leftWrap) {
+            const avUrl = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(m.creatorCharId || 'buddy') : './assets/chars/buddy.jpg';
+            leftWrap.style.display = 'flex';
+            leftWrap.style.alignItems = 'center';
+            leftWrap.style.gap = '8px';
+            leftWrap.insertAdjacentHTML('afterbegin', `<img src="${avUrl}" class="pvp-challenger-av" onerror="this.src='./assets/chars/buddy.jpg'" />`);
+          }
+          const acceptBtn = cardEl.querySelector('button.btn-gold');
+          if (acceptBtn) {
+            const origClick = acceptBtn.onclick;
+            acceptBtn.onclick = () => {
+              ArenaApp._pvpActiveOpponent = { name: m.creatorName, charId: m.creatorCharId || 'buddy', stakePts: m.stakePts };
+              if (origClick) origClick();
+            };
+          }
+        });
+      };
+
+      // Inject visual VS card inside Result Overlay for PvP joins
+      const origCloseRes = ArenaApp.closeResult.bind(ArenaApp);
+      ArenaApp.closeResult = function() {
+        document.getElementById('pvpVsResultBox10')?.remove();
+        origCloseRes();
+      };
+      const resObs = new MutationObserver(() => {
+        const ov = document.getElementById('resultOverlay');
+        if (!ov || ov.classList.contains('hidden')) return;
+        const ctx = ArenaApp.lastSessionCtx;
+        const opp = ArenaApp._pvpActiveOpponent;
+        if (ctx && ctx.mode === 'pvp_join' && opp && !document.getElementById('pvpVsResultBox10')) {
+          const myAv = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(ArenaApp.profile?.activeCharacterId || 'buddy') : './assets/chars/buddy.jpg';
+          const oppAv = window.ArenaVoice ? window.ArenaVoice.getCharImgUrl(opp.charId || 'buddy') : './assets/chars/buddy.jpg';
+          const txtEl = document.getElementById('resultText');
+          const vsDiv = document.createElement('div');
+          vsDiv.id = 'pvpVsResultBox10';
+          vsDiv.className = 'pvp-vs-box';
+          vsDiv.innerHTML = `
+            <div class="pvp-vs-side"><img src="${myAv}" alt="أنت" /><div style="font-size:0.78rem;font-weight:900;color:#4ade80;margin-top:4px;">أنت</div></div>
+            <div class="pvp-vs-badge">VS</div>
+            <div class="pvp-vs-side"><img src="${oppAv}" alt="${opp.name}" /><div style="font-size:0.78rem;font-weight:900;color:#fde047;margin-top:4px;">${opp.name}</div></div>
+          `;
+          if (txtEl) txtEl.parentElement.insertBefore(vsDiv, txtEl);
+          ArenaApp._pvpActiveOpponent = null;
+        }
+      });
+      const resOvEl = document.getElementById('resultOverlay');
+      if (resOvEl) resObs.observe(resOvEl, { attributes: true, attributeFilter: ['class'] });
+
+      // 5. In-Game Runtime HUD Overlay (Live Record Chase Bar + Pre-Boss Warning + Boss Ability + Nemesis Aura)
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origStart = TEProto.start;
+        const origFinish = TEProto._finishGame;
+        const origEmit = TEProto._emit;
+
+        function ensureHud10() {
+          let hud = document.getElementById('tmPhase10Hud');
+          if (!hud) {
+            hud = document.createElement('div');
+            hud.id = 'tmPhase10Hud';
+            hud.innerHTML = `<div id="tm10Chase" class="tm10-chase-bar hidden"></div><div id="tm10BossTip" class="tm10-boss-tip hidden"></div>`;
+            document.body.appendChild(hud);
+          }
+          return hud;
+        }
+        function removeHud10() { document.getElementById('tmPhase10Hud')?.remove(); }
+
+        function updateHud10(engine) {
+          const hud = ensureHud10();
+          const chaseEl = document.getElementById('tm10Chase');
+          const tipEl = document.getElementById('tm10BossTip');
+          if (chaseEl && engine.mode === 'record' && engine.opponentTargetScore > 0) {
+            const rem = engine.opponentTargetScore - engine.score;
+            chaseEl.classList.remove('hidden');
+            if (rem <= 0) {
+              chaseEl.className = 'tm10-chase-bar hot';
+              chaseEl.textContent = `👑 تجاوزت الرقم القياسي! واصل الصعود لتثبيت عرشك!`;
+            } else {
+              const hot = rem <= Math.ceil(engine.opponentTargetScore * 0.15);
+              chaseEl.className = `tm10-chase-bar ${hot ? 'hot' : ''}`;
+              chaseEl.textContent = `🔥 متبقي ${rem.toLocaleString()} نقطة لكسر الرقم القياسي!`;
+            }
+          } else if (chaseEl) {
+            chaseEl.classList.add('hidden');
+          }
+
+          if (tipEl) {
+            if (engine.isBossFloor && engine.bossTheme) {
+              tipEl.classList.remove('hidden');
+              if (engine.bossTheme.isNemesis) {
+                tipEl.className = 'tm10-boss-tip nemesis';
+                tipEl.textContent = `👁️ ${engine.bossTheme.name}: ${engine.bossTheme.ability || 'ظل البطل السابق يحرس العرش!'}`;
+              } else {
+                tipEl.className = 'tm10-boss-tip';
+                tipEl.textContent = `⚔️ ${engine.bossTheme.name}: ${engine.bossTheme.ability || ''}`;
+              }
+            } else if (engine.floor % 5 === 4 && window.MoaathTowerAssets) {
+              const nextBoss = window.MoaathTowerAssets.getBossForFloor(engine.floor + 1, engine.floor + 1 >= 10 && engine.mode === 'record' ? engine.nemesisBoss : null);
+              tipEl.classList.remove('hidden');
+              tipEl.className = 'tm10-boss-tip';
+              tipEl.textContent = `⚠️ الطابق القادم: ${nextBoss ? nextBoss.name : 'زعيم البرج'} — احتفظ بقنابلك ومهارتك!`;
+            } else {
+              tipEl.classList.add('hidden');
+            }
+          }
+        }
+
+        TEProto.start = function(...args) {
+          const r = origStart.apply(this, args);
+          updateHud10(this);
+          return r;
+        };
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit.apply(this, arguments);
+          if (ev === 'move' || ev === 'floorCleared' || ev === 'skillUsed') updateHud10(this);
+          return r;
+        };
+        TEProto._finishGame = function(...args) {
+          removeHud10();
+          return origFinish.apply(this, args);
+        };
+      }
     })();
 
   </script>
