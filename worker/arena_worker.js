@@ -156,6 +156,118 @@ async function processDueAutoCashouts(env, config) {
   return count;
 }
 
+
+// ============================================================================
+// المرحلة 4: 50 بطاقة استفزاز + صناديق المتجر + معادلة كسر الرقم 75%/15%/10% + زعيم الظل
+// ============================================================================
+const TAUNT_RARITIES = {
+  common:    { label: 'عادي',    cratePrice: 20, weight: 70 },
+  rare:      { label: 'نادر',     cratePrice: 45, weight: 22 },
+  epic:      { label: 'ملحمي',   cratePrice: 90, weight: 6.5 },
+  legendary: { label: 'أسطوري',  cratePrice: 180, weight: 1.5 }
+};
+
+const CRATE_BUNDLES = {
+  crate_basic:     { id: 'crate_basic',     name: 'صندوق الاستفزاز العادي',   price: 25,  rarity: 'common',    emoji: '📦' },
+  crate_epic:      { id: 'crate_epic',      name: 'صندوق الاستفزاز الملحمي', price: 75,  rarity: 'epic',      emoji: '🎁' },
+  crate_legendary: { id: 'crate_legendary', name: 'صندوق الاستفزاز الأسطوري',price: 160, rarity: 'legendary', emoji: '👑' }
+};
+
+const TAUNTS_50 = (() => {
+  const list = [];
+  const commonTexts = [
+    'البرج واسع للي يتقن الصعود 😉', 'حركة حلوة.. بس العرش بعيد شوي!', 'كومبو لذيذ، جرّب تزوّده حبتين!',
+    'الزعيم ضحك على هاي الضربة 😄', 'قريب.. بس مو قريب كفاية!', 'خلي أعصابك باردة بالبرج 🧊',
+    'أهلاً بك في ملعب الكبار 👋', 'تحتاج شوية قنبلة وتضبط الأمور 💣', 'لا تستسلم، الطابق الجاي أسهل.. ربما!',
+    'سجلناها في دفتر الذكريات 📝', 'الخطوة الجاية هي الحاسمة!', 'إحماء جيد قبل الجد!',
+    'نقطة ورا نقطة يطلع البطل!', 'البرج يحب السريعين ⚡', 'مرور الكرام على العرش!',
+    'خلّي الجوكر يشتغل لصالحك 🃏', 'طابق واحد كان يفصلك!', 'تحية من قمة البرج 👋',
+    'بداية موفقة للضغط على الزر!', 'ننتظرك في الجولة الجاية!'
+  ];
+  const rareTexts = [
+    'أخذنا العرش على البارد ❄️👑', 'الزعيم انصدم من سرعتك.. وأنا أكثر!', 'هجمة مرتدة بـ 180 درجة 🔄',
+    'الرقم صار تحت الحماية المشددة 🛡️', 'كومبو متتالي يكسر الخواطر 🔥', 'أهلاً بمنافس التحدي الجديد ⚔️',
+    'النتيجة تتكلم والبقية تستمع 🎯', 'حماس ×2 ولسا في بقية!', 'الطابق الحاسم ما يرحم أحد!',
+    'أمسكنا بالصدارة بيد من حديد 🪙', 'نكهة الفوز لها طعم مختلف 😋', 'أداء تكتيكي مرتب جداً!',
+    'تحدي مقبول والنتيجة حاضرة!', 'البرج صار باسمنا مؤقتاً 🏰', 'ضربة إذهال في الصميم ⚡'
+  ];
+  const epicTexts = [
+    'عرشك تحت السيطرة الكاملة الآن 👑🔥', 'أهلاً بك في صفوف من لمسوا القمة!', 'تحطيم الأرقام هواية مو صدفة 💥',
+    'النسخة الشريرة للبرج تشهد لنا!', 'أقوى من توقعات الجدول الأسبوعي!', 'عاصفة كومبو لا تُرد 🌪️',
+    'شخصيتك تعبت وهي تطارد الرقم!', 'البطولة الأسبوعية اشتعلت نارها 🔥', 'سيطرة كاملة على أرض البرج!',
+    'مكافأة الفوز وصلت قبل ما تبرد!'
+  ];
+  const legTexts = [
+    'أسطورة البرج لا تُقهر — العرش لنا! 🌌👑', 'سقوط عرش وإعلان إمبراطور جديد للبرج!',
+    'رقم قياسي يكتب اسمه بحروف من ذهب ✨', 'هيبة الملك في قمة برج التحدي اللانهائي!',
+    'الجميع يطارد الظل بينما نحن في القمة 🏆'
+  ];
+  commonTexts.forEach((txt, i) => list.push({ id: `t_c_${i+1}`, rarity: 'common', text: txt }));
+  rareTexts.forEach((txt, i) => list.push({ id: `t_r_${i+1}`, rarity: 'rare', text: txt }));
+  epicTexts.forEach((txt, i) => list.push({ id: `t_e_${i+1}`, rarity: 'epic', text: txt }));
+  legTexts.forEach((txt, i) => list.push({ id: `t_l_${i+1}`, rarity: 'legendary', text: txt }));
+  return list;
+})();
+
+async function pushPlayerNotification(env, targetPhone, notif) {
+  if (!targetPhone) return;
+  const id = `n_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  await fbPatch(env, `arena_world/notifications/${targetPhone}/${id}`, { ...notif, read: false, at: Date.now() });
+}
+
+async function runAutomaticTowerStreakForPlayer(env, player) {
+  const tData = getTowerPlayerData(player);
+  const now = Date.now();
+  const todayStr = new Date(now).toISOString().slice(0, 10);
+  const yesterdayStr = new Date(now - 86400000).toISOString().slice(0, 10);
+  const twoDaysAgoStr = new Date(now - 2 * 86400000).toISOString().slice(0, 10);
+
+  if (tData.lastCheckInDate === todayStr) {
+    return { autoClaimed: false, streakDays: tData.streakDays, newlyUnlocked: [] };
+  }
+
+  let streakDays = tData.streakDays;
+  if (!tData.lastCheckInDate || tData.lastCheckInDate === yesterdayStr || tData.lastCheckInDate === twoDaysAgoStr) {
+    streakDays = Math.min(360, streakDays + 1);
+  } else {
+    const inv = player.inventory || {};
+    if ((inv.streak_shield || 0) > 0) {
+      inv.streak_shield -= 1;
+      streakDays = Math.min(360, streakDays + 1);
+      await fbPatch(env, `arena_world/players/${player.phone}`, { inventory: inv });
+    } else {
+      streakDays = 1;
+    }
+  }
+
+  const claimedSteps = { ...tData.claimedSteps };
+  const titles = { ...tData.titles };
+  const badges = { ...tData.badges };
+  const cos = { ...(player.cosmetics || {}) };
+  const newlyUnlocked = [];
+
+  for (const r of TOWER_STREAK_REWARDS) {
+    if (streakDays >= r.day && !claimedSteps[r.step]) {
+      claimedSteps[r.step] = now;
+      if (r.type === 'title') titles[r.id] = r.name;
+      if (r.type === 'badge') badges[r.id] = { name: r.name, file: r.file };
+      if (r.type === 'frame') {
+        cos[r.id] = true;
+        if (r.bonusTitle) titles['title_tower_legend'] = r.bonusTitle;
+      }
+      newlyUnlocked.push(r);
+    }
+  }
+
+  await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, {
+    streakDays, lastCheckInDate: todayStr, claimedSteps, titles, badges
+  });
+  if (newlyUnlocked.some((x) => x.type === 'frame')) {
+    await fbPatch(env, `arena_world/players/${player.phone}`, { cosmetics: cos });
+  }
+  return { autoClaimed: true, streakDays, newlyUnlocked };
+}
+
 const DAILY_DEAL_POOL = ['shield_1', 'fuel_boost', 'double_xp', 'extra_hp', 'fuel_magnet', 'streak_shield'];
 
 function getTodayDailyDeal() {
@@ -297,6 +409,14 @@ export default {
           return handleTowerStreakClaim(env, player);
         case '/tower/cosmetic/equip':
           return handleTowerCosmeticEquip(env, player, body);
+        case '/tower/taunt/open-crate':
+          return handleOpenTauntCrate(env, player, body);
+        case '/tower/taunt/equip':
+          return handleEquipTaunt(env, player, body);
+        case '/tower/taunt/send':
+          return handleSendTaunt(env, player, body);
+        case '/player/notifications/read':
+          return handleReadNotifications(env, player);
         default:
           return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
@@ -592,6 +712,14 @@ async function handleProfile(env, player, config = {}) {
     broadcast: getActiveBroadcast(config),
     towerData: { ...towerData, canCheckInToday },
     towerStreakCatalog: TOWER_STREAK_REWARDS,
+    tauntsCatalog: TAUNTS_50,
+    crateBundles: Object.values(CRATE_BUNDLES),
+    playerTaunts: (((player.games && player.games.tower_match) || {}).taunts) || {},
+    activeTauntId: (((player.games && player.games.tower_match) || {}).activeTauntId) || '',
+    notifications: await (async () => {
+      const nMap = (await fbGet(env, `arena_world/notifications/${player.phone}`)) || {};
+      return Object.entries(nMap).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.at - a.at).slice(0, 20);
+    })(),
     phone: player.phone,
     activeCharacterId: activeChar,
     activeFrame: player.activeFrame || '',
@@ -792,8 +920,15 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
       title: gameId === 'hill_drive' ? 'قيادة التلال 2D' : (gameId === 'tower_match' ? 'برج التحدي اللانهائي' : 'ميجا شوتر 2D'),
       currentRecord: gameId === 'hill_drive' ? 350 : (gameId === 'tower_match' ? 1200 : 500), holderName: 'إدارة العالم', entryCostPts: 10, jackpotPts: gameId === 'tower_match' ? 120 : 100
     };
-    const jackpotAdd = cost > 0 ? Math.floor(cost * 0.80) : 0; // 80% لمكافأة كسر الرقم و20% للإدارة
-    await fbPatch(env, `arena_world/admin_records/${gameId}`, { ...rec, jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd });
+    const jackpotAdd = cost > 0 ? Math.floor(cost * 0.75) : 0; // 75% جائزة كسر الرقم الحالي
+    const adminRecShare = cost > 0 ? Math.floor(cost * 0.15) : 0; // 15% للإدارة
+    const nextSeedAdd = cost > 0 ? Math.max(0, cost - jackpotAdd - adminRecShare) : 0; // 10% لبدء الرقم الجديد
+    if (adminRecShare > 0) await recordAdminRevenue(env, 'record', adminRecShare);
+    await fbPatch(env, `arena_world/admin_records/${gameId}`, {
+      ...rec,
+      jackpotPts: Number(rec.jackpotPts || 100) + jackpotAdd,
+      nextSeedPts: Number(rec.nextSeedPts || 0) + nextSeedAdd
+    });
   }
 
   await fbPatch(env, `arena_world/sessions/${sessionId}`, {
@@ -865,8 +1000,35 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
       if (charId === 'coach_sakhr') baseJackpot += Math.min(20, Math.floor(baseJackpot * 0.1));
       rewardPts = baseJackpot;
       await updatePlayerBalance(env, player, rewardPts, { txId: `win_rec_${sessionId}`, type: 'record_broken', delta: rewardPts, at: now });
-      await fbPatch(env, `arena_world/admin_records/${session.gameId}`, { currentRecord: score, holderName: player.displayName, holderPhone: player.phone, jackpotPts: 50 });
+      const seededJackpot = Math.max(50, Number(rec.nextSeedPts || 0));
+      const oldHolderPhone = rec.holderPhone || '';
+      const activeTId = (((player.games && player.games.tower_match) || {}).activeTauntId) || '';
+      const tauntObj = TAUNTS_50.find((t) => t.id === activeTId);
+      await fbPatch(env, `arena_world/admin_records/${session.gameId}`, {
+        currentRecord: score,
+        holderName: player.displayName,
+        holderPhone: player.phone,
+        holderCharacterId: charId,
+        jackpotPts: seededJackpot,
+        nextSeedPts: 0
+      });
       await fbPatch(env, `arena_world/players/${player.phone}`, { recordsBroken: (player.recordsBroken || 0) + 1 });
+      if (oldHolderPhone && oldHolderPhone !== player.phone) {
+        await pushPlayerNotification(env, oldHolderPhone, {
+          kind: 'record_dethroned',
+          title: '👑 تم تحطيم رقمك القياسي!',
+          body: `انتزع ${player.displayName} الرقم القياسي (${score}) وأصبح ظله الشرير بانتظارك في البرج!`,
+          tauntText: tauntObj ? tauntObj.text : '',
+          opponentPhone: player.phone,
+          opponentName: player.displayName
+        });
+      }
+      await fbPatch(env, 'arena_world/config/broadcast', {
+        active: true,
+        text: `حطّم اللاعب ${player.displayName} الرقم القياسي السابق وحصل على ${rewardPts} عملة! انطلق الآن لانتزاع العرش!`,
+        type: 'promo',
+        expiresAt: now + 12 * 3600000
+      });
       outcomeMsg = `🔥 مبروك! كسرت الرقم القياسي وربحت الجائزة الكبرى (${rewardPts} عملة معاذ)!`;
     } else {
       const curRec = Number(rec ? rec.currentRecord : 0);
@@ -959,7 +1121,11 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
   }
 
   await fbPatch(env, `arena_world/players/${player.phone}`, { xp: (player.xp || 0) + xpGain });
-  return jsonResponse({ ok: true, won, score, rewardPts, xpGain, message: outcomeMsg });
+  let streakUpdate = null;
+  if (session.gameId === 'tower_match') {
+    streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
+  }
+  return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, message: outcomeMsg });
 }
 
 function validateTelemetry(session, score, telemetry) {
@@ -1497,4 +1663,83 @@ async function handleAdminPlayerTrust(env, { phone, trusted }) {
   if (!phone) return jsonResponse({ code: 'ERR_PHONE', message: 'رقم الهاتف مطلوب.' }, 400);
   await fbPatch(env, `arena_world/players/${phone}`, { trusted: Boolean(trusted) });
   return jsonResponse({ ok: true, message: trusted ? `تم توثيق الحساب ${phone} للسحب التلقائي الصغير.` : `تم إلغاء توثيق الحساب ${phone}.` });
+}
+
+
+// ============================================================================
+// معالجات صناديق الاستفزاز الـ 50 والإشعارات في المرحلة 4
+// ============================================================================
+async function handleOpenTauntCrate(env, player, { crateId }) {
+  const crate = CRATE_BUNDLES[crateId];
+  if (!crate) return jsonResponse({ code: 'ERR_CRATE', message: 'صندوق غير معروف.' }, 400);
+  if (Number(player.points || 0) < crate.price) {
+    return jsonResponse({ code: 'ERR_FUNDS', message: `تحتاج إلى ${crate.price} عملة لفتح ${crate.name}.` }, 400);
+  }
+  const now = Date.now();
+  const txId = `crt_${crypto.randomUUID().slice(0, 8)}`;
+  await updatePlayerBalance(env, player, -crate.price, { txId, type: `open_${crateId}`, delta: -crate.price, at: now });
+
+  // سحب حتمي قائم على البصمة الزمنية والرصيد دون أي تدخل للذكاء الاصطناعي
+  const seedNum = (now % 10000) + Number(player.points || 0) + crate.price;
+  let pickedRarity = crate.rarity;
+  if (crateId === 'crate_basic') {
+    const roll = seedNum % 100;
+    pickedRarity = roll < 70 ? 'common' : (roll < 92 ? 'rare' : (roll < 98.5 ? 'epic' : 'legendary'));
+  } else if (crateId === 'crate_epic') {
+    const roll = seedNum % 100;
+    pickedRarity = roll < 15 ? 'rare' : (roll < 82 ? 'epic' : 'legendary');
+  }
+
+  const pool = TAUNTS_50.filter((t) => t.rarity === pickedRarity);
+  const chosen = pool[seedNum % pool.length] || TAUNTS_50[0];
+
+  const tData = getTowerPlayerData(player);
+  const taunts = { ...(tData.taunts || {}) };
+  const alreadyOwned = Boolean(taunts[chosen.id]);
+  taunts[chosen.id] = { id: chosen.id, rarity: chosen.rarity, text: chosen.text, unlockedAt: now };
+
+  await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, {
+    taunts,
+    activeTauntId: chosen.id
+  });
+
+  return jsonResponse({
+    ok: true,
+    crateName: crate.name,
+    taunt: chosen,
+    alreadyOwned,
+    message: alreadyOwned
+      ? `تم فتح ${crate.name} وتجهيز الاستفزاز (${chosen.text})`
+      : `🎉 مبروك! حصلت على استفزاز (${TAUNT_RARITIES[chosen.rarity]?.label}): «${chosen.text}»`
+  });
+}
+
+async function handleEquipTaunt(env, player, { tauntId }) {
+  const tData = getTowerPlayerData(player);
+  const taunts = tData.taunts || {};
+  if (tauntId && !taunts[tauntId]) {
+    return jsonResponse({ code: 'ERR_LOCKED', message: 'لا تملك بطاقة الاستفزاز هذه.' }, 403);
+  }
+  await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, { activeTauntId: tauntId || '' });
+  return jsonResponse({ ok: true, activeTauntId: tauntId || '', message: 'تم تجهيز بطاقة الاستفزاز!' });
+}
+
+async function handleSendTaunt(env, player, { targetPhone, tauntId }) {
+  if (!targetPhone || !tauntId) return jsonResponse({ code: 'ERR_PARAM', message: 'بيانات الاستفزاز ناقصة.' }, 400);
+  const tData = getTowerPlayerData(player);
+  const owned = (tData.taunts || {})[tauntId];
+  if (!owned) return jsonResponse({ code: 'ERR_LOCKED', message: 'افتتح بطاقة الاستفزاز من المتجر أولاً.' }, 403);
+  await pushPlayerNotification(env, targetPhone, {
+    kind: 'taunt_received',
+    title: `😏 استفزاز من ${player.displayName}`,
+    body: `«${owned.text}»`,
+    opponentPhone: player.phone,
+    opponentName: player.displayName
+  });
+  return jsonResponse({ ok: true, message: `تم إرسال الاستفزاز إلى ${player.displayName ? targetPhone : 'المنافس'}!` });
+}
+
+async function handleReadNotifications(env, player) {
+  await fbPatch(env, `arena_world/notifications/${player.phone}`, {});
+  return jsonResponse({ ok: true });
 }
