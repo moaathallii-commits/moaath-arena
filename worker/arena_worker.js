@@ -586,6 +586,7 @@ async function handleAdminDashboard(env, config) {
       pvpHouseEdgePct: Number(config.pvpHouseEdgePct || 10),
       coinToUsdRate: Number(config.coinToUsdRate || (1 / Number(config.usdToSypRate || 150))),
       buyRateSYP: Number(config.buyRateSYP || 1),
+      cashoutRateSYP: Number(config.cashoutRateSYP || 1),
       usdToSypRate: Number(config.usdToSypRate || 150),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
       autoRolloverWeekly: config.autoRolloverWeekly !== false,
@@ -601,10 +602,10 @@ async function handleAdminDashboard(env, config) {
     },
     adminProfit: (() => {
       const totalPts = Number((adminStats && adminStats.totalRevenuePts) || 0);
-      const usdRate = Number(config.coinToUsdRate || 0.01);
-      const sypRate = Number(config.usdToSypRate || 15000);
-      const totalUsd = Number((totalPts * usdRate).toFixed(2));
-      const totalSyp = Math.round(totalUsd * sypRate);
+      const buySyp = Number(config.buyRateSYP || 1);
+      const sypRate = Math.max(1, Number(config.usdToSypRate || 150));
+      const totalSyp = Math.round(totalPts * buySyp);
+      const totalUsd = Number((totalSyp / sypRate).toFixed(2));
       return { totalPts, totalUsd, totalSyp, bySource: (adminStats && adminStats.bySource) || {} };
     })(),
     pendingCashouts, pendingTopups, recentAlerts, frozenPlayers,
@@ -625,7 +626,12 @@ async function handleAdminUpdateConfig(env, body) {
   if (body.adminWhatsApp !== undefined) updates.adminWhatsApp = String(body.adminWhatsApp || '').replace(/[^0-9]/g, '').slice(0, 20);
   if (body.pvpHouseEdgePct !== undefined) updates.pvpHouseEdgePct = Math.min(30, Math.max(0, Number(body.pvpHouseEdgePct)));
   if (body.coinToUsdRate !== undefined) updates.coinToUsdRate = Math.max(0.0001, Number(body.coinToUsdRate));
-  if (body.buyRateSYP !== undefined) updates.buyRateSYP = Math.max(1, Number(body.buyRateSYP));
+  if (body.buyRateSYP !== undefined) updates.buyRateSYP = Math.max(0.1, Number(body.buyRateSYP));
+  if (body.cashoutRateSYP !== undefined) {
+    updates.cashoutRateSYP = Math.max(0.1, Number(body.cashoutRateSYP));
+    const sypUsd = Math.max(1, Number(body.usdToSypRate || 150));
+    updates.coinToUsdRate = Number((updates.cashoutRateSYP / sypUsd).toFixed(6));
+  }
   if (body.usdToSypRate !== undefined) updates.usdToSypRate = Math.max(100, Number(body.usdToSypRate));
   if (body.recordEntryCostPts !== undefined) updates.recordEntryCostPts = Math.max(1, Math.floor(Number(body.recordEntryCostPts)));
   if (typeof body.autoRolloverWeekly === 'boolean') updates.autoRolloverWeekly = body.autoRolloverWeekly;
@@ -650,6 +656,14 @@ async function handleAdminResolveCashout(env, { txId, action }) {
       await flagAndFreeze(env, player, 'LEDGER_MISMATCH_ON_ADMIN_APPROVE', { txId });
       return jsonResponse({ code: 'ERR_AUDIT_FAIL', message: 'تحذير: السجل غير متطابق! تم تجميد الحساب تلقائياً.' }, 409);
     }
+    if (cashout.method === 'shamcash') {
+      await fbPatch(env, `arena_world/pending_cashouts/${txId}`, { status: 'approved', resolvedAt: Date.now() });
+      await fbPatch(env, `arena_world/bridge_transfers/${txId}`, {
+        phone: cashout.phone, direction: 'arena_to_shamcash', pts: cashout.pts, sypAmount: cashout.sypAmount || cashout.pts,
+        usdAmount: cashout.usdAmount, shamCashId: cashout.shamCashId || '', status: 'completed', createdAt: Date.now()
+      });
+      return jsonResponse({ ok: true, message: `✅ تم اعتماد سحب شام كاش (${Number(cashout.sypAmount || cashout.pts).toLocaleString()} ل.س) للمعرّف ${cashout.shamCashId || ''}.` });
+    }
     const storeUser = await fbGet(env, `users/${cashout.phone}`);
     const currentUsd = Number((storeUser && storeUser.prepaidBalanceUSD) || 0);
     const newUsd = Number((currentUsd + Number(cashout.usdAmount)).toFixed(4));
@@ -659,7 +673,7 @@ async function handleAdminResolveCashout(env, { txId, action }) {
     await fbPatch(env, `arena_world/bridge_transfers/${txId}`, {
       phone: cashout.phone, direction: 'arena_to_store', pts: cashout.pts, usdAmount: cashout.usdAmount, status: 'completed', createdAt: Date.now()
     });
-    return jsonResponse({ ok: true, message: `تم اعتماد التحويل وإضافة ${cashout.usdAmount}$ لرصيد الزبون في المتجر.` });
+    return jsonResponse({ ok: true, message: `✅ تم اعتماد التحويل وإضافة ${Number(cashout.sypAmount || cashout.pts).toLocaleString()} ل.س (${cashout.usdAmount}$) لرصيد الزبون في المتجر.` });
   } else {
     await updatePlayerBalance(env, player, Number(cashout.pts), { txId: `ref_${txId}`, type: 'cashout_rejected_refund', delta: Number(cashout.pts), at: Date.now() });
     await fbPatch(env, `arena_world/pending_cashouts/${txId}`, { status: 'rejected', resolvedAt: Date.now() });
@@ -760,6 +774,7 @@ async function handleProfile(env, player, config = {}) {
     framesCatalog: getEffectiveFramesCatalog(config),
     economy: {
       buyRateSYP: Number(config.buyRateSYP || 1),
+      cashoutRateSYP: Number(config.cashoutRateSYP || 1),
       usdToSypRate: Number(config.usdToSypRate || 150),
       coinToUsdRate: Number(config.coinToUsdRate || (1 / Number(config.usdToSypRate || 150))),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
@@ -1283,18 +1298,20 @@ async function handleCashoutRequest(env, player, { tierPts, method, shamCashId }
 
   const txId = `cash_${crypto.randomUUID().slice(0, 12)}`;
   const now = Date.now();
-  const sypRate = Number(config.usdToSypRate || 150);
-  const usdAmount = Number((pts / sypRate).toFixed(4));
+  const cashoutSypRate = Math.max(0.1, Number(config.cashoutRateSYP || 1));
+  const sypAmount = Math.round(pts * cashoutSypRate);
+  const sypRate = Math.max(1, Number(config.usdToSypRate || 150));
+  const usdAmount = Number((sypAmount / sypRate).toFixed(4));
   await updatePlayerBalance(env, player, -pts, { txId, type: `cashout_pending_${payMethod}`, delta: -pts, at: now });
   const isTrusted = Boolean(player.trusted) || (Number(player.wins || 0) >= Number(config.autoCashoutMinWins || 3) && Number(player.antiCheatFlags || 0) === 0 && !player.frozen);
   const autoEligible = payMethod === 'store' && Boolean(config.autoCashoutEnabled) && isTrusted && pts <= Number(config.autoCashoutMaxPts || 200);
   await fbPatch(env, `arena_world/pending_cashouts/${txId}`, {
-    phone: player.phone, displayName: player.displayName || '', pts, sypAmount: pts, usdAmount,
+    phone: player.phone, displayName: player.displayName || '', pts, sypAmount, usdAmount,
     method: payMethod, shamCashId: payMethod === 'shamcash' ? cleanShamId : '',
     status: 'pending_audit', autoEligible, createdAt: now, releaseAt: now + CASHOUT_AUDIT_DELAY_MS
   });
   return jsonResponse({
-    ok: true, txId, pts, sypAmount: pts, usdAmount, method: payMethod,
+    ok: true, txId, pts, sypAmount, usdAmount, method: payMethod,
     shamCashId: cleanShamId, autoEligible, createdAt: now, releaseAt: now + CASHOUT_AUDIT_DELAY_MS
   });
 }
