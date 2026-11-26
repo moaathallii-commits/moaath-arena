@@ -15,25 +15,27 @@
   const QUESTS_KEY = "moaath_tower_daily_quests_v1";
 
   const PERSONA_SKILLS = {
-    buddy: { id: "buddy", name: "بندق الودود", tier: "standard", quote: "يا سلام عليك! كفو!", skillName: "دفعة ترحيبية", skillType: "hint_and_time", passive: { startTimeBonus: 2 }, skillPower: { addSec: 3.5, showHint: true } },
-    lolo: { id: "lolo", name: "لولو النشيطة", tier: "standard", quote: "سرعة البرق! كمّل!", skillName: "ومضة السرعة", skillType: "convert_and_dmg", passive: { scoreMult: 1.08 }, skillPower: { convertTo: "bolt", count: 3, directDmg: 25 } },
-    noor: { id: "noor", name: "نور الهادئة", tier: "standard", quote: "هدوء وتركيز.. ضربة رائعة!", skillName: "سكينة الزمن", skillType: "freeze_time", passive: { clockBonusSec: 0.4 }, skillPower: { freezeSec: 5, addSec: 2 } },
-    chef: { id: "chef", name: "الشيف الماهر", tier: "standard", quote: "وصفة نارية على أصولها!", skillName: "وصفة الهجوم", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.10 }, skillPower: { convertTo: "sword", count: 4, directDmg: 20 } },
-    pastry: { id: "pastry", name: "صانعة الحلويات", tier: "standard", quote: "أحلى كومبو في الساحة!", skillName: "مكافأة الضيافة", skillType: "coin_burst", passive: { coinScoreMult: 1.12 }, skillPower: { bonusScore: 180, addSec: 2 } },
-    athlete: { id: "athlete", name: "البطل الرياضي", tier: "standard", quote: "قوة ولياقة! لا تتوقف!", skillName: "ضربة الاندفاع", skillType: "blast_row", passive: { comboDmgMult: 1.15 }, skillPower: { directDmg: 45 } },
-    sheikh: { id: "sheikh", name: "شيخ الشباب", tier: "standard", quote: "فزعة الأبطال! أبدعت!", skillName: "فزعة الساحة", skillType: "blast_row", passive: { skillChargeMult: 1.10 }, skillPower: { directDmg: 40, addSec: 1.5 } },
-    saver: { id: "saver", name: "خبير التوفير", tier: "standard", quote: "صفقة رابحة 100%!", skillName: "صفقة ذكية", skillType: "coin_burst", passive: { safeRetainBonus: 0.10 }, skillPower: { bonusScore: 220 } },
-    homemaker: { id: "homemaker", name: "رفيقة المنزل", tier: "standard", quote: "ترتيب ونظام ولا أروع!", skillName: "ترتيب اللوحة", skillType: "convert_and_dmg", passive: { bossDmgMult: 1.12 }, skillPower: { convertTo: "emerald", count: 4, directDmg: 25 } },
+    // === 9 شخصيات أساسية (متوازنة 100% تنافسياً) ===
+    buddy:     { id: "buddy",     name: "بندق الودود",     tier: "standard", archetype: "time",   quote: "يا سلام عليك! كفو!",       skillName: "دفعة ترحيبية",  skillType: "hint_and_time",   passive: { startTimeBonus: 2 },                  skillPower: { addSec: 3.5, directDmg: 30, showHint: true } },
+    lolo:      { id: "lolo",      name: "لولو النشيطة",    tier: "standard", archetype: "attack", quote: "سرعة البرق! كمّل!",       skillName: "ومضة السرعة",   skillType: "convert_and_dmg", passive: { scoreMult: 1.06 },                    skillPower: { convertTo: "bolt", count: 4, directDmg: 35 } },
+    noor:      { id: "noor",      name: "نور الهادئة",     tier: "standard", archetype: "time",   quote: "هدوء وتركيز.. ضربة رائعة!",skillName: "سكينة الزمن",   skillType: "freeze_time",     passive: { clockBonusSec: 0.35 },                skillPower: { freezeSec: 5, addSec: 2 } },
+    chef:      { id: "chef",      name: "الشيف الماهر",    tier: "standard", archetype: "attack", quote: "وصفة نارية على أصولها!",  skillName: "وصفة الهجوم",   skillType: "convert_and_dmg", passive: { swordDmgMult: 1.08 },                 skillPower: { convertTo: "sword", count: 4, directDmg: 35 } },
+    pastry:    { id: "pastry",    name: "صانعة الحلويات",  tier: "standard", archetype: "logic",  quote: "أحلى كومبو في الساحة!",   skillName: "مكافأة الضيافة",skillType: "coin_burst",      passive: { coinScoreMult: 1.08 },                skillPower: { bonusScore: 180, addSec: 2 } },
+    athlete:   { id: "athlete",   name: "البطل الرياضي",   tier: "standard", archetype: "attack", quote: "قوة ولياقة! لا تتوقف!",   skillName: "ضربة الاندفاع", skillType: "blast_row",       passive: { comboDmgMult: 1.10 },                 skillPower: { directDmg: 50 } },
+    sheikh:    { id: "sheikh",    name: "شيخ الشباب",      tier: "standard", archetype: "attack", quote: "فزعة الأبطال! أبدعت!",    skillName: "فزعة الساحة",   skillType: "blast_row",       passive: { skillChargeMult: 1.10 },              skillPower: { directDmg: 45, addSec: 1.5 } },
+    saver:     { id: "saver",     name: "خبير التوفير",    tier: "standard", archetype: "logic",  quote: "صفقة رابحة 100%!",        skillName: "صفقة ذكية",     skillType: "coin_burst",      passive: { safeRetainBonus: 0.08 },              skillPower: { bonusScore: 200, directDmg: 20 } },
+    homemaker: { id: "homemaker", name: "رفيقة المنزل",    tier: "standard", archetype: "logic",  quote: "ترتيب ونظام ولا أروع!",   skillName: "ترتيب اللوحة",  skillType: "convert_and_dmg", passive: { bossDmgMult: 1.10 },                  skillPower: { convertTo: "emerald", count: 4, directDmg: 35 } },
 
-    coach_sakhr: { id: "coach_sakhr", name: "كابتن صخر", tier: "vip", quote: "حطّم البرج بقوة الصخر!", skillName: "زلزال الصخر", skillType: "blast_row", passive: { swordDmgMult: 1.15, bossDmgMult: 1.18 }, skillPower: { directDmg: 85 } },
-    grand_chef: { id: "grand_chef", name: "الشيف الذهبي", tier: "vip", quote: "وليمة انتصار ذهبية!", skillName: "الوليمة الذهبية", skillType: "convert_and_dmg", passive: { swordDmgMult: 1.15, scoreMult: 1.10 }, skillPower: { convertTo: "sword", count: 6, directDmg: 45 } },
-    princess_layla: { id: "princess_layla", name: "الأميرة ليلى", tier: "vip", quote: "أداء ملكي لا يُضاهى!", skillName: "هالة الملوك", skillType: "freeze_time", passive: { startTimeBonus: 3, clockBonusSec: 0.6 }, skillPower: { freezeSec: 7, addSec: 3.5 } },
-    butler_farid: { id: "butler_farid", name: "السيد فريد", tier: "vip", quote: "خزينة الذهب تمتليء يا سيدي!", skillName: "خزينة الذهب", skillType: "coin_burst", passive: { coinScoreMult: 1.20, safeRetainBonus: 0.15 }, skillPower: { bonusScore: 340, addSec: 2 } },
-    friend_fadi: { id: "friend_fadi", name: "فادي الفرفوش", tier: "vip", quote: "يا عيني على الفرفشة والكومبو!", skillName: "فرفشة الكومبو", skillType: "convert_and_dmg", passive: { skillChargeMult: 1.20, comboDmgMult: 1.15 }, skillPower: { convertTo: "bolt", count: 5, directDmg: 50 } },
-    anime_zain: { id: "anime_zain", name: "كابتن زين", tier: "vip", quote: "عاصفة النصر لا تُقهر!", skillName: "عاصفة النصر", skillType: "blast_row", passive: { comboDmgMult: 1.22, scoreMult: 1.10 }, skillPower: { directDmg: 90 } },
-    anime_ryu: { id: "anime_ryu", name: "المحقق ريو", tier: "vip", quote: "كل حركة محسوبة بدقة!", skillName: "بصيرة المحقق", skillType: "hint_and_time", passive: { bossDmgMult: 1.15, scoreMult: 1.08 }, skillPower: { addSec: 5, showHint: true, directDmg: 45 } },
-    anime_ritaj: { id: "anime_ritaj", name: "ريتاج", tier: "vip", quote: "انفجار بهجة ونقاط!", skillName: "انفجار البهجة", skillType: "blast_row", passive: { scoreMult: 1.15 }, skillPower: { directDmg: 75, bonusScore: 150 } },
-    friend_saad: { id: "friend_saad", name: "الصديق سعد", tier: "vip", quote: "ثبات وإتقان.. أحسنت!", skillName: "بركة الثبات", skillType: "freeze_time", passive: { startTimeBonus: 2, swordDmgMult: 1.10, scoreMult: 1.10 }, skillPower: { freezeSec: 6, addSec: 3, directDmg: 40 } }
+    // === 9 شخصيات VIP (نفس السقف التنافسي العادل تماماً — تميّزها في XP والـ Cashback والهيبة) ===
+    coach_sakhr:    { id: "coach_sakhr",    name: "كابتن صخر",    tier: "vip", archetype: "attack", quote: "حطّم البرج بقوة الصخر!",     skillName: "زلزال الصخر",    skillType: "blast_row",       passive: { swordDmgMult: 1.08 },    skillPower: { directDmg: 52 } },
+    grand_chef:     { id: "grand_chef",     name: "الشيف الذهبي", tier: "vip", archetype: "attack", quote: "وليمة انتصار ذهبية!",         skillName: "الوليمة الذهبية", skillType: "convert_and_dmg", passive: { scoreMult: 1.06 },       skillPower: { convertTo: "sword", count: 4, directDmg: 35 } },
+    princess_layla: { id: "princess_layla", name: "الأميرة ليلى", tier: "vip", archetype: "time",   quote: "أداء ملكي لا يُضاهى!",        skillName: "هالة الملوك",    skillType: "freeze_time",     passive: { clockBonusSec: 0.35 },   skillPower: { freezeSec: 5, addSec: 2 } },
+    butler_farid:   { id: "butler_farid",   name: "السيد فريد",   tier: "vip", archetype: "logic",  quote: "خزينة الذهب تمتليء يا سيدي!", skillName: "خزينة الذهب",    skillType: "coin_burst",      passive: { coinScoreMult: 1.08 },   skillPower: { bonusScore: 200, addSec: 1.5 } },
+    friend_fadi:    { id: "friend_fadi",    name: "فادي الفرفوش", tier: "vip", archetype: "attack", quote: "يا عيني على الفرفشة والكومبو!",skillName: "فرفشة الكومبو", skillType: "convert_and_dmg", passive: { skillChargeMult: 1.10 }, skillPower: { convertTo: "bolt", count: 4, directDmg: 35 } },
+    anime_zain:     { id: "anime_zain",     name: "كابتن زين",    tier: "vip", archetype: "attack", quote: "عاصفة النصر لا تُقهر!",       skillName: "عاصفة النصر",    skillType: "blast_row",       passive: { comboDmgMult: 1.10 },    skillPower: { directDmg: 52 } },
+    anime_ryu:      { id: "anime_ryu",      name: "المحقق ريو",   tier: "vip", archetype: "logic",  quote: "كل حركة محسوبة بدقة!",        skillName: "بصيرة المحقق",   skillType: "hint_and_time",   passive: { bossDmgMult: 1.10 },     skillPower: { addSec: 3.5, directDmg: 30, showHint: true } },
+    anime_ritaj:    { id: "anime_ritaj",    name: "ريتاج",        tier: "vip", archetype: "logic",  quote: "انفجار بهجة ونقاط!",          skillName: "انفجار البهجة",  skillType: "blast_row",       passive: { scoreMult: 1.06 },       skillPower: { directDmg: 45, bonusScore: 100 } },
+    friend_saad:    { id: "friend_saad",    name: "الصديق سعد",   tier: "vip", archetype: "time",   quote: "ثبات وإتقان.. أحسنت!",        skillName: "بركة الثبات",    skillType: "freeze_time",     passive: { startTimeBonus: 2 },     skillPower: { freezeSec: 5, addSec: 2 } }
   };
 
   const FLOOR_MODIFIERS = [
@@ -43,9 +45,9 @@
   ];
 
   const ROGUELIKE_PERKS = [
-    { id: "perk_sword", title: "⚔️ حد السيف (+20% ضرر السيوف)", desc: "يرفع ضرر جميع السيوف حتى نهاية الجولة." },
-    { id: "perk_clock", title: "⏱️ نبض الزمن (+1.2ث لكل ساعة)", desc: "كل مطابقة ساعة تمنح وقتاً إضافياً." },
-    { id: "perk_skill", title: "⭐ شحن فائق (+25% سرعة المهارة)", desc: "تشحن مهارة شخصيتك بشكل أسرع." }
+    { id: "perk_sword", img: "./assets/tower_match/perks/perk_sword.png", title: "حد السيف (+20% ضرر)", desc: "يرفع ضرر جميع السيوف حتى نهاية الجولة." },
+    { id: "perk_clock", img: "./assets/tower_match/perks/perk_clock.png", title: "نبض الزمن (+1.2ث/ساعة)", desc: "كل مطابقة ساعة تمنح وقتاً إضافياً." },
+    { id: "perk_skill", img: "./assets/tower_match/perks/perk_skill.png", title: "شحن فائق (+25% مهارة)", desc: "تشحن مهارة شخصيتك بشكل أسرع." }
   ];
 
   function getTodayKey() { return new Date().toISOString().slice(0, 10); }
@@ -312,7 +314,21 @@
       else if (tier === 6) { this.board.applyBossLocks(2); label = "🌑 زعيم الظل ألقى ظلامه على قطعتين!"; }
       else if (tier === 8) { this.board.applyBossLocks(2); label = "🔥 لهب العنقاء النارية اشتعل في اللوحة!"; }
       else if (tier === 9) { this.bossAttackCooldownSec = Math.max(4, this.bossAttackCooldownSec - 3); label = "⏳ حارس الزمن سرّع عدّاد الهجمة!"; }
-      else if (tier === 99) { this.board.applyBossLocks(3); this.board.bossSwapRandomPair(); label = "👁️ هجمة النسخة الشريرة للبطل السابق!"; }
+      else if (tier === 99) {
+        const nemCharId = (this.nemesisBoss && this.nemesisBoss.holderCharacterId) || "buddy";
+        const nemArch = (PERSONA_SKILLS[nemCharId] && PERSONA_SKILLS[nemCharId].archetype) || "attack";
+        if (nemArch === "time") {
+          this.timeLeftSec = Math.max(1, this.timeLeftSec - 2.5);
+          label = "⏳ ظل البطل الشرير استنزف 2.5 ثانية من وقتك!";
+        } else if (nemArch === "logic") {
+          this.board.applyIceObstacles(2, 2);
+          this.board.bossSwapRandomPair();
+          label = "❄️ ظل البطل الشرير جمّد قطعتين وشوّش اللوحة!";
+        } else {
+          this.board.applyBossLocks(3);
+          label = "⚡ صاعقة ظل البطل الشرير أقفلت 3 قطع!";
+        }
+      }
       else if (tier === 3) { this.timeLeftSec = Math.max(1, this.timeLeftSec - 2.0); label = "🐉 تنين الزمرد استنزف ثانيتين!"; }
       else { this.board.applyIceObstacles(2, 2); label = "❄️ سيد البرج جمّد قطعتين!"; }
       this._emit("bossAttack", { tier, label, boardAfter: this.board.getSnapshot(), state: this.getPublicState() });
