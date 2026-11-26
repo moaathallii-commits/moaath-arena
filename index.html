@@ -289,6 +289,68 @@
     .modal-box { background: #121c30; border: 1.5px solid var(--gold); border-radius: 18px; padding: 18px; width: 100%; max-width: 350px; }
     .countdown-num { font-size: 5rem; font-weight: 900; color: var(--gold-light); margin: 14px 0; }
     .error-code { font-family: monospace; background: #000; color: #f87171; padding: 6px 12px; border-radius: 6px; margin-top: 12px; }
+  
+    /* === Phase 3: Broadcast Banner, Isolated Hub & Mythic 60fps GPU FX === */
+    .broadcast-bar {
+      background: linear-gradient(90deg, rgba(234,179,8,0.22), rgba(56,189,248,0.22), rgba(234,179,8,0.22));
+      border-bottom: 1px solid rgba(250,204,21,0.5);
+      color: #fef08a; font-size: 0.8rem; font-weight: 800;
+      padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      animation: fxShimmer 4s linear infinite;
+    }
+    .ws-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; background: rgba(15,23,42,0.92);
+      border-bottom: 1px solid rgba(212,175,55,0.3);
+    }
+    .ws-back-btn {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(212,175,55,0.4);
+      color: #fde047; border-radius: 10px; padding: 6px 12px; font-size: 0.78rem; font-weight: 800; cursor: pointer;
+    }
+    .hub-card {
+      background: linear-gradient(155deg, #162238, #0b1222);
+      border: 1.5px solid rgba(212,175,55,0.5); border-radius: 18px;
+      padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden;
+    }
+    .hub-card.locked { opacity: 0.58; filter: grayscale(0.5); border-color: rgba(148,163,184,0.25); }
+    .title-pill {
+      display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 900;
+      background: linear-gradient(135deg, rgba(250,204,21,0.25), rgba(168,85,247,0.25));
+      border: 1px solid rgba(250,204,21,0.55); color: #fde047; margin-top: 2px;
+    }
+    .badge-mini { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; filter: drop-shadow(0 0 4px rgba(250,204,21,0.7)); }
+    .revenge-card {
+      background: linear-gradient(135deg, rgba(220,38,38,0.22), rgba(15,23,42,0.92));
+      border: 1.5px solid rgba(248,113,113,0.65); border-radius: 14px; padding: 11px; margin-bottom: 10px;
+    }
+    .streak-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+    .streak-node {
+      background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 14px; padding: 10px; text-align: center; position: relative;
+    }
+    .streak-node.unlocked { border-color: rgba(74,222,128,0.7); background: linear-gradient(160deg, rgba(22,163,74,0.16), rgba(15,23,42,0.9)); }
+    .streak-node.mythic { border-color: rgba(250,204,21,0.75); box-shadow: 0 0 14px rgba(250,204,21,0.18); }
+    .streak-node img { width: 62px; height: 62px; object-fit: contain; margin: 4px auto; display: block; }
+    .streak-day-tag {
+      position: absolute; top: 6px; right: 6px; font-size: 0.66rem; font-weight: 900;
+      background: rgba(0,0,0,0.6); color: #fde047; padding: 2px 6px; border-radius: 6px;
+    }
+    /* Mythic 60fps GPU Frame Animations */
+    @keyframes fxPulseCopper { 0%,100%{filter:drop-shadow(0 0 5px #f59e0b);} 50%{filter:drop-shadow(0 0 13px #fbbf24);} }
+    @keyframes fxPulseSilver { 0%,100%{filter:drop-shadow(0 0 6px #38bdf8);} 50%{filter:drop-shadow(0 0 15px #e0f2fe);} }
+    @keyframes fxFlameRuby   { 0%,100%{filter:drop-shadow(0 0 8px #ef4444) brightness(1);} 50%{filter:drop-shadow(0 0 18px #f97316) brightness(1.15);} }
+    @keyframes fxDragonAura  { 0%,100%{filter:drop-shadow(0 0 9px #dc2626);} 50%{filter:drop-shadow(0 0 20px #facc15);} }
+    @keyframes fxPhoenixGlow { 0%,100%{filter:drop-shadow(0 0 10px #f59e0b) saturate(1.1);} 50%{filter:drop-shadow(0 0 22px #fef08a) saturate(1.35);} }
+    @keyframes fxGalaxySpin  { 0%{filter:drop-shadow(0 0 12px #a855f7) hue-rotate(0deg);} 50%{filter:drop-shadow(0 0 22px #38bdf8) hue-rotate(25deg);} 100%{filter:drop-shadow(0 0 12px #a855f7) hue-rotate(0deg);} }
+    @keyframes fxShimmer { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+    .fx-copper  { animation: fxPulseCopper 3s ease-in-out infinite; }
+    .fx-silver  { animation: fxPulseSilver 2.8s ease-in-out infinite; }
+    .fx-ruby    { animation: fxFlameRuby 2.2s ease-in-out infinite; }
+    .fx-dragon  { animation: fxDragonAura 2.4s ease-in-out infinite; }
+    .fx-phoenix { animation: fxPhoenixGlow 2.1s ease-in-out infinite; }
+    .fx-galaxy  { animation: fxGalaxySpin 3.2s linear infinite; }
+    #fxCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 999999; }
+
   </style>
 </head>
 <body>
@@ -303,6 +365,16 @@
       <button type="button" class="topup-plus" title="شحن من متجر معاذ" onclick="ArenaApp.openStoreTopupHint()">+</button>
     </div>
   </header>
+  <div id="broadcastBanner" class="broadcast-bar hidden">
+    <span id="broadcastText">📢</span>
+    <button type="button" style="background:none;border:none;color:#fde047;font-weight:900;cursor:pointer;" onclick="document.getElementById('broadcastBanner').classList.add('hidden')">✕</button>
+  </div>
+  <div id="workspaceBar" class="ws-bar hidden">
+    <button type="button" class="ws-back-btn" onclick="ArenaApp.exitToHub()">← البوابة الرئيسية</button>
+    <strong style="color:#fde047; font-size:0.86rem;">🏰 مساحة برج التحدي اللانهائي</strong>
+    <button type="button" id="fxSoundBtn" class="ws-back-btn" onclick="MythicFX.toggleMute()">🔊</button>
+  </div>
+  <canvas id="fxCanvas" class="hidden"></canvas>
   <div id="liveCountdownStrip" class="live-strip hidden">⏳ جاري مزامنة عداد البطولة الأسبوعية...</div>
 
   <main>
@@ -335,7 +407,53 @@
       <div style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">🛡️ حسابك مرتبط مباشرة بمحفظة متجر معاذ ومؤمّن بالكامل.</div>
     </section>
 
-    <!-- ================= 2. اللوبي الرئيسي ================= -->
+    <!-- ================= 1.5 البوابة الرئيسية المعزولة (Arena Hub) ================= -->
+    <section id="arenaHubScreen" class="hidden" style="padding:12px;">
+      <div class="hub-card" style="text-align:center; padding:12px;">
+        <div style="font-size:0.78rem; color:#94a3b8;">المحفظة الموحدة المرتبطة بمتجر معاذ</div>
+        <div style="font-size:1.35rem; font-weight:900; color:#4ade80; margin:4px 0;"><span id="hubCoinsVal">0</span> عملة معاذ</div>
+        <div style="display:flex; justify-content:center; gap:8px; margin-top:8px;">
+          <button class="btn btn-gold btn-sm" style="margin:0; width:auto; padding:7px 14px;" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">💳 شحن بالليرة من المتجر</button>
+          <button class="btn btn-outline btn-sm" style="margin:0; width:auto; padding:7px 14px;" onclick="ArenaApp.enterTowerWorkspace('profile')">💸 السحب وملفي</button>
+        </div>
+      </div>
+
+      <h3 style="color:#fde047; font-size:0.95rem; margin:10px 4px 8px;">🎮 اختر عالمك التنافسي المستقل</h3>
+
+      <div class="hub-card">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="./assets/icons/game_tower.png" alt="برج التحدي" style="width:68px; height:68px; border-radius:14px; border:1.5px solid #facc15;" />
+          <div style="flex:1;">
+            <span class="orient-badge" style="margin-bottom:4px;">🔥 مفعّلة بالكامل • متجر ومسار 360 يوم مستقل</span>
+            <h3 style="color:#fde047; margin:0; font-size:1.05rem;">برج التحدي اللانهائي</h3>
+            <p style="font-size:0.76rem; color:#cbd5e1; margin:4px 0 0;">كسر الرقم القياسي • البطولة الأسبوعية • 1 ضد 1 • مسار 360 يوماً</p>
+          </div>
+        </div>
+        <button class="btn btn-gold" style="margin-top:10px;" onclick="ArenaApp.enterTowerWorkspace('home')">🏰 دخول مساحة برج التحدي</button>
+      </div>
+
+      <div class="hub-card locked">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="./assets/icons/game_hill.png" alt="قيادة التلال" style="width:56px; height:56px; border-radius:12px;" />
+          <div style="flex:1;">
+            <h4 style="color:#fb923c; margin:0;">قيادة التلال 2D</h4>
+            <div style="font-size:0.74rem; color:#94a3b8; margin-top:3px;">مساحة مستقلة معزولة — قيد التجهيز للمرحلة القادمة</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-card locked">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="./assets/icons/game_shooter.png" alt="ميجا شوتر" style="width:56px; height:56px; border-radius:12px;" />
+          <div style="flex:1;">
+            <h4 style="color:#38bdf8; margin:0;">ميجا شوتر 2D</h4>
+            <div style="font-size:0.74rem; color:#94a3b8; margin-top:3px;">مساحة مستقلة معزولة — قيد التجهيز للمرحلة القادمة</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 2. اللوبي الرئيسي (مساحة برج التحدي المعزولة) ================= -->
     <section id="lobbyScreen" class="hidden">
 
       <!-- التبويب 1: الرئيسية (منصة الصدارة الملكية + بطاقات الألعاب) -->
@@ -348,7 +466,7 @@
           </div>
           <div style="flex:1; min-width:0;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong id="companionName" style="color:var(--gold-light); font-size:0.9rem;">بندق الودود</strong>
+              <div><strong id="companionName" style="color:var(--gold-light); font-size:0.9rem;">بندق الودود</strong> <img id="activeBadgeImg" class="badge-mini hidden" src="" alt="" /><div id="activeTitlePill" class="title-pill hidden"></div></div>
               <span style="font-size:0.74rem; color:#7dd3fc; font-weight:800;">XP: <b id="xpDisplay">0</b> • فوز: <b id="winsDisplay">0</b></span>
             </div>
             <div id="companionBubble" style="font-size:0.78rem; color:#e2e8f0; margin-top:2px;">أهلاً بك في ساحة الأبطال!</div>
@@ -403,7 +521,8 @@
           </div>
         </div>
 
-        <div class="hero-game-card hill">
+        <div id="pvpRevengeBox" class="revenge-card hidden"></div>
+        <div class="hero-game-card hill hidden">
           <div class="game-head">
             <img class="game-icon-lg" src="./assets/icons/game_hill.png" alt="قيادة التلال" />
             <div style="flex:1;">
@@ -419,7 +538,7 @@
           </div>
         </div>
 
-        <div class="hero-game-card shooter">
+        <div class="hero-game-card shooter hidden">
           <div class="game-head">
             <img class="game-icon-lg" src="./assets/icons/game_shooter.png" alt="ميجا شوتر" />
             <div style="flex:1;">
@@ -493,6 +612,18 @@
       </div>
 
       <!-- التبويب 5: ملفي (الشخصيات الـ 18 + المحفظة بالليرة السورية) -->
+      <!-- التبويب الجديد: مسار البرج 360 يوماً (20 مكافأة حصرية) -->
+      <div id="tab-streak" class="hidden">
+        <div class="card" style="text-align:center; border-color:rgba(250,204,21,0.55);">
+          <h3 style="color:#fde047; margin:0 0 6px;">🔥 مسار صعود البرج (360 يوماً)</h3>
+          <p style="font-size:0.78rem; color:#cbd5e1; margin:0 0 8px;">20 مكافأة حصرية (7 ألقاب + 7 شارات + 6 إطارات أسطورية) — عدالة تنافسية 100%</p>
+          <div style="font-size:1.15rem; font-weight:900; color:#4ade80; margin-bottom:6px;">سلسلتك الحالية: <span id="streakDaysVal">0</span> / 360 يوم</div>
+          <div class="xp-bar-bg" style="height:10px; margin-bottom:10px;"><div id="streakProgressFill" class="xp-bar-fill" style="width:0%;"></div></div>
+          <button id="claimStreakBtn" class="btn btn-gold" onclick="ArenaApp.claimTowerStreak()">🎁 تسجيل الحضور اليومي واستلام المكافأة</button>
+        </div>
+        <div id="towerStreakGrid" class="streak-grid"></div>
+      </div>
+
       <div id="tab-profile" class="hidden">
         <div class="filter-row">
           <button class="filter-pill active" onclick="ArenaApp.setProfileSub('chars', this)">🎭 الشخصيات (18)</button>
@@ -530,7 +661,7 @@
   <!-- شريط التنقل السفلي الزجاجي الثابت -->
   <nav id="bottomDock" class="bottom-dock hidden">
     <button class="dock-btn active" data-tab="home" onclick="ArenaApp.switchTab('home')"><span class="dock-ico">🏠</span><span>الرئيسية</span></button>
-    <button class="dock-btn" data-tab="weekly" onclick="ArenaApp.switchTab('weekly')"><span class="dock-ico">🏆</span><span>الأسبوعية</span></button>
+    <button class="dock-btn" data-tab="streak" onclick="ArenaApp.switchTab('streak')"><span class="dock-ico">🔥</span><span>مسار 360</span></button>
     <button class="dock-btn" data-tab="pvp" onclick="ArenaApp.switchTab('pvp')"><span class="dock-ico">⚔️</span><span>PvP</span><span id="pvpCountBadge" class="dock-badge hidden">0</span></button>
     <button class="dock-btn" data-tab="shop" onclick="ArenaApp.switchTab('shop')"><span class="dock-ico">🛒</span><span>المتجر</span></button>
     <button class="dock-btn" data-tab="profile" onclick="ArenaApp.switchTab('profile')"><span class="dock-ico">👤</span><span>ملفي</span></button>
@@ -1393,6 +1524,254 @@
     };
 
     window.addEventListener('DOMContentLoaded', () => ArenaApp.init());
+  
+    // ========================================================================
+    // محرك المؤثرات الصوتية والمرئية الخارقة (MythicFX — Web Audio 0 KB + Canvas)
+    // ========================================================================
+    const MythicFX = {
+      ctx: null,
+      muted: localStorage.getItem('moaath_fx_muted') === '1',
+      ensureCtx() {
+        if (this.muted) return null;
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        return this.ctx;
+      },
+      toggleMute() {
+        this.muted = !this.muted;
+        localStorage.setItem('moaath_fx_muted', this.muted ? '1' : '0');
+        const btn = document.getElementById('fxSoundBtn');
+        if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
+      },
+      tone(freq, dur, type = 'sine', vol = 0.14, delay = 0) {
+        const c = this.ensureCtx();
+        if (!c) return;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, c.currentTime + delay);
+        gain.gain.setValueAtTime(0.001, c.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(vol, c.currentTime + delay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
+        osc.connect(gain); gain.connect(c.destination);
+        osc.start(c.currentTime + delay);
+        osc.stop(c.currentTime + delay + dur + 0.02);
+      },
+      playBadgeUnlock() {
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.28, 'triangle', 0.15, i * 0.07));
+        if (navigator.vibrate) navigator.vibrate([25, 35, 60]);
+        this.burstParticles('#38bdf8');
+      },
+      playMythicFrameUnlock() {
+        this.tone(95, 0.55, 'sawtooth', 0.18, 0);
+        [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.45, 'triangle', 0.16, 0.08 + i * 0.08));
+        if (navigator.vibrate) navigator.vibrate([40, 40, 100]);
+        this.burstParticles('#facc15');
+      },
+      playRevengeClash() {
+        this.tone(220, 0.14, 'sawtooth', 0.12, 0);
+        this.tone(440, 0.22, 'square', 0.1, 0.08);
+      },
+      burstParticles(color = '#facc15') {
+        const cvs = document.getElementById('fxCanvas');
+        if (!cvs) return;
+        cvs.classList.remove('hidden');
+        cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+        const g = cvs.getContext('2d');
+        const parts = Array.from({ length: 42 }, () => ({
+          x: cvs.width / 2, y: cvs.height / 2,
+          vx: (Math.random() - 0.5) * 14, vy: (Math.random() - 0.7) * 14,
+          r: 2 + Math.random() * 4, life: 1, c: Math.random() > 0.4 ? color : '#ffffff'
+        }));
+        let frames = 0;
+        const step = () => {
+          g.clearRect(0, 0, cvs.width, cvs.height);
+          parts.forEach((p) => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.28; p.life -= 0.025;
+            if (p.life > 0) {
+              g.globalAlpha = p.life; g.fillStyle = p.c;
+              g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI * 2); g.fill();
+            }
+          });
+          if (++frames < 42) requestAnimationFrame(step);
+          else { g.clearRect(0, 0, cvs.width, cvs.height); cvs.classList.add('hidden'); }
+        };
+        requestAnimationFrame(step);
+      }
+    };
+
+    // ========================================================================
+    // ربط المرحلة 3 والعزل المعماري مع ArenaApp
+    // ========================================================================
+    (function extendArenaAppPhase3() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      ArenaApp.enterTowerWorkspace = function(initialTab = 'home') {
+        document.getElementById('arenaHubScreen')?.classList.add('hidden');
+        document.getElementById('lobbyScreen')?.classList.remove('hidden');
+        document.getElementById('workspaceBar')?.classList.remove('hidden');
+        document.getElementById('bottomDock')?.classList.remove('hidden');
+        const sndBtn = document.getElementById('fxSoundBtn');
+        if (sndBtn) sndBtn.textContent = MythicFX.muted ? '🔇' : '🔊';
+        this.switchTab(initialTab);
+      };
+
+      ArenaApp.exitToHub = function() {
+        document.getElementById('lobbyScreen')?.classList.add('hidden');
+        document.getElementById('workspaceBar')?.classList.add('hidden');
+        document.getElementById('bottomDock')?.classList.add('hidden');
+        document.getElementById('arenaHubScreen')?.classList.remove('hidden');
+        const hubCoins = document.getElementById('hubCoinsVal');
+        if (hubCoins && this.profile) hubCoins.textContent = Number(this.profile.points || 0).toLocaleString();
+      };
+
+      const origSwitchTab = ArenaApp.switchTab.bind(ArenaApp);
+      ArenaApp.switchTab = function(tab) {
+        const st = document.getElementById('tab-streak');
+        if (st) st.classList.toggle('hidden', tab !== 'streak');
+        origSwitchTab(tab);
+        if (tab === 'streak') this.renderTowerStreak();
+      };
+
+      ArenaApp.renderPhase3UI = function() {
+        const p = this.profile;
+        if (!p) return;
+        // 1. Broadcast Banner
+        const b = p.broadcast;
+        const bEl = document.getElementById('broadcastBanner');
+        const bTxt = document.getElementById('broadcastText');
+        if (b && b.text && bEl && bTxt) {
+          bTxt.textContent = '📢 ' + b.text;
+          bEl.classList.remove('hidden');
+        }
+        // 2. Hub Coins
+        const hubCoins = document.getElementById('hubCoinsVal');
+        if (hubCoins) hubCoins.textContent = Number(p.points || 0).toLocaleString();
+
+        // 3. Active Title & Badge
+        const td = p.towerData || {};
+        const tPill = document.getElementById('activeTitlePill');
+        if (tPill) {
+          if (td.activeTitle) { tPill.textContent = '🏷️ ' + td.activeTitle; tPill.classList.remove('hidden'); }
+          else tPill.classList.add('hidden');
+        }
+        const bImg = document.getElementById('activeBadgeImg');
+        if (bImg) {
+          const badgeObj = td.activeBadge && td.badges && td.badges[td.activeBadge];
+          if (badgeObj && badgeObj.file) { bImg.src = badgeObj.file; bImg.classList.remove('hidden'); }
+          else bImg.classList.add('hidden');
+        }
+
+        // 4. PvP Revenge Card
+        const revBox = document.getElementById('pvpRevengeBox');
+        if (revBox) {
+          if (td.lastPvpLoss && td.lastPvpLoss.opponentName) {
+            const L = td.lastPvpLoss;
+            revBox.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div>
+                  <strong style="color:#f87171; font-size:0.86rem;">⚔️ فرصة الثأر في برج التحدي!</strong>
+                  <div style="font-size:0.75rem; color:#e2e8f0; margin-top:2px;">خسرت أمام <b>${L.opponentName}</b> بفارق ${L.scoreDiff} نقطة فقط!</div>
+                </div>
+                <button class="btn btn-gold btn-sm" style="width:auto; margin:0; padding:7px 12px;" onclick="MythicFX.playRevengeClash(); ArenaApp.switchTab('pvp')">🔥 ثأر الآن</button>
+              </div>
+            `;
+            revBox.classList.remove('hidden');
+          } else {
+            revBox.classList.add('hidden');
+          }
+        }
+      };
+
+      ArenaApp.renderTowerStreak = function() {
+        const p = this.profile;
+        if (!p) return;
+        const td = p.towerData || {};
+        const cat = Array.isArray(p.towerStreakCatalog) ? p.towerStreakCatalog : [];
+        const days = Number(td.streakDays || 0);
+        const daysEl = document.getElementById('streakDaysVal');
+        if (daysEl) daysEl.textContent = days;
+        const fill = document.getElementById('streakProgressFill');
+        if (fill) fill.style.width = Math.min(100, Math.round((days / 360) * 100)) + '%';
+        const btn = document.getElementById('claimStreakBtn');
+        if (btn) btn.textContent = td.canCheckInToday ? '🎁 تسجيل الحضور اليومي واستلام المكافأة' : '✅ تم تسجيل حضورك اليوم (عودة غداً)';
+
+        const grid = document.getElementById('towerStreakGrid');
+        if (!grid) return;
+        grid.innerHTML = cat.map((r) => {
+          const unlocked = Boolean(td.claimedSteps && td.claimedSteps[r.step]);
+          const isMythic = r.rarity === 'mythic' || r.rarity === 'legendary';
+          const visual = r.file
+            ? `<img src="${r.file}" class="${r.anim || ''}" alt="${r.name}" />`
+            : `<div style="font-size:2rem; margin:12px 0;">🏷️</div>`;
+          let actionBtn = `<div style="font-size:0.7rem; color:#94a3b8; margin-top:6px;">🔒 يفتح يوم ${r.day}</div>`;
+          if (unlocked) {
+            if (r.type === 'frame') {
+              actionBtn = `<button class="btn btn-gold btn-sm" style="margin-top:6px;padding:5px;" onclick="ArenaApp.equipFrame('${r.id}')">✨ تجهيز الإطار</button>`;
+            } else if (r.type === 'badge') {
+              actionBtn = `<button class="btn btn-blue btn-sm" style="margin-top:6px;padding:5px;" onclick="ArenaApp.equipTowerCosmetic({ badgeId: '${r.id}' })">🎖️ تجهيز الشارة</button>`;
+            } else if (r.type === 'title') {
+              actionBtn = `<button class="btn btn-outline btn-sm" style="margin-top:6px;padding:5px;" onclick="ArenaApp.equipTowerCosmetic({ titleId: '${r.id}' })">🏷️ تفعيل اللقب</button>`;
+            }
+          }
+          return `
+            <div class="streak-node ${unlocked ? 'unlocked' : ''} ${isMythic ? 'mythic' : ''}">
+              <span class="streak-day-tag">يوم ${r.day}</span>
+              ${visual}
+              <div style="font-size:0.78rem; font-weight:800; color:#fff;">${r.name}</div>
+              ${actionBtn}
+            </div>
+          `;
+        }).join('');
+      };
+
+      ArenaApp.claimTowerStreak = async function() {
+        try {
+          const res = await this.api('/tower/streak/claim', {});
+          if (res.newlyUnlocked && res.newlyUnlocked.length > 0) {
+            const hasFrame = res.newlyUnlocked.some((x) => x.type === 'frame');
+            if (hasFrame) MythicFX.playMythicFrameUnlock();
+            else MythicFX.playBadgeUnlock();
+          } else {
+            MythicFX.playBadgeUnlock();
+          }
+          alert(res.message || 'تم تسجيل الحضور!');
+          await this.loadProfile();
+          this.renderPhase3UI();
+          this.renderTowerStreak();
+        } catch (err) { alert(err.message || 'تعذر تسجيل الحضور.'); }
+      };
+
+      ArenaApp.equipTowerCosmetic = async function(payload) {
+        try {
+          const res = await this.api('/tower/cosmetic/equip', payload);
+          MythicFX.playBadgeUnlock();
+          alert(res.message || 'تم التجهيز!');
+          await this.loadProfile();
+          this.renderPhase3UI();
+          this.renderTowerStreak();
+        } catch (err) { alert(err.message || 'تعذر التجهيز.'); }
+      };
+
+      // Hook into loadProfile to show Hub first on fresh load and update Phase 3 UI
+      if (typeof ArenaApp.loadProfile === 'function') {
+        const origLoadProfile = ArenaApp.loadProfile.bind(ArenaApp);
+        let firstHubShown = false;
+        ArenaApp.loadProfile = async function(...args) {
+          const r = await origLoadProfile(...args);
+          this.renderPhase3UI();
+          if (!firstHubShown) {
+            firstHubShown = true;
+            this.exitToHub();
+          }
+          return r;
+        };
+      }
+    })();
+
   </script>
 </body>
 </html>
