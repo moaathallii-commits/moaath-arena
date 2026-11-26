@@ -6,7 +6,7 @@
  * - استثناء تام لـ workers.dev و firebaseio.com لمنع الغش
  */
 
-const CACHE_NAME = 'moaath-arena-smart-cache-v10';
+const CACHE_NAME = 'moaath-arena-smart-cache-v11';
 
 const CORE_ASSETS = [
   './',
@@ -28,6 +28,9 @@ const CORE_ASSETS = [
   './assets/shop/tower_bomb.png',
   './assets/shop/tower_row.png',
   './assets/shop/tower_wildcard.png',
+  './assets/tower_match/perks/perk_sword.png',
+  './assets/tower_match/perks/perk_clock.png',
+  './assets/tower_match/perks/perk_skill.png',
   './assets/pvp_prestige/pvp_def_5.png',
   './assets/pvp_prestige/pvp_def_10.png',
   './assets/pvp_prestige/pvp_def_15.png',

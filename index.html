@@ -707,6 +707,66 @@
       color: #fdba74; margin-right: 4px;
     }
 
+  
+    /* === Phase 11: HUD Overlap Fix, Bomb/Ability FX, 3D Perk Cards & Safe Retreat Polish === */
+    #tmPhase10Hud {
+      top: 56px !important; /* Below the top floor/score/retreat bar so it NEVER overlaps! */
+      max-width: 400px !important;
+    }
+    #tm10Chase { padding: 4px 10px !important; font-size: 0.72rem !important; }
+    #tm10BossTip { padding: 4px 9px !important; font-size: 0.7rem !important; }
+
+    /* Move toast to bottom above dock so it never covers companion card */
+    #toastBox {
+      top: auto !important; bottom: 86px !important;
+      background: rgba(10, 18, 36, 0.96) !important;
+      border: 1.5px solid #fde047 !important;
+    }
+
+    /* Bomb & Ability Visual FX Overlay */
+    #tmFxOverlay11 {
+      position: fixed; inset: 0; pointer-events: none; z-index: 2200000; overflow: hidden;
+    }
+    .fx11-shockwave {
+      position: absolute; left: 50%; top: 55%; width: 40px; height: 40px;
+      margin-left: -20px; margin-top: -20px; border-radius: 50%;
+      border: 5px solid #fde047; box-shadow: 0 0 28px #f97316, inset 0 0 18px #ef4444;
+      animation: fx11Shock 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .fx11-laser {
+      position: absolute; left: 0; right: 0; top: 55%; height: 18px; margin-top: -9px;
+      background: linear-gradient(90deg, transparent, #38bdf8, #ffffff, #38bdf8, transparent);
+      box-shadow: 0 0 28px #38bdf8, 0 0 50px #0284c7;
+      animation: fx11Laser 0.34s ease-out forwards;
+    }
+    .fx11-rainbow {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 55%, rgba(250,204,21,0.35), rgba(168,85,247,0.28), rgba(56,189,248,0.22), transparent 72%);
+      animation: fx11Flash 0.45s ease-out forwards;
+    }
+    @keyframes fx11Shock { 0%{transform:scale(0.5);opacity:1} 100%{transform:scale(9.5);opacity:0} }
+    @keyframes fx11Laser { 0%{transform:scaleY(2.2);opacity:1} 100%{transform:scaleY(0.1);opacity:0} }
+    @keyframes fx11Flash { 0%{opacity:1} 100%{opacity:0} }
+    @keyframes fx11Shake { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-5px,3px)} 40%{transform:translate(5px,-3px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(4px,2px)} }
+    .tm11-shaking { animation: fx11Shake 0.28s ease-in-out; }
+
+    /* 3D Perk Image Cards inside Boss Decision Modal */
+    .perk11-card {
+      display: flex !important; align-items: center !important; gap: 12px !important;
+      text-align: right !important; padding: 10px 12px !important; border-radius: 16px !important;
+      background: linear-gradient(145deg, rgba(24, 38, 68, 0.96), rgba(9, 15, 30, 0.98)) !important;
+      border: 1.5px solid rgba(250, 204, 21, 0.48) !important;
+      box-shadow: 0 4px 0 #78350f, 0 8px 18px rgba(0,0,0,0.45) !important;
+      margin-bottom: 9px !important; transition: transform 0.08s ease !important;
+    }
+    .perk11-card:active { transform: translateY(3px) !important; }
+    .perk11-ico {
+      width: 50px; height: 50px; border-radius: 12px; object-fit: contain; flex-shrink: 0;
+      background: radial-gradient(circle, rgba(250,204,21,0.2), #070c18);
+      border: 1px solid rgba(250,204,21,0.45); padding: 4px;
+      filter: drop-shadow(0 0 8px rgba(250,204,21,0.5));
+    }
+
   </style>
 </head>
 <body>
@@ -764,14 +824,15 @@
         <button type="button" class="filter-pill" id="authTabReg" onclick="ArenaApp.switchAuthTab('reg')">✨ حساب جديد</button>
       </div>
       <div id="authPaneLogin" class="hidden" style="margin:8px 0;">
-        <input type="tel" id="sharedLoginPhone" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        <input type="tel" id="sharedLoginPhone" dir="ltr" placeholder="09xxxxxxxx" />
         <input type="password" id="sharedLoginPass" placeholder="كلمة المرور" />
         <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedLogin()">🚀 تسجيل الدخول المشترك</button>
       </div>
       <div id="authPaneReg" class="hidden" style="margin:8px 0;">
         <input type="text" id="sharedRegName" placeholder="الاسم الكامل" />
-        <input type="tel" id="sharedRegPhone" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        <input type="tel" id="sharedRegPhone" dir="ltr" placeholder="09xxxxxxxx" />
         <input type="password" id="sharedRegPass" placeholder="كلمة المرور (4 أحرف على الأقل)" />
+        <input type="text" id="sharedRegRefCode" dir="ltr" placeholder="🎁 كود الإحالة (اختياري — مثال: MTH8A3F)" style="font-family:monospace; letter-spacing:1px;" />
         <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedRegister()">✨ إنشاء حساب مشترك مع متجر معاذ</button>
       </div>
       <div id="authPaneBind">
@@ -779,6 +840,7 @@
         <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" style="margin:0; font-family:monospace; letter-spacing:1px;" oninput="ArenaApp.formatBindInput(this)" />
         <button type="button" class="paste-btn" onclick="ArenaApp.pasteBindKey()">📋 لصق</button>
       </div>
+      <input type="text" id="bindRefCodeInput" dir="ltr" placeholder="🎁 كود الإحالة (اختياري — إن وُجد)" style="font-family:monospace; letter-spacing:1px;" />
       <button id="bindSubmitBtn" class="btn btn-gold" onclick="ArenaApp.bindDevice()">🚀 ربط الجهاز والدخول للساحة</button>
       </div>
       <button class="btn btn-outline btn-sm" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 ليس لدي معرف؟ افتح متجر معاذ</button>
@@ -1012,19 +1074,16 @@
 
 
         <div class="card" id="referralCardBox" style="border-color:rgba(56,189,248,0.45)!important;">
-          <h3>🎁 ادعُ أصدقاءك واربح 5% من شحنهم الفعلي!</h3>
+          <h3>🎁 كود الإحالة الخاص بك (اربح 5% من شحن أصدقائك!)</h3>
           <p style="font-size:0.76rem; color:#cbd5e1; line-height:1.5; margin-bottom:8px;">
-            شارك رابط دعوتك الخاص؛ عند شحن صديقك الفعلي من الإدارة ولعبه في الساحة، يُضاف <b>5%</b> تلقائياً إلى رصيدك!
+            أعطِ هذا الكود لأصدقائك لكتابته عند إنشاء حساب جديد؛ عند شحنهم الفعلي ولعبهم في الساحة يُضاف <b>5%</b> تلقائياً لرصيدك!
           </p>
-          <div id="myRefLinkBox" style="background:#070c18; border:1px dashed #38bdf8; border-radius:10px; padding:8px; font-family:monospace; font-size:0.74rem; color:#7dd3fc; word-break:break-all; text-align:center; margin-bottom:8px;">—</div>
+          <div id="myRefLinkBox" style="background:#070c18; border:1.5px dashed #38bdf8; border-radius:12px; padding:10px; font-family:monospace; font-size:1.15rem; letter-spacing:2px; font-weight:900; color:#fde047; text-align:center; margin-bottom:8px;">—</div>
           <div class="stat-row" style="margin-bottom:8px;">
             <span>👥 المدعوون: <b id="refCountSpan" style="color:#fff;">0</b></span>
             <span>🪙 أرباحك (5%): <b id="refEarnedSpan" style="color:#4ade80;">0 عملة</b></span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.copyRefLink()">📋 نسخ الرابط</button>
-            <button type="button" class="btn btn-wa btn-sm" style="margin:0;" onclick="ArenaApp.shareRefWhatsApp()">📲 دعوة واتساب</button>
-          </div>
+          <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.copyRefLink()">📋 نسخ كود الإحالة</button>
         </div>
         <div class="card" id="pvpPrestigeCard">
           <h3>💀 الأوسمة الفخرية الأسطورية (PvP)</h3>
@@ -2052,7 +2111,7 @@
       createPvp() {
         const gameId = document.getElementById('pvpGameSelect').value;
         const stake = Number(document.getElementById('pvpStakeInput').value);
-        if (stake < 10) return this.showError('ERR_STAKE', 'أقل رهان هو 10 عملات.');
+        if (stake < 10) return this.showError('ERR_STAKE', 'الحد الأدنى لقيمة التحدي هو 10 عملات.');
         this.startFlow(gameId, 'pvp_create', stake);
       },
 
@@ -2065,7 +2124,7 @@
           <div style="border-top:1px solid rgba(255,255,255,0.1); padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
               <strong style="color:#fff;">${m.creatorName}</strong> (${m.gameId === 'hill_drive' ? '🚗 قيادة' : (m.gameId === 'tower_match' ? '🏰 برج التحدي' : '🔫 شوتر')})<br/>
-              <small style="color:var(--gold-light);">الرهان: ${m.stakePts} عملة</small>
+              <small style="color:var(--gold-light);">قيمة التحدي: ${m.stakePts} عملة</small>
             </div>
             <button class="btn btn-gold" style="width:auto; padding:8px 14px; margin:0;" onclick="ArenaApp.startFlow('${m.gameId}', 'pvp_join', ${m.stakePts}, '${m.matchId}')">اقبل التحدي</button>
           </div>
@@ -3026,7 +3085,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                   <div>
                     <strong style="color:#fff; font-size:0.92rem;">${m.creatorName} ${m.isMine ? '<small style="color:#4ade80;">(تحديك)</small>' : ''}</strong>
-                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">الرهان: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
+                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">قيمة التحدي: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
                   </div>
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
                     <span class="skull-pill">💀 ${m.defensesCount || 0} ضحايا</span>
@@ -3262,7 +3321,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                   <div>
                     <strong style="color:#fff; font-size:0.92rem;">${presImg}${m.creatorName} ${m.isMine ? '<small style="color:#4ade80;">(تحديك)</small>' : ''}</strong>
-                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">الرهان: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
+                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">قيمة التحدي: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
                   </div>
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
                     <span class="skull-pill">💀 ${m.defensesCount || 0} ضحايا</span>
@@ -3610,6 +3669,153 @@
         TEProto._finishGame = function(...args) {
           removeHud10();
           return origFinish.apply(this, args);
+        };
+      }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 11: إصلاح التداخل العلوي + مؤثرات القنابل والقدرات + بطاقات البركة المصورة + كود الإحالة اليدوي
+    // ========================================================================
+    (function extendArenaAppPhase11() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Hide header wallet buttons before login; show them after login
+      function updateHeaderAuthVisibility() {
+        const loggedIn = Boolean(ArenaApp.token && ArenaApp.profile);
+        document.querySelectorAll('header .wallet-badge, header .hdr-act-btn:not([title="دليل اللعبة"])').forEach((el) => {
+          el.classList.toggle('hidden', !loggedIn);
+        });
+      }
+      updateHeaderAuthVisibility();
+      const origSync11 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync11(...args);
+        updateHeaderAuthVisibility();
+        // Hide weekly countdown strip on Arena Hub
+        const hub = document.getElementById('arenaHubScreen');
+        if (hub && !hub.classList.contains('hidden')) {
+          document.getElementById('liveCountdownStrip')?.classList.add('hidden');
+        }
+        return res;
+      };
+      const origExitHub11 = ArenaApp.exitToHub ? ArenaApp.exitToHub.bind(ArenaApp) : null;
+      if (origExitHub11) {
+        ArenaApp.exitToHub = function() {
+          origExitHub11();
+          document.getElementById('liveCountdownStrip')?.classList.add('hidden');
+        };
+      }
+
+      // 2. Manual Referral Code input on Register & Bind + Profile displays CODE ONLY (no link)
+      const origApi11 = ArenaApp.api.bind(ArenaApp);
+      ArenaApp.api = function(path, body = {}) {
+        if (path === '/auth/register-shared') {
+          const manualRef = document.getElementById('sharedRegRefCode')?.value.trim().toUpperCase() || '';
+          if (manualRef) body = { ...body, refCode: manualRef };
+        } else if (path === '/auth/bind') {
+          const manualRef = document.getElementById('bindRefCodeInput')?.value.trim().toUpperCase() || '';
+          if (manualRef) body = { ...body, refCode: manualRef };
+        }
+        return origApi11(path, body);
+      };
+
+      const origRenderRef11 = ArenaApp.renderReferralAndPrestige ? ArenaApp.renderReferralAndPrestige.bind(ArenaApp) : null;
+      if (origRenderRef11) {
+        ArenaApp.renderReferralAndPrestige = function() {
+          origRenderRef11();
+          const code = this.profile?.refCode || '—';
+          const linkEl = document.getElementById('myRefLinkBox');
+          if (linkEl) linkEl.textContent = code; // Show CODE ONLY, no URL!
+        };
+      }
+      ArenaApp.copyRefLink = function() {
+        const code = document.getElementById('myRefLinkBox')?.textContent?.trim() || '';
+        if (!code || code === '—') return;
+        navigator.clipboard?.writeText(code).then(() => this.toast(`✅ تم نسخ كود الإحالة (${code})!`));
+      };
+
+      // 3. Hide Weekly Button inside Record Room card to keep it focused & clean
+      const origSwitchRoom11 = ArenaApp.switchTowerRoom ? ArenaApp.switchTowerRoom.bind(ArenaApp) : null;
+      if (origSwitchRoom11) {
+        ArenaApp.switchTowerRoom = function(room) {
+          origSwitchRoom11(room);
+          const wkBtnInRec = document.querySelector('#tab-home .hero-game-card.tower .btn-blue');
+          if (wkBtnInRec) {
+            wkBtnInRec.classList.toggle('hidden', room === 'record');
+            if (wkBtnInRec.parentElement) {
+              wkBtnInRec.parentElement.style.gridTemplateColumns = room === 'record' ? '1fr' : '1fr 1fr';
+            }
+          }
+        };
+      }
+
+      // 4. In-Game Visual FX for Bombs, Row Blasts, Wildcards, & Skills + Hide HUD on Boss Decision
+      function triggerGameFx11(kind) {
+        let root = document.getElementById('tmFxOverlay11');
+        if (!root) {
+          root = document.createElement('div');
+          root.id = 'tmFxOverlay11';
+          document.body.appendChild(root);
+        }
+        const el = document.createElement('div');
+        el.className = kind === 'laser' ? 'fx11-laser' : (kind === 'rainbow' ? 'fx11-rainbow' : 'fx11-shockwave');
+        root.appendChild(el);
+        setTimeout(() => el.remove(), 520);
+
+        // Light board shake
+        const overlay = document.querySelector('[id*="tower"], .tm-overlay, #towerMatchOverlay');
+        if (overlay) {
+          overlay.classList.remove('tm11-shaking');
+          void overlay.offsetWidth;
+          overlay.classList.add('tm11-shaking');
+        }
+      }
+
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origEmit11 = TEProto._emit;
+        const origContinue11 = TEProto.continueClimbing;
+
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit11.apply(this, arguments);
+          const hud = document.getElementById('tmPhase10Hud');
+          if (ev === 'bossDecision' || ev === 'gameOver') {
+            if (hud) hud.classList.add('hidden');
+            if (ev === 'bossDecision') {
+              // Upgrade perk buttons into 3D Visual Image Cards right after tower_ui renders them
+              setTimeout(() => {
+                const imgs = [
+                  './assets/tower_match/perks/perk_sword.png',
+                  './assets/tower_match/perks/perk_clock.png',
+                  './assets/tower_match/perks/perk_skill.png'
+                ];
+                const perkBtns = document.querySelectorAll('button[data-perk], .tm-perk-btn');
+                perkBtns.forEach((btn, idx) => {
+                  if (btn.classList.contains('perk11-card')) return;
+                  btn.classList.add('perk11-card');
+                  const icoSrc = imgs[idx % imgs.length];
+                  btn.innerHTML = `<img src="${icoSrc}" class="perk11-ico" alt="" onerror="this.style.display='none'" /><div style="flex:1;">${btn.innerHTML}</div>`;
+                });
+              }, 60);
+            }
+          } else if (ev === 'move' && payload) {
+            if (payload.totals && payload.totals.specialsTriggered > 0) {
+              triggerGameFx11(payload.totals.specialsTriggered >= 2 ? 'rainbow' : 'shockwave');
+            }
+            if (payload.wildcardSpawned) triggerGameFx11('rainbow');
+            if (payload.isCrit || payload.bossStunned) triggerGameFx11('laser');
+          } else if (ev === 'skillUsed') {
+            triggerGameFx11('laser');
+            triggerGameFx11('shockwave');
+          }
+          return r;
+        };
+
+        TEProto.continueClimbing = function(...args) {
+          const r = origContinue11.apply(this, args);
+          document.getElementById('tmPhase10Hud')?.classList.remove('hidden');
+          return r;
         };
       }
     })();
