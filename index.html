@@ -105,9 +105,10 @@
       border: 2px solid rgba(212,175,55,0.5); background: #0b1120; display: block;
     }
     .avatar-framed .av-frame-img {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      position: absolute; inset: -12%;
       width: 124%; height: 124%;
       object-fit: contain; pointer-events: none; z-index: 3;
+      transform-origin: center center;
     }
     /* تأثيرات حركية فخمة حسب مستوى الإطار */
     .anim-pulse-soft { animation: frPulseSoft 2.8s ease-in-out infinite; }
@@ -435,11 +436,29 @@
         <div class="login-step"><b>3. الصق وانطلق</b><br>ربط آمن وفوري</div>
       </div>
 
+      <div class="filter-row" style="margin:10px 0 8px;">
+        <button type="button" class="filter-pill active" id="authTabBind" onclick="ArenaApp.switchAuthTab('bind')">🔑 معرف الربط</button>
+        <button type="button" class="filter-pill" id="authTabLogin" onclick="ArenaApp.switchAuthTab('login')">👤 دخول مشترك</button>
+        <button type="button" class="filter-pill" id="authTabReg" onclick="ArenaApp.switchAuthTab('reg')">✨ حساب جديد</button>
+      </div>
+      <div id="authPaneLogin" class="hidden" style="margin:8px 0;">
+        <input type="tel" id="sharedLoginPhone" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        <input type="password" id="sharedLoginPass" placeholder="كلمة المرور" />
+        <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedLogin()">🚀 تسجيل الدخول المشترك</button>
+      </div>
+      <div id="authPaneReg" class="hidden" style="margin:8px 0;">
+        <input type="text" id="sharedRegName" placeholder="الاسم الكامل" />
+        <input type="tel" id="sharedRegPhone" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        <input type="password" id="sharedRegPass" placeholder="كلمة المرور (4 أحرف على الأقل)" />
+        <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedRegister()">✨ إنشاء حساب مشترك مع متجر معاذ</button>
+      </div>
+      <div id="authPaneBind">
       <div class="bind-input-row">
         <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" style="margin:0; font-family:monospace; letter-spacing:1px;" oninput="ArenaApp.formatBindInput(this)" />
         <button type="button" class="paste-btn" onclick="ArenaApp.pasteBindKey()">📋 لصق</button>
       </div>
       <button id="bindSubmitBtn" class="btn btn-gold" onclick="ArenaApp.bindDevice()">🚀 ربط الجهاز والدخول للساحة</button>
+      </div>
       <button class="btn btn-outline btn-sm" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 ليس لدي معرف؟ افتح متجر معاذ</button>
       <button id="pwaInstallBtn" class="btn btn-blue btn-sm hidden" onclick="ArenaApp.installPWA()">📲 تثبيت التطبيق على الشاشة الرئيسية</button>
       <div style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">🛡️ حسابك مرتبط مباشرة بمحفظة متجر معاذ ومؤمّن بالكامل.</div>
@@ -785,6 +804,17 @@
     <button id="waShareBtn" class="btn btn-wa hidden" style="max-width: 260px;">📲 أرسل التحدي عبر واتساب</button>
     <button id="quickRematchBtn" class="btn btn-blue hidden" style="max-width: 260px;" onclick="ArenaApp.quickRematch()">⚡ إعادة الجولة فوراً</button>
     <button class="btn btn-gold" style="max-width: 260px;" onclick="ArenaApp.closeResult()">العودة للساحة</button>
+  </div>
+
+
+  <!-- النافذة المنبثقة المستقبلية الموحدة (ArenaModal) -->
+  <div id="arenaFutureModal" class="overlay hidden" style="z-index:2500;">
+    <div id="afmBox" class="modal-box" style="max-width:390px; background:linear-gradient(160deg,#121e36,#080e1d); border:1.5px solid #38bdf8; box-shadow:0 0 32px rgba(56,189,248,0.25);">
+      <div id="afmIcon" style="font-size:2.3rem; margin-bottom:6px;">✨</div>
+      <h3 id="afmTitle" style="color:#fde047; margin-bottom:8px;">إشعار</h3>
+      <div id="afmBody" style="font-size:0.84rem; color:#e2e8f0; line-height:1.55; margin-bottom:14px;"></div>
+      <div id="afmActions" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
   </div>
 
   <!-- شاشة الطوارئ -->
@@ -1359,7 +1389,7 @@
             return `
               <div class="shop-card rarity-${item.rarity}">
                 <span class="shop-rarity-tag tag-${item.rarity}">${rarityLabel[item.rarity] || 'عادي'}</span>
-                <div class="shop-icon-box"><img src="${imgUrl}" alt="${item.name}" loading="lazy" onerror="this.parentElement.textContent='${item.emoji}'" /></div>
+                <div class="shop-icon-box" style="background:radial-gradient(circle,rgba(56,189,248,0.18),#070c18); border:1px solid rgba(212,175,55,0.3); font-size:2.1rem;"><img src="${imgUrl}" alt="${item.name}" style="width:100%;height:100%;object-fit:contain;" onerror="this.remove(); this.parentElement.textContent='${item.emoji}'" /></div>
                 <div style="flex:1;">
                   <strong style="color:var(--gold-light); font-size:0.9rem;">${item.name}</strong>
                   <p style="font-size:0.74rem; color:var(--silver); margin:4px 0;">${item.desc}</p>
@@ -2027,6 +2057,241 @@
           await this.syncProfile();
           this.renderShop();
         }
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 5: النافذة المستقبلية الموحدة + شام كاش (شحن/سحب) + الدخول المشترك + الصناديق الاحترافية
+    // ========================================================================
+    const ArenaModal = {
+      show({ theme = 'cyber', icon = '✨', title = 'إشعار', bodyHtml = '', buttons = [{ text: 'حسناً', cls: 'btn-gold', onClick: null }] }) {
+        const root = document.getElementById('arenaFutureModal');
+        const box = document.getElementById('afmBox');
+        const colors = { gold: '#facc15', cyber: '#38bdf8', crimson: '#f43f5e', emerald: '#22c55e' };
+        const c = colors[theme] || colors.cyber;
+        if (box) { box.style.borderColor = c; box.style.boxShadow = `0 0 32px ${c}44`; }
+        document.getElementById('afmIcon').textContent = icon;
+        document.getElementById('afmTitle').textContent = title;
+        document.getElementById('afmBody').innerHTML = bodyHtml;
+        const act = document.getElementById('afmActions');
+        act.innerHTML = '';
+        buttons.forEach((b) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `btn ${b.cls || 'btn-gold'}`;
+          btn.style.margin = '0';
+          btn.textContent = b.text;
+          btn.onclick = () => { if (!b.keepOpen) this.close(); if (b.onClick) b.onClick(); };
+          act.appendChild(btn);
+        });
+        root.classList.remove('hidden');
+      },
+      close() { document.getElementById('arenaFutureModal')?.classList.add('hidden'); }
+    };
+
+    const ShamLedger = {
+      KEY: 'moaath_sham_immutable_ledger_v1',
+      async sign(rec) {
+        const raw = `${rec.txId}|${rec.kind}|${rec.amount}|${rec.shamCashId || ''}|${rec.createdAt}`;
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('moaath_rcpt_' + raw));
+        return Array.from(new Uint8Array(buf)).slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
+      },
+      async append(rec) {
+        const sig = await this.sign(rec);
+        const list = this.list();
+        list.unshift({ ...rec, sig });
+        localStorage.setItem(this.KEY, JSON.stringify(list.slice(0, 30)));
+      },
+      list() {
+        try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; }
+      }
+    };
+
+    (function extendArenaAppPhase5() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      ArenaApp.switchAuthTab = function(tab) {
+        ['bind', 'login', 'reg'].forEach((t) => {
+          document.getElementById('authPane' + t[0].toUpperCase() + t.slice(1))?.classList.toggle('hidden', t !== tab);
+          document.getElementById('authTab' + t[0].toUpperCase() + t.slice(1))?.classList.toggle('active', t === tab);
+        });
+      };
+
+      ArenaApp.doSharedRegister = async function() {
+        const name = document.getElementById('sharedRegName')?.value.trim();
+        const phone = document.getElementById('sharedRegPhone')?.value.trim();
+        const password = document.getElementById('sharedRegPass')?.value.trim();
+        let deviceId = localStorage.getItem('arena_device_fp') || crypto.randomUUID();
+        localStorage.setItem('arena_device_fp', deviceId);
+        const res = await this.api('/auth/register-shared', { name, phone, password, deviceId });
+        if (res && res.deviceToken) {
+          this.token = res.deviceToken;
+          localStorage.setItem('arena_device_token', res.deviceToken);
+          ArenaModal.show({ theme: 'emerald', icon: '🎉', title: 'تم إنشاء الحساب المشترك', bodyHtml: res.message });
+          this.syncProfile();
+        }
+      };
+
+      ArenaApp.doSharedLogin = async function() {
+        const phone = document.getElementById('sharedLoginPhone')?.value.trim();
+        const password = document.getElementById('sharedLoginPass')?.value.trim();
+        let deviceId = localStorage.getItem('arena_device_fp') || crypto.randomUUID();
+        localStorage.setItem('arena_device_fp', deviceId);
+        const res = await this.api('/auth/login-shared', { phone, password, deviceId });
+        if (res && res.deviceToken) {
+          this.token = res.deviceToken;
+          localStorage.setItem('arena_device_token', res.deviceToken);
+          this.syncProfile();
+        }
+      };
+
+      // Override "+" topup button to offer Sham Cash Topup OR Store Topup
+      ArenaApp.openStoreTopupHint = function() {
+        const eco = this.profile?.economy || {};
+        const btns = [];
+        if (eco.shamCashTopupEnabled) {
+          btns.push({ text: '💳 شحن مباشر عبر شام كاش (1 ل.س = 1 عملة)', cls: 'btn-gold', onClick: () => this.openShamTopupModal() });
+        }
+        btns.push({ text: '🛒 شحن من محفظة متجر معاذ', cls: 'btn-blue', onClick: () => window.open('https://moaathallii-commits.github.io/-/', '_blank') });
+        btns.push({ text: 'إغلاق', cls: 'btn-outline' });
+        ArenaModal.show({
+          theme: 'gold', icon: '💎', title: 'شحن عملات عالم تحديات معاذ',
+          bodyHtml: 'اختر طريقة الشحن المناسبة لك (كل <b>1 ل.س = 1 عملة</b> في النظام الموحد).',
+          buttons: btns
+        });
+      };
+
+      ArenaApp.openShamTopupModal = function() {
+        const eco = this.profile?.economy || {};
+        const minT = Number(eco.minTopupSYP || 100);
+        const adminSham = eco.adminShamCashId || 'يُطلب من الإدارة';
+        ArenaModal.show({
+          theme: 'emerald', icon: '💳', title: 'شحن مباشر عبر شام كاش',
+          bodyHtml: `
+            <div style="background:#070c18;border:1px solid rgba(56,189,248,0.4);border-radius:12px;padding:9px;margin-bottom:10px;">
+              <div style="font-size:0.74rem;color:#94a3b8;">معرّف شام كاش الإدارة:</div>
+              <div style="font-family:monospace;font-size:1.05rem;color:#fde047;margin:4px 0;">${adminSham}</div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin:0;padding:4px 10px;" onclick="navigator.clipboard?.writeText('${adminSham}').then(()=>ArenaApp.toast('تم نسخ معرف شام كاش الإدارة!'))">📋 نسخ المعرف</button>
+            </div>
+            <input type="number" id="shamTopupAmtInput" min="${minT}" value="${Math.max(minT, 5000)}" placeholder="المبلغ بالليرة السورية (الحد الأدنى ${minT})" />
+            <div style="font-size:0.74rem;color:#4ade80;">✨ كل 1 ل.س = 1 عملة • سيفتح واتساب تلقائياً برسالة الطلب</div>
+          `,
+          buttons: [
+            { text: '🚀 تأكيد وإرسال الطلب عبر واتساب', cls: 'btn-gold', onClick: () => this.submitShamTopup() },
+            { text: 'إلغاء', cls: 'btn-outline' }
+          ]
+        });
+      };
+
+      ArenaApp.submitShamTopup = async function() {
+        const sypAmount = Number(document.getElementById('shamTopupAmtInput')?.value || 0);
+        const res = await this.api('/bridge/shamcash-topup-request', { sypAmount });
+        if (res && res.ok) {
+          await ShamLedger.append({ txId: res.txId, kind: 'شحن شام كاش', amount: res.sypAmount, shamCashId: res.adminShamCashId, createdAt: res.createdAt });
+          window.open(res.waUrl, '_blank');
+          this.toast(`تم تسجيل طلب الشحن (${res.txId}) وحفظ إيصاله في هاتفك!`);
+        }
+      };
+
+      // Upgrade Wallet tab with 1:1 SYP Cashout + Sham Cash Cashout + Immutable Local Ledger
+      ArenaApp.renderWalletSYP = function() {
+        const box = document.getElementById('walletSypButtons');
+        if (!box || !this.profile) return;
+        const eco = this.profile.economy || {};
+        const minC = Number(eco.minCashoutPts || 100);
+        const shamOn = Boolean(eco.shamCashCashoutEnabled);
+        const ledgerRows = ShamLedger.list().map((r) => `
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding:6px 0;font-size:0.74rem;text-align:right;">
+            <div style="display:flex;justify-content:space-between;"><strong style="color:#fde047;">${r.kind} (${r.txId})</strong><span style="color:#4ade80;">${Number(r.amount).toLocaleString()} ل.س ✓</span></div>
+            ${r.shamCashId ? `<div style="color:#94a3b8;">المعرّف: ${r.shamCashId}</div>` : ''}
+          </div>
+        `).join('') || '<div style="font-size:0.74rem;color:#64748b;">لا توجد إيصالات مسجلة على هاتفك بعد.</div>';
+
+        box.innerHTML = `
+          <input type="number" id="customCashoutPts" min="${minC}" value="${Math.max(minC, 500)}" placeholder="المبلغ المراد سحبه (الحد الأدنى ${minC} ل.س)" />
+          <button class="btn btn-gold" onclick="ArenaApp.requestCustomCashout('store')">🛒 سحب إلى محفظة متجر معاذ</button>
+          ${shamOn ? `<button class="btn btn-blue" onclick="ArenaApp.openShamCashoutModal()">💳 سحب مباشر عبر شام كاش</button>` : ''}
+          <div style="margin-top:14px;background:#070c18;border:1px solid rgba(56,189,248,0.28);border-radius:12px;padding:10px;">
+            <div style="font-size:0.8rem;font-weight:800;color:#7dd3fc;margin-bottom:4px;">🔒 سجل الإيصالات المحمي على هاتفك</div>
+            ${ledgerRows}
+          </div>
+        `;
+      };
+
+      ArenaApp.requestCustomCashout = async function(method, shamCashId = '') {
+        const tierPts = Number(document.getElementById('customCashoutPts')?.value || 0);
+        const res = await this.api('/bridge/cashout', { tierPts, method, shamCashId });
+        if (res && res.ok) {
+          if (method === 'shamcash') {
+            await ShamLedger.append({ txId: res.txId, kind: 'سحب شام كاش', amount: res.pts, shamCashId, createdAt: res.createdAt });
+          }
+          ArenaModal.show({
+            theme: 'emerald', icon: '✅', title: 'تم استلام طلب السحب',
+            bodyHtml: `تم خصم <b>${res.pts.toLocaleString()} عملة (ل.س)</b> بنجاح.<br/>سيُراجع السجل خلال ساعة ويُحوّل تلقائياً.`
+          });
+          this.syncProfile();
+          this.renderWalletSYP();
+        }
+      };
+
+      ArenaApp.openShamCashoutModal = function() {
+        const pts = Number(document.getElementById('customCashoutPts')?.value || 0);
+        ArenaModal.show({
+          theme: 'cyber', icon: '💳', title: 'سحب عبر شام كاش',
+          bodyHtml: `
+            <p style="margin-bottom:8px;">أدخل معرّف حسابك في <b>شام كاش</b> لتحويل <b>${pts.toLocaleString()} ل.س</b>:</p>
+            <input type="text" id="playerShamIdInput" placeholder="معرّف شام كاش الخاص بك" />
+          `,
+          buttons: [
+            { text: '✅ تأكيد السحب عبر شام كاش', cls: 'btn-gold', onClick: () => {
+              const sid = document.getElementById('playerShamIdInput')?.value.trim();
+              this.requestCustomCashout('shamcash', sid);
+            }},
+            { text: 'إلغاء', cls: 'btn-outline' }
+          ]
+        });
+      };
+
+      // Upgrade Taunts Shop to show the 3 professional Crate PNGs + Arabic Rarity labels
+      const origRenderShop5 = ArenaApp.renderShop.bind(ArenaApp);
+      ArenaApp.renderShop = function() {
+        if (this.shopTab !== 'taunts') return origRenderShop5();
+        const box = document.getElementById('shopContainer');
+        if (!box) return;
+        const rarAr = { common: 'عادي', rare: 'نادر', epic: 'ملحمي', legendary: 'أسطوري' };
+        const crates = Array.isArray(this.profile?.crateBundles) ? this.profile.crateBundles : [];
+        const ownedTaunts = this.profile?.playerTaunts || {};
+        const activeT = this.profile?.activeTauntId || '';
+        const catalog = Array.isArray(this.profile?.tauntsCatalog) ? this.profile.tauntsCatalog : [];
+
+        const cratesHtml = crates.map((c) => `
+          <div class="shop-card rarity-${c.rarity || 'epic'}">
+            <div class="shop-icon-box" style="background:radial-gradient(circle,rgba(250,204,21,0.16),#070c18);">
+              ${c.img ? `<img src="${c.img}" alt="${c.name}" style="width:100%;height:100%;object-fit:contain;" onerror="this.remove();this.parentElement.textContent='${c.emoji}'" />` : c.emoji}
+            </div>
+            <div style="flex:1;">
+              <strong style="color:#fde047; font-size:0.88rem;">${c.name}</strong>
+              <p style="font-size:0.72rem; color:#cbd5e1; margin:3px 0;">يفتح بطاقة استفزاز من مكتبة الـ 50 بطاقة</p>
+              <button class="btn btn-gold btn-sm" onclick="ArenaApp.openTauntCrate('${c.id}')">🪙 فتح (${c.price} عملة)</button>
+            </div>
+          </div>
+        `).join('');
+
+        const listHtml = catalog.map((t) => {
+          const has = Boolean(ownedTaunts[t.id]);
+          const eq = activeT === t.id;
+          return `
+            <div class="stat-row" style="padding:7px 8px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);">
+              <div><strong style="color:#fff; font-size:0.78rem;">${t.text}</strong> <span class="shop-rarity-tag tag-${t.rarity}" style="position:static;margin-right:4px;">${rarAr[t.rarity] || t.rarity}</span></div>
+              ${has
+                ? `<button class="btn ${eq ? 'btn-outline' : 'btn-blue'} btn-sm" style="width:auto;margin:0;padding:4px 9px;" onclick="ArenaApp.equipTaunt('${eq ? '' : t.id}')">${eq ? 'مفعّلة' : 'تجهيز'}</button>`
+                : `<span style="font-size:0.7rem; color:#64748b;">🔒 صندوق</span>`}
+            </div>
+          `;
+        }).join('');
+
+        box.innerHTML = `<div class="card"><h3>🎁 صناديق الاستفزاز الاحترافية</h3>${cratesHtml}</div><div class="card"><h3>😏 مكتبة الاستفزازات (50 بطاقة)</h3>${listHtml}</div>`;
       };
     })();
 
