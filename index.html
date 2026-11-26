@@ -816,6 +816,44 @@
     body.lite-fx * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     body.lite-fx .prestige-aura-ring, body.lite-fx #fxCanvas { display: none !important; }
 
+  
+    /* === Phase 13: 25 Retention & Player Experience Enhancements === */
+    .next-milestone-strip {
+      background: linear-gradient(90deg, rgba(250,204,21,0.14), rgba(56,189,248,0.14));
+      border: 1px solid rgba(250,204,21,0.4); border-radius: 14px;
+      padding: 8px 12px; margin-bottom: 10px; font-size: 0.76rem; font-weight: 800;
+      color: #fef08a; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .daily-quests-box {
+      background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56,189,248,0.35);
+      border-radius: 16px; padding: 11px 12px; margin-bottom: 10px;
+    }
+    .dq-row {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.75rem;
+    }
+    .dq-row:first-of-type { border-top: none; }
+    .dq-claim-btn {
+      padding: 3px 9px; border-radius: 8px; border: none; font-size: 0.68rem;
+      font-weight: 900; cursor: pointer; background: #22c55e; color: #052e16;
+    }
+    .dq-claim-btn:disabled { background: #334155; color: #94a3b8; cursor: default; }
+    .combo-meter-pill {
+      position: fixed; left: 10px; top: 110px; z-index: 960; pointer-events: none;
+      background: rgba(15, 23, 42, 0.92); border: 1.5px solid #facc15; border-radius: 999px;
+      padding: 5px 10px; font-size: 0.72rem; font-weight: 900; color: #fde047;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .pvp-react-row { display: flex; justify-content: center; gap: 8px; margin: 8px 0; }
+    .pvp-react-btn {
+      padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(250,204,21,0.45);
+      background: rgba(15,23,42,0.9); color: #fff; font-size: 0.78rem; cursor: pointer;
+    }
+    .fb-pulse-btn {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; padding: 5px 10px; font-size: 1rem; cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -4151,6 +4189,325 @@
             tc.appendChild(pBtn);
           }
         }
+        return res;
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 13: إضافة جميع التحسينات الـ 25 لرفع تجربة اللاعب ومعدلات الاحتفاظ
+    // ========================================================================
+    (function extendArenaAppPhase13() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      const P13_KEY = 'moaath_arena_p13_state_v1';
+      function getP13State() {
+        const today = new Date().toISOString().slice(0, 10);
+        try {
+          const s = JSON.parse(localStorage.getItem(P13_KEY) || 'null');
+          if (s && s.day === today) return s;
+        } catch (_) {}
+        return {
+          day: today,
+          firstRunBonusDone: false,
+          ownedFramesOnly: false,
+          questsClaimed: {},
+          rivals: {},
+          stats: { bestScore: 0, totalWins: 0, totalBosses: 0, bestCombo: 0, totalRounds: 0 },
+          feedbackGiven: false
+        };
+      }
+      function saveP13State(st) {
+        try { localStorage.setItem(P13_KEY, JSON.stringify(st)); } catch (_) {}
+      }
+
+      // 1. Next Milestone Bar + Quick Play Shortcut + Streak Midnight Warning on Hub & Lobby
+      ArenaApp.renderRetentionBars13 = function() {
+        const p = this.profile;
+        if (!p) return;
+        const st = getP13State();
+
+        // Next milestone calculation
+        const streakDays = Number(p.towerData?.streakDays || 0);
+        const nextStreak = (p.towerStreakCatalog || []).find((r) => Number(r.day || 0) > streakDays);
+        const milestoneText = nextStreak
+          ? `🎯 المكافأة القادمة: «${nextStreak.name}» بعد ${nextStreak.day - streakDays} يوم سلسلة`
+          : `👑 أنت في قمة مسار الـ 360 يوماً! واصل الصدارة`;
+
+        const homeTab = document.getElementById('tab-home');
+        if (homeTab && !document.getElementById('nextMilestoneBar13')) {
+          const bar = document.createElement('div');
+          bar.id = 'nextMilestoneBar13';
+          bar.className = 'next-milestone-strip';
+          bar.innerHTML = `<span id="msText13">${milestoneText}</span><button type="button" class="ws-back-btn" style="padding:3px 8px;font-size:0.68rem;" onclick="ArenaApp.openStatsModal13()">📊 إحصائياتي</button>`;
+          homeTab.insertBefore(bar, homeTab.firstChild);
+        } else if (document.getElementById('msText13')) {
+          document.getElementById('msText13').textContent = milestoneText;
+        }
+
+        // Daily mini quests inside homeTab
+        if (homeTab && !document.getElementById('dailyQuestsBox13')) {
+          const qBox = document.createElement('div');
+          qBox.id = 'dailyQuestsBox13';
+          qBox.className = 'daily-quests-box';
+          homeTab.insertBefore(qBox, document.getElementById('nextMilestoneBar13').nextSibling);
+        }
+        this.renderDailyQuests13();
+
+        // Streak danger alert if < 4 hours left in UTC day and not checked in
+        const hrUtc = new Date().getUTCHours();
+        if (p.towerData && p.towerData.canCheckInToday && hrUtc >= 20 && !sessionStorage.getItem('streak_warn_13')) {
+          sessionStorage.setItem('streak_warn_13', '1');
+          this.toast('⏰ تنبيه: متبقي أقل من 4 ساعات على نهاية اليوم وسلسلتك بانتظار جولة البرج!');
+        }
+      };
+
+      ArenaApp.renderDailyQuests13 = function() {
+        const box = document.getElementById('dailyQuestsBox13');
+        if (!box) return;
+        const st = getP13State();
+        const quests = [
+          { id: 'q1', title: '⚡ أول جولة اليوم (مضاعف XP)', done: st.stats.totalRounds >= 1, reward: '+25 XP' },
+          { id: 'q2', title: '👑 اهزم زعيماً أو حقق كومبو ×3', done: st.stats.totalBosses >= 1 || st.stats.bestCombo >= 3, reward: '+30 XP' },
+          { id: 'q3', title: '⚔️ خض تحدياً تنافسياً اليوم', done: st.stats.totalRounds >= 2, reward: '+20 XP' }
+        ];
+        box.innerHTML = `<div style="font-size:0.78rem;font-weight:900;color:#7dd3fc;margin-bottom:4px;">📋 مهام اليوم السريعة</div>` + quests.map((q) => {
+          const claimed = Boolean(st.questsClaimed[q.id]);
+          const btnHtml = claimed
+            ? `<button type="button" class="dq-claim-btn" disabled>تم ✓</button>`
+            : (q.done
+              ? `<button type="button" class="dq-claim-btn" onclick="ArenaApp.claimDailyQuest13('${q.id}')">استلام (${q.reward})</button>`
+              : `<span style="font-size:0.68rem;color:#94a3b8;">${q.reward}</span>`);
+          return `<div class="dq-row"><span>${q.title}</span>${btnHtml}</div>`;
+        }).join('');
+      };
+
+      ArenaApp.claimDailyQuest13 = function(qId) {
+        const st = getP13State();
+        if (st.questsClaimed[qId]) return;
+        st.questsClaimed[qId] = true;
+        saveP13State(st);
+        if (this.profile) {
+          this.profile.xp = Number(this.profile.xp || 0) + 25;
+          const xpEl = document.getElementById('xpDisplay');
+          if (xpEl) xpEl.textContent = this.profile.xp;
+        }
+        this.renderDailyQuests13();
+        this.toast('🎉 تم استلام مكافأة المهمة اليومية بنجاح!');
+      };
+
+      // 2. Detailed Stats & Unlocked Badges/Titles Vault Modal
+      ArenaApp.openStatsModal13 = function() {
+        const st = getP13State();
+        const p = this.profile || {};
+        const wins = Number(p.wins || 0);
+        const losses = Number(p.losses || 0);
+        const wr = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+        const titlesList = Object.values(p.towerData?.titles || {});
+        const badgesList = Object.values(p.towerData?.badges || {}).map((b) => b.name || '');
+        const itemsAll = [...titlesList, ...badgesList].filter(Boolean);
+        ArenaModal.show({
+          theme: 'cyber', icon: '📊', title: 'ملف الإنجازات والإحصائيات',
+          bodyHtml: `
+            <div class="stat-row"><span>🏆 نسبة الفوز في PvP:</span><b style="color:#4ade80;">${wr}% (${wins} فوز)</b></div>
+            <div class="stat-row"><span>🔥 أعلى كومبو مسجّل:</span><b style="color:#fde047;">×${Math.max(1, st.stats.bestCombo)}</b></div>
+            <div class="stat-row"><span>👹 زعماء مهزومون (الجلسة/اليوم):</span><b>${st.stats.totalBosses}</b></div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
+              <div style="font-size:0.76rem;color:#7dd3fc;font-weight:800;margin-bottom:4px;">🏅 خزانة ألقابك وشاراتك المفتوحة (${itemsAll.length})</div>
+              <div style="font-size:0.75rem;color:#e2e8f0;">${itemsAll.length ? itemsAll.join(' • ') : 'العب في برج التحدي ومسار 360 لفتح الألقاب والشارات!'}</div>
+            </div>
+          `
+        });
+      };
+
+      // 3. Owned Frames Filter Toggle in Shop + Transparent Pool Hint in Record Room
+      const origRenderShop13 = ArenaApp.renderShop.bind(ArenaApp);
+      ArenaApp.renderShop = function() {
+        origRenderShop13();
+        if (this.shopTab === 'frames') {
+          const box = document.getElementById('shopContainer');
+          if (box && !document.getElementById('ownedFramesToggle13')) {
+            const st = getP13State();
+            const btn = document.createElement('button');
+            btn.id = 'ownedFramesToggle13';
+            btn.type = 'button';
+            btn.className = 'btn btn-outline btn-sm';
+            btn.style.marginBottom = '8px';
+            btn.textContent = st.ownedFramesOnly ? '🌐 عرض جميع الإطارات (15)' : '✅ عرض الإطارات المملوكة فقط';
+            btn.onclick = () => {
+              const cur = getP13State();
+              cur.ownedFramesOnly = !cur.ownedFramesOnly;
+              saveP13State(cur);
+              this.renderShop();
+            };
+            box.insertBefore(btn, box.firstChild);
+            if (st.ownedFramesOnly) {
+              const cos = this.profile?.cosmetics || {};
+              box.querySelectorAll('.shop-card').forEach((card) => {
+                const isOwned = card.innerHTML.includes('إزالة الإطار') || card.innerHTML.includes('✅ مملوك');
+                if (!isOwned) card.style.display = 'none';
+              });
+            }
+          }
+        }
+      };
+
+      // Transparent pool rule hint inside Record Room card
+      const origSwitchRoom13 = ArenaApp.switchTowerRoom ? ArenaApp.switchTowerRoom.bind(ArenaApp) : null;
+      if (origSwitchRoom13) {
+        ArenaApp.switchTowerRoom = function(room) {
+          origSwitchRoom13(room);
+          const tc = document.querySelector('#tab-home .hero-game-card.tower');
+          if (tc && !document.getElementById('poolRuleNote13')) {
+            const note = document.createElement('div');
+            note.id = 'poolRuleNote13';
+            note.style.cssText = 'font-size:0.68rem;color:#94a3b8;text-align:center;margin-top:6px;';
+            note.textContent = '💎 شفافية الجائزة: 75% تضاف فوراً لجائزة كسر الرقم الحالي • 15% للإدارة • 10% بذرة الرقم التالي';
+            tc.appendChild(note);
+          }
+        };
+      }
+
+      // 4. Private Room Code Filter + Top Bounty Hunters Leaderboard in PvP Tab
+      const origLoadPvp13 = ArenaApp.loadPvpList.bind(ArenaApp);
+      ArenaApp.loadPvpList = async function() {
+        await origLoadPvp13();
+        const box = document.getElementById('pvpListContainer');
+        if (!box || document.getElementById('pvpPrivateBox13')) return;
+        const priv = document.createElement('div');
+        priv.id = 'pvpPrivateBox13';
+        priv.className = 'card';
+        priv.style.marginTop = '10px';
+        priv.innerHTML = `
+          <h3 style="font-size:0.88rem;">🔒 غرفة أصدقاء خاصة (كود من 4 أرقام)</h3>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="pvpRoomCodeInput13" maxlength="4" dir="ltr" placeholder="كود الغرفة (مثال: 4821)" style="margin:0;flex:1;" />
+            <button type="button" class="btn btn-blue btn-sm" style="margin:0;width:auto;padding:8px 12px;" onclick="ArenaApp.searchPrivateRoom13()">بحث</button>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="ArenaApp.createPrivatePvp13()">🔐 إنشاء تحدٍ خاص بكود لصديق</button>
+          <div id="pvpBountyLeaders13" style="margin-top:10px;font-size:0.76rem;color:#cbd5e1;"></div>
+        `;
+        box.parentElement.appendChild(priv);
+        this.loadBountyLeaders13();
+      };
+
+      ArenaApp.createPrivatePvp13 = function() {
+        const gameId = document.getElementById('pvpGameSelect')?.value || 'tower_match';
+        const stake = Number(document.getElementById('pvpStakeInput')?.value || 20);
+        if (stake < 10) return this.showError('ERR_STAKE', 'الحد الأدنى لقيمة التحدي هو 10 عملات.');
+        this.lastSessionCtx = { gameId, mode: 'pvp_create', stakePts: stake, pvpMatchId: null };
+        const useItem = document.getElementById('tacticalItemSelect')?.value || null;
+        const idempotencyKey = `priv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        this.api('/pvp/create', { gameId, stakePts: stake, useItem, isPrivate: true, idempotencyKey }).then((ses) => {
+          if (ses && ses.sessionId) this.launchGame(gameId, 'pvp_create', stake, ses);
+        });
+      };
+
+      ArenaApp.searchPrivateRoom13 = async function() {
+        const roomCode = document.getElementById('pvpRoomCodeInput13')?.value.trim() || '';
+        if (roomCode.length !== 4) return this.toast('أدخل كود غرفة مكوّن من 4 أرقام.');
+        const res = await this.api('/pvp/list', { roomCode });
+        if (res && Array.isArray(res.matches) && res.matches.length > 0) {
+          this.toast(`🔓 تم العثور على تحدٍ خاص بالكود ${roomCode}!`);
+        } else {
+          this.toast('لم يتم العثور على تحدٍ خاص نشط بهذا الكود.');
+        }
+      };
+
+      ArenaApp.loadBountyLeaders13 = async function() {
+        const el = document.getElementById('pvpBountyLeaders13');
+        if (!el) return;
+        const res = await this.api('/pvp/bounty-leaders');
+        if (res && Array.isArray(res.leaders) && res.leaders.length > 0) {
+          el.innerHTML = `<div style="color:#fde047;font-weight:900;margin-bottom:4px;">🏅 أكبر صيّادي الجوائز والجماجم</div>` +
+            res.leaders.map((l, i) => `<div class="stat-row"><span>#${i + 1} ${l.creatorName}</span><span>💀 ${l.defensesCount} • 🎯 +${l.bountyPts}</span></div>`).join('');
+        }
+      };
+
+      // 5. Live Combo Meter during gameplay + Quick Reactions & Feedback Pulse on Result screen
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origStart13 = TEProto.start;
+        const origEmit13 = TEProto._emit;
+        const origFinish13 = TEProto._finishGame;
+
+        TEProto.start = function(...args) {
+          const r = origStart13.apply(this, args);
+          let cm = document.getElementById('comboMeter13');
+          if (!cm) {
+            cm = document.createElement('div');
+            cm.id = 'comboMeter13';
+            cm.className = 'combo-meter-pill hidden';
+            document.body.appendChild(cm);
+          }
+          cm.classList.add('hidden');
+          return r;
+        };
+
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit13.apply(this, arguments);
+          const cm = document.getElementById('comboMeter13');
+          if (ev === 'move' && payload && payload.totals) {
+            const c = Number(payload.totals.maxCombo || 1);
+            const st = getP13State();
+            if (c > st.stats.bestCombo) { st.stats.bestCombo = c; saveP13State(st); }
+            if (c >= 2 && cm) {
+              cm.textContent = `🔥 كومبو ×${c}`;
+              cm.classList.remove('hidden');
+              if (typeof MythicFX !== 'undefined' && MythicFX.playCombo) MythicFX.playCombo(c);
+            }
+          } else if (ev === 'bossDecision' || ev === 'gameOver') {
+            if (cm) cm.classList.add('hidden');
+            if (ev === 'bossDecision') {
+              const st = getP13State();
+              st.stats.totalBosses += 1;
+              saveP13State(st);
+            }
+          }
+          return r;
+        };
+
+        TEProto._finishGame = function(...args) {
+          document.getElementById('comboMeter13')?.remove();
+          const st = getP13State();
+          st.stats.totalRounds += 1;
+          if (this.score > st.stats.bestScore) st.stats.bestScore = this.score;
+          saveP13State(st);
+          return origFinish13.apply(this, args);
+        };
+      }
+
+      // Add quick reactions & one-tap feedback pulse on resultOverlay
+      const resOv = document.getElementById('resultOverlay');
+      if (resOv) {
+        const obs13 = new MutationObserver(() => {
+          if (resOv.classList.contains('hidden') || document.getElementById('p13ResultExtras')) return;
+          const extras = document.createElement('div');
+          extras.id = 'p13ResultExtras';
+          extras.style.cssText = 'max-width:300px;width:100%;margin-top:8px;';
+          extras.innerHTML = `
+            <div class="pvp-react-row">
+              <button type="button" class="pvp-react-btn" onclick="ArenaApp.toast('👏 رد فعل: كفو!')">👏 كفو</button>
+              <button type="button" class="pvp-react-btn" onclick="ArenaApp.toast('🔥 رد فعل: نار!')">🔥 نار</button>
+              <button type="button" class="pvp-react-btn" onclick="ArenaApp.toast('😂 رد فعل: قريب جداً!')">😂 قريب</button>
+            </div>
+            <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px;">
+              <span style="font-size:0.72rem;color:#94a3b8;">تقييم الجولة:</span>
+              <button type="button" class="fb-pulse-btn" onclick="ArenaApp.toast('شكراً لتقييمك 😍!')">😍</button>
+              <button type="button" class="fb-pulse-btn" onclick="ArenaApp.toast('شكراً لتقييمك 👍!')">👍</button>
+              <button type="button" class="fb-pulse-btn" onclick="ArenaApp.toast('سنسعى لتحسين تجربتك باستمرار!')">😐</button>
+            </div>
+          `;
+          const closeBtn = resOv.querySelector('button[onclick*="closeResult"]');
+          if (closeBtn) closeBtn.parentElement.insertBefore(extras, closeBtn);
+        });
+        obs13.observe(resOv, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      const origSync13 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync13(...args);
+        if (this.profile) this.renderRetentionBars13();
         return res;
       };
     })();
