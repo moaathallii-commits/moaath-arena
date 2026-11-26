@@ -525,6 +525,42 @@
       padding: 4px 6px;
     }
 
+  
+    /* === Phase 8: Bounty PvP, Onboarding, Referral & UX Polish === */
+    .bounty-card {
+      background: linear-gradient(155deg, rgba(69, 10, 10, 0.72), rgba(11, 17, 32, 0.96));
+      border: 1.5px solid rgba(244, 63, 94, 0.55); border-radius: 16px;
+      padding: 12px; margin-bottom: 10px;
+      box-shadow: 0 6px 0 #4c0519, 0 10px 24px rgba(0,0,0,0.45);
+    }
+    .bounty-card.hot {
+      border-color: #facc15;
+      box-shadow: 0 6px 0 #78350f, 0 0 22px rgba(250, 204, 21, 0.25);
+    }
+    .skull-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(244, 63, 94, 0.2); border: 1px solid #f43f5e; color: #fda4af;
+      font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 999px;
+    }
+    .bounty-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(250, 204, 21, 0.2); border: 1px solid #facc15; color: #fde047;
+      font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 999px;
+    }
+    .in-battle-pill {
+      background: rgba(249, 115, 22, 0.2); border: 1px solid #fb923c; color: #fdba74;
+      font-size: 0.74rem; font-weight: 900; padding: 6px 10px; border-radius: 10px; text-align: center;
+    }
+    .onboard-step-dots { display: flex; justify-content: center; gap: 6px; margin: 10px 0; }
+    .onboard-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+    .onboard-dot.active { width: 22px; border-radius: 999px; background: #fde047; }
+    .prestige-chip {
+      display: inline-block; padding: 4px 10px; border-radius: 999px; margin: 3px;
+      font-size: 0.72rem; font-weight: 900; background: rgba(250,204,21,0.14);
+      border: 1px solid rgba(250,204,21,0.5); color: #fde047;
+    }
+    .prestige-chip.locked { opacity: 0.45; filter: grayscale(0.8); border-color: #475569; color: #94a3b8; }
+
   </style>
 </head>
 <body>
@@ -541,6 +577,7 @@
       </div>
       <button type="button" class="hdr-act-btn" title="شحن الرصيد" onclick="ArenaApp.openTopupVault()">+ شحن</button>
       <button type="button" class="hdr-act-btn withdraw" title="سحب الأرباح" onclick="ArenaApp.openWithdrawVault()">💸 سحب</button>
+      <button type="button" class="hdr-act-btn" title="دليل اللعبة" onclick="ArenaApp.openOnboarding(true)" style="padding:0 8px;">?</button>
     </div>
   </header>
   <div id="broadcastBanner" class="broadcast-bar hidden">
@@ -827,6 +864,28 @@
           <button class="filter-pill" onclick="ArenaApp.setProfileSub('wallet', this)">💰 المحفظة والسحب (ل.س)</button>
         </div>
 
+
+        <div class="card" id="referralCardBox" style="border-color:rgba(56,189,248,0.45)!important;">
+          <h3>🎁 ادعُ أصدقاءك واربح 5% من شحنهم الفعلي!</h3>
+          <p style="font-size:0.76rem; color:#cbd5e1; line-height:1.5; margin-bottom:8px;">
+            شارك رابط دعوتك الخاص؛ عند شحن صديقك الفعلي من الإدارة ولعبه في الساحة، يُضاف <b>5%</b> تلقائياً إلى رصيدك!
+          </p>
+          <div id="myRefLinkBox" style="background:#070c18; border:1px dashed #38bdf8; border-radius:10px; padding:8px; font-family:monospace; font-size:0.74rem; color:#7dd3fc; word-break:break-all; text-align:center; margin-bottom:8px;">—</div>
+          <div class="stat-row" style="margin-bottom:8px;">
+            <span>👥 المدعوون: <b id="refCountSpan" style="color:#fff;">0</b></span>
+            <span>🪙 أرباحك (5%): <b id="refEarnedSpan" style="color:#4ade80;">0 عملة</b></span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.copyRefLink()">📋 نسخ الرابط</button>
+            <button type="button" class="btn btn-wa btn-sm" style="margin:0;" onclick="ArenaApp.shareRefWhatsApp()">📲 دعوة واتساب</button>
+          </div>
+        </div>
+        <div class="card" id="pvpPrestigeCard">
+          <h3>💀 الأوسمة الفخرية الأسطورية (PvP)</h3>
+          <div style="font-size:0.74rem; color:#94a3b8; margin-bottom:6px;">تُفتح تلقائياً عند الدفاع عن تحديك الدائم (5 / 10 / 15 / 20 / 25 / 50 جولة) أو تحقيق سلاسل فوز متتالية:</div>
+          <div id="pvpPrestigeBadgesBox"></div>
+        </div>
+
         <div id="profile-chars">
           <div class="filter-row">
             <button class="filter-pill active" onclick="ArenaApp.setCharFilter('all', this)">الكل (18)</button>
@@ -1050,6 +1109,25 @@
       </div>
 
       <button type="button" class="btn btn-blue" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 أو الشحن من محفظة متجر معاذ</button>
+    </div>
+  </div>
+
+
+  <!-- جولة الشرح التوضيحية الأنيقة للدخول الأول (3 بطاقات) -->
+  <div id="onboardingOverlay" class="overlay hidden" style="z-index:2700;">
+    <div class="vault-modal-box" style="text-align:center; border-color:#fde047;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.74rem; color:#7dd3fc; font-weight:900;">📖 دليل البطل السريع</span>
+        <button type="button" class="ws-back-btn" style="padding:3px 10px;" onclick="ArenaApp.closeOnboarding()">تخطي ✕</button>
+      </div>
+      <div id="obIcon" style="font-size:3rem; margin:8px 0;">🏰</div>
+      <h3 id="obTitle" style="color:#fde047; margin-bottom:6px; font-size:1.1rem;">اصعد البرج واهزم الزعماء!</h3>
+      <p id="obDesc" style="font-size:0.84rem; color:#e2e8f0; line-height:1.6; min-height:66px;"></p>
+      <div id="obDots" class="onboard-step-dots"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+        <button type="button" class="btn btn-outline" style="margin:0;" onclick="ArenaApp.closeOnboarding()">تخطي</button>
+        <button type="button" id="obNextBtn" class="btn btn-gold" style="margin:0;" onclick="ArenaApp.nextOnboardingStep()">التالي ←</button>
+      </div>
     </div>
   </div>
 
@@ -2686,6 +2764,206 @@
 
       // Also link openStoreTopupHint to the new Top-Up Vault
       ArenaApp.openStoreTopupHint = () => ArenaApp.openTopupVault();
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 8: التحدي الدائم (Bounty PvP) + الإحالة (5%) + الشرح التوضيحي + تحسينات UX
+    // ========================================================================
+    (function extendArenaAppPhase8() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Capture ?ref= from URL immediately
+      try {
+        const up = new URLSearchParams(window.location.search);
+        const r = up.get('ref');
+        if (r && r.trim().length >= 5) localStorage.setItem('arena_pending_ref', r.trim().toUpperCase());
+      } catch (_) {}
+
+      // Inject refCode into /auth/bind & /auth/register-shared calls automatically
+      const origApi = ArenaApp.api.bind(ArenaApp);
+      ArenaApp.api = function(path, body = {}) {
+        if (path === '/auth/bind' || path === '/auth/register-shared') {
+          const pendingRef = localStorage.getItem('arena_pending_ref') || '';
+          if (pendingRef && !body.refCode) body = { ...body, refCode: pendingRef };
+        }
+        return origApi(path, body);
+      };
+
+      // 2. First-Time 3-Card Onboarding Guide
+      const ONBOARD_SLIDES = [
+        {
+          icon: '🏰',
+          title: 'اصعد البرج واهزم الزعماء التسعة!',
+          desc: 'طابق المكعبات بسرعة، فعّل مهارة شخصيتك، وتجاوز الزعماء في الطوابق الحاسمة. احذر من «ظل البطل السابق» الذي يحرس الرقم القياسي!'
+        },
+        {
+          icon: '⚔️',
+          title: '3 ساحات تنافسية وجوائز بالليرة (1:1)',
+          desc: 'اختر بين «كسر الرقم» للجائزة الكبرى الفورية، «الساحة الأسبوعية» لتصدر المراكز السبعة، أو «التحدي الدائم PvP» لصيد الجوائز والجماجم 💀!'
+        },
+        {
+          icon: '🎁',
+          title: 'متجر البرج + مسار 360 + دعوة الأصدقاء',
+          desc: 'جهّز أداة واحدة تكتيكية (قنبلة / مدفع صف / جوكر)، افتح صناديق الاستفزاز، وشارك رابط دعوتك لتربح 5% من شحن أصدقائك الفعلي!'
+        }
+      ];
+      ArenaApp._obIdx = 0;
+      ArenaApp.openOnboarding = function(force = false) {
+        if (!force && localStorage.getItem('arena_onboard_done_v8') === '1') return;
+        this._obIdx = 0;
+        this._renderOnboardingSlide();
+        document.getElementById('onboardingOverlay')?.classList.remove('hidden');
+      };
+      ArenaApp._renderOnboardingSlide = function() {
+        const s = ONBOARD_SLIDES[this._obIdx] || ONBOARD_SLIDES[0];
+        document.getElementById('obIcon').textContent = s.icon;
+        document.getElementById('obTitle').textContent = s.title;
+        document.getElementById('obDesc').textContent = s.desc;
+        document.getElementById('obNextBtn').textContent = this._obIdx >= ONBOARD_SLIDES.length - 1 ? '🚀 انطلق للعب!' : 'التالي ←';
+        const dots = document.getElementById('obDots');
+        if (dots) {
+          dots.innerHTML = ONBOARD_SLIDES.map((_, i) => `<span class="onboard-dot ${i === this._obIdx ? 'active' : ''}"></span>`).join('');
+        }
+      };
+      ArenaApp.nextOnboardingStep = function() {
+        if (this._obIdx < ONBOARD_SLIDES.length - 1) {
+          this._obIdx++;
+          this._renderOnboardingSlide();
+        } else {
+          this.closeOnboarding();
+        }
+      };
+      ArenaApp.closeOnboarding = function() {
+        localStorage.setItem('arena_onboard_done_v8', '1');
+        document.getElementById('onboardingOverlay')?.classList.add('hidden');
+      };
+
+      // 3. Remember last visited room (record vs weekly) + show 1-line rule hint
+      const savedRoom = localStorage.getItem('arena_last_room');
+      if (savedRoom === 'record' || savedRoom === 'weekly') ArenaApp.towerRoom = savedRoom;
+      const origSwitchRoom8 = ArenaApp.switchTowerRoom ? ArenaApp.switchTowerRoom.bind(ArenaApp) : null;
+      if (origSwitchRoom8) {
+        ArenaApp.switchTowerRoom = function(room) {
+          localStorage.setItem('arena_last_room', room);
+          origSwitchRoom8(room);
+        };
+      }
+
+      // 4. Upgrade PvP List to Bounty PvP ("🎯 مطلوبون للعدالة" + Skulls 💀 + Lock + Cancel 50%)
+      ArenaApp.loadPvpList = async function() {
+        const box = document.getElementById('pvpListContainer');
+        if (!box) return;
+        box.textContent = 'جاري تحميل مطلوبين الساحة...';
+        const res = await this.api('/pvp/list');
+        if (!res || !res.matches || res.matches.length === 0) {
+          box.innerHTML = '<div style="text-align:center; padding:14px; color:#94a3b8;">لا توجد تحديات دائمة مفتوحة حالياً — كن أول «مطلوب للعدالة» وانشر تحديك!</div>';
+          return;
+        }
+        box.innerHTML = `
+          <div style="font-size:0.76rem; color:#fde047; font-weight:900; margin-bottom:8px;">🎯 مطلوبون للعدالة (مرتّبون حسب أعلى جائزة صيد وعدد الجماجم)</div>
+          ${res.matches.map((m) => {
+            const winReward = Math.floor(m.stakePts * 2 * 0.80) + Number(m.bountyPts || 0);
+            const isHot = m.bountyPts > 0 || m.defensesCount >= 3;
+            let actionHtml = '';
+            if (m.isMine) {
+              actionHtml = m.inBattle
+                ? `<div class="in-battle-pill">⚔️ في منافسة حالياً</div>`
+                : `<button class="btn btn-outline btn-sm" style="border-color:#f43f5e;color:#fda4af;margin-top:8px;" onclick="ArenaApp.confirmCancelPvp('${m.matchId}', ${m.stakePts})">🚫 إلغاء التحدي (استرداد 50% = ${Math.floor(m.stakePts * 0.5).toLocaleString()} عملة)</button>`;
+            } else if (m.inBattle) {
+              actionHtml = `<div class="in-battle-pill" style="margin-top:8px;">⚔️ في منافسة حالياً — انتظر انتهاء الجولة</div>`;
+            } else {
+              actionHtml = `<button class="btn btn-gold btn-sm" style="margin-top:8px;" onclick="ArenaApp.startFlow('${m.gameId}', 'pvp_join', ${m.stakePts}, '${m.matchId}')">⚔️ اقبل التحدي (${m.stakePts} عملة ← اربح ${winReward.toLocaleString()})</button>`;
+            }
+            return `
+              <div class="bounty-card ${isHot ? 'hot' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                  <div>
+                    <strong style="color:#fff; font-size:0.92rem;">${m.creatorName} ${m.isMine ? '<small style="color:#4ade80;">(تحديك)</small>' : ''}</strong>
+                    <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">الرهان: <b style="color:#fde047;">${m.stakePts.toLocaleString()} عملة</b></div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    <span class="skull-pill">💀 ${m.defensesCount || 0} ضحايا</span>
+                    ${m.bountyPts > 0 ? `<span class="bounty-pill">🎯 جائزة صيد +${m.bountyPts.toLocaleString()}</span>` : ''}
+                  </div>
+                </div>
+                ${actionHtml}
+              </div>
+            `;
+          }).join('')}
+        `;
+      };
+
+      ArenaApp.confirmCancelPvp = function(matchId, stakePts) {
+        const refund = Math.floor(Number(stakePts || 0) * 0.50);
+        ArenaModal.show({
+          theme: 'crimson', icon: '⚠️', title: 'إلغاء التحدي الدائم',
+          bodyHtml: `عند إلغاء تحديك الدائم ستسترد <b>50% فقط (${refund.toLocaleString()} عملة)</b> وتُحوّل الـ 50% المتبقية وأي جائزة صيد متراكمة إلى خزينة الإدارة.<br/>هل تريد المتابعة؟`,
+          buttons: [
+            { text: '🚫 نعم، إلغاء التحدي واسترداد 50%', cls: 'btn-gold', onClick: async () => {
+              const res = await this.api('/pvp/cancel', { matchId });
+              if (res && res.ok) {
+                this.toast(res.message);
+                await this.syncProfile();
+                this.loadPvpList();
+              }
+            }},
+            { text: 'تراجع', cls: 'btn-outline' }
+          ]
+        });
+      };
+
+      // 5. Referral Link & PvP Prestige UI sync
+      ArenaApp.renderReferralAndPrestige = function() {
+        const p = this.profile;
+        if (!p) return;
+        const code = p.refCode || '';
+        const link = code ? `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(code)}` : '—';
+        const linkEl = document.getElementById('myRefLinkBox');
+        if (linkEl) linkEl.textContent = link;
+        const cntEl = document.getElementById('refCountSpan');
+        if (cntEl) cntEl.textContent = Number(p.referralStats?.totalCount || 0);
+        const earnEl = document.getElementById('refEarnedSpan');
+        if (earnEl) earnEl.textContent = `${Number(p.referralStats?.totalEarnedPts || 0).toLocaleString()} عملة`;
+
+        const pBox = document.getElementById('pvpPrestigeBadgesBox');
+        if (pBox) {
+          const owned = p.pvpPrestige || {};
+          const all = [...(p.pvpDefenseCatalog || []), ...(p.pvpStreakCatalog || [])];
+          pBox.innerHTML = all.map((it) => {
+            const has = Boolean(owned[it.id]);
+            return `<span class="prestige-chip ${has ? '' : 'locked'}">${has ? '✅' : '🔒'} ${it.name}</span>`;
+          }).join('');
+        }
+      };
+
+      ArenaApp.copyRefLink = function() {
+        const txt = document.getElementById('myRefLinkBox')?.textContent?.trim() || '';
+        if (!txt || txt === '—') return;
+        navigator.clipboard?.writeText(txt).then(() => this.toast('✅ تم نسخ رابط دعوتك! شاركه مع أصدقائك لتربح 5%!'));
+      };
+
+      ArenaApp.shareRefWhatsApp = function() {
+        const txt = document.getElementById('myRefLinkBox')?.textContent?.trim() || '';
+        if (!txt || txt === '—') return;
+        const msg = `🏆 أنصحك بتجربة «عالم تحديات معاذ»! العب برج التحدي اللانهائي واربح جوائز بالليرة السورية!\nسجّل عبر رابطي الخاص:\n${txt}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      };
+
+      // Hook into syncProfile to render Referral/Prestige + show First-Time Onboarding once
+      const origSync8 = ArenaApp.syncProfile.bind(ArenaApp);
+      let onboardChecked = false;
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync8(...args);
+        if (this.profile) {
+          this.renderReferralAndPrestige();
+          if (!onboardChecked) {
+            onboardChecked = true;
+            setTimeout(() => this.openOnboarding(false), 600);
+          }
+        }
+        return res;
+      };
     })();
 
   </script>
