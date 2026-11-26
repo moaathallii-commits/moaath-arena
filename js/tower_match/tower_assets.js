@@ -1,19 +1,23 @@
+/**
+ * حزمة صور لعبة «برج التحدي اللانهائي» (Tower Match-3) — v4.1 Fixed
+ * المسار في مستودع عالم التحديات: js/tower_match/tower_assets.js
+ */
 (function () {
-  if (window.MoaathTowerAssets) return;
+  if (window.MoaathTowerAssets && window.MoaathTowerAssets.version === "4.1-fixed") return;
 
-  const TILE_TYPES = [
-    { id: "sword",   label: "سيف اللهب",   color: "#f97316", src: "./assets/tower_match/tile_sword.png" },
-    { id: "clock",   label: "ساعة الزمن",   color: "#38bdf8", src: "./assets/tower_match/tile_clock.png" },
-    { id: "coin",    label: "عملة المجد",  color: "#facc15", src: "./assets/tower_match/tile_coin.png" },
-    { id: "star",    label: "نجمة القوة",   color: "#c084fc", src: "./assets/tower_match/tile_star.png" },
-    { id: "emerald", label: "زمردة الحياة", color: "#10b981", src: "./assets/tower_match/tile_emerald.png" },
-    { id: "bolt",    label: "صاعقة البرق",  color: "#22d3ee", src: "./assets/tower_match/tile_bolt.png" }
-  ];
+  const TILE_DEFS = {
+    sword:   { id: "sword",   name: "سيف الهجوم",   color: "#ef4444", glow: "rgba(239,68,68,0.55)",  src: "./assets/tower_match/tile_sword.png" },
+    clock:   { id: "clock",   name: "ساعة الزمن",   color: "#38bdf8", glow: "rgba(56,189,248,0.55)", src: "./assets/tower_match/tile_clock.png" },
+    coin:    { id: "coin",    name: "عملة معاذ",    color: "#facc15", glow: "rgba(250,204,21,0.55)", src: "./assets/tower_match/tile_coin.png" },
+    star:    { id: "star",    name: "نجمة المهارة", color: "#c084fc", glow: "rgba(192,132,252,0.55)",src: "./assets/tower_match/tile_star.png" },
+    emerald: { id: "emerald", name: "زمردة القوة",  color: "#10b981", glow: "rgba(16,185,129,0.55)", src: "./assets/tower_match/tile_emerald.png" },
+    bolt:    { id: "bolt",    name: "صاعقة الكومبو",color: "#f97316", glow: "rgba(249,115,22,0.55)", src: "./assets/tower_match/tile_bolt.png" }
+  };
 
-  const SPECIAL_TYPES = {
-    row_blast:  { id: "row_blast",  label: "شعاع الصف",    src: "./assets/tower_match/spec_row_blast.png" },
-    bomb_3x3:   { id: "bomb_3x3",   label: "قنبلة 3×3",    src: "./assets/tower_match/spec_bomb_3x3.png" },
-    prism_core: { id: "prism_core", label: "نواة المنشور", src: "./assets/tower_match/spec_prism_core.png" }
+  const SPECIAL_DEFS = {
+    row_blast:  { id: "row_blast",  name: "مدفع الصف",    src: "./assets/tower_match/spec_row_blast.png" },
+    bomb_3x3:   { id: "bomb_3x3",   name: "قنبلة البرج",  src: "./assets/tower_match/spec_bomb_3x3.png" },
+    prism_core: { id: "prism_core", name: "جوهرة الطيف",  src: "./assets/tower_match/spec_prism_core.png" }
   };
 
   const BOSS_THEMES = [
@@ -28,29 +32,26 @@
     { tier: 9, name: "حارس الزمن",             accent: "#34d399", bgTop: "#064e3b", bgBot: "#111827", src: "./assets/tower_match/boss_9_chrono.png",  ability: "يتلاعب بالساعة ويُسرّع هجماته — اجمع قطع الساعة والبرق باستمرار." }
   ];
 
-  const EXTRA_SOURCES = [
-    ...TILE_TYPES.map((t) => ({ key: "tile_" + t.id, src: t.src })),
-    ...Object.values(SPECIAL_TYPES).map((s) => ({ key: "spec_" + s.id, src: s.src })),
-    ...BOSS_THEMES.map((b) => ({ key: "boss_" + b.tier, src: b.src }))
-  ];
+  const imgCache = {};
 
-  const cache = {};
-  let loadedCount = 0;
-
-  function loadAll(onProgress) {
-    return new Promise((resolve) => {
-      if (EXTRA_SOURCES.length === 0) return resolve(cache);
-      EXTRA_SOURCES.forEach((item) => {
-        const img = new Image();
-        img.decoding = "async";
-        img.onload = () => { cache[item.key] = img; loadedCount++; if (onProgress) onProgress(loadedCount, EXTRA_SOURCES.length); if (loadedCount >= EXTRA_SOURCES.length) resolve(cache); };
-        img.onerror = () => { cache[item.key] = null; loadedCount++; if (onProgress) onProgress(loadedCount, EXTRA_SOURCES.length); if (loadedCount >= EXTRA_SOURCES.length) resolve(cache); };
-        img.src = item.src;
-      });
+  function preloadAll() {
+    const all = [
+      ...Object.values(TILE_DEFS).map((t) => ({ key: "tile_" + t.id, src: t.src })),
+      ...Object.values(SPECIAL_DEFS).map((s) => ({ key: "spec_" + s.id, src: s.src })),
+      ...BOSS_THEMES.map((b) => ({ key: "boss_" + b.tier, src: b.src }))
+    ];
+    all.forEach((item) => {
+      if (imgCache[item.key]) return;
+      const img = new Image();
+      img.src = item.src;
+      imgCache[item.key] = img;
     });
   }
 
-  function getImg(key) { return cache[key] || null; }
+  function getImage(key) {
+    if (!imgCache[key]) preloadAll();
+    return imgCache[key] || null;
+  }
 
   function getBossForFloor(floorNum, nemesisMeta = null) {
     if (nemesisMeta && nemesisMeta.holderName) {
@@ -71,5 +72,16 @@
     return BOSS_THEMES[idx];
   }
 
-  window.MoaathTowerAssets = { TILE_TYPES, SPECIAL_TYPES, BOSS_THEMES, loadAll, getImg, getBossForFloor };
+  preloadAll();
+
+  window.MoaathTowerAssets = {
+    version: "4.1-fixed",
+    TILE_KEYS: Object.keys(TILE_DEFS),
+    TILE_DEFS,
+    SPECIAL_DEFS,
+    BOSS_THEMES,
+    preloadAll,
+    getImage,
+    getBossForFloor
+  };
 })();
