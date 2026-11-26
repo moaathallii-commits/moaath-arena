@@ -373,6 +373,22 @@ async function releasePendingReferralIfEligible(env, player) {
   });
 }
 
+
+// ============================================================================
+// المرحلة 12: حماية منع التكرار (Idempotency) + حماية تخمين كلمات المرور (Rate Limit)
+// ============================================================================
+async function checkOrLockIdempotency(env, key, scope) {
+  const clean = String(key || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!clean || clean.length < 8) return { ok: true, key: null };
+  const path = `arena_world/idem/${scope}_${clean}`;
+  const existing = await fbGet(env, path);
+  if (existing && (Date.now() - Number(existing.at || 0)) < 10 * 60 * 1000) {
+    return { ok: false, cached: existing.response || null };
+  }
+  await fbPatch(env, path, { at: Date.now(), status: 'locked' });
+  return { ok: true, key: path };
+}
+
 const DAILY_DEAL_POOL = ['tower_bomb', 'tower_row', 'tower_wildcard', 'double_xp', 'streak_shield'];
 
 function getTodayDailyDeal() {
@@ -940,7 +956,9 @@ async function handleEquipCosmetic(env, player, { frameId }) {
   return jsonResponse({ ok: true, activeFrame: frameId || '', message: frameId ? 'تم تفعيل الإطار على صورتك!' : 'تم إزالة الإطار.' });
 }
 
-async function handleShopBuy(env, player, { itemId }, config = {}) {
+async function handleShopBuy(env, player, { itemId, idempotencyKey }, config = {}) {
+  const idem = await checkOrLockIdempotency(env, idempotencyKey, 'buy_' + player.phone);
+  if (!idem.ok) return jsonResponse({ code: 'ERR_DUP_BUY', message: 'تم تنفيذ عملية الشراء هذه مسبقاً.' }, 409);
   const framesCat = getEffectiveFramesCatalog(config);
   const frameItem = framesCat.find((f) => f.id === itemId);
   if (frameItem) {
@@ -1025,7 +1043,9 @@ async function handleShopBuy(env, player, { itemId }, config = {}) {
   });
 }
 
-async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem, usePass }, config) {
+async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatchId, useItem, usePass, idempotencyKey }, config) {
+  const idem = await checkOrLockIdempotency(env, idempotencyKey, 'ses_' + player.phone);
+  if (!idem.ok) return jsonResponse(idem.cached || { code: 'ERR_DUP_REQ', message: 'تم استلام هذا الطلب مسبقاً، جاري التحميل...' }, idem.cached ? 200 : 409);
   if (!['hill_drive', 'cyber_shooter', 'tower_match'].includes(gameId)) return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير مدعومة.' }, 400);
   const playMode = mode || 'record';
   let cost = Number(stakePts) || 10;
@@ -1439,10 +1459,10 @@ async function handlePvpList(env, player = null) {
 }
 
 async function handlePvpCreate(env, player, body, config) {
-  return handleSessionStart(env, player, { gameId: body.gameId, mode: 'pvp_create', stakePts: Number(body.stakePts || 20), useItem: body.useItem }, config);
+  return handleSessionStart(env, player, { gameId: body.gameId, mode: 'pvp_create', stakePts: Number(body.stakePts || 20), useItem: body.useItem, idempotencyKey: body.idempotencyKey }, config);
 }
 
-async function handlePvpJoin(env, player, { matchId, useItem }, config) {
+async function handlePvpJoin(env, player, { matchId, useItem, idempotencyKey }, config) {
   const now = Date.now();
   const match = await fbGet(env, `arena_world/pvp_matches/${matchId}`);
   if (!match || match.status !== 'open') return jsonResponse({ code: 'ERR_PVP_CLOSED', message: 'هذا التحدي لم يعد متاحاً.' }, 400);
@@ -1450,7 +1470,7 @@ async function handlePvpJoin(env, player, { matchId, useItem }, config) {
   if (match.activeChallenge && Number(match.activeChallenge.expiresAt || 0) > now && match.activeChallenge.phone !== player.phone) {
     return jsonResponse({ code: 'ERR_PVP_BUSY', message: '⚔️ هذا التحدي في منافسة حالياً مع لاعب آخر، حاول بعد لحظات!' }, 409);
   }
-  const sesRes = await handleSessionStart(env, player, { gameId: match.gameId, mode: 'pvp_join', stakePts: match.stakePts, pvpMatchId: matchId, useItem }, config);
+  const sesRes = await handleSessionStart(env, player, { gameId: match.gameId, mode: 'pvp_join', stakePts: match.stakePts, pvpMatchId: matchId, useItem, idempotencyKey }, config);
   if (sesRes.status === 200) {
     await fbPatch(env, `arena_world/pvp_matches/${matchId}`, {
       activeChallenge: { phone: player.phone, startedAt: now, expiresAt: now + 10 * 60 * 1000 }
@@ -2173,10 +2193,20 @@ async function handleSharedLogin(env, { phone, password, deviceId }, config) {
   if (!storeUser || !storeUser.arenaPassHash) {
     return jsonResponse({ code: 'ERR_NOT_FOUND', message: 'الحساب غير مسجل بكلمة مرور. استخدم «تسجيل جديد» أو «معرف الربط السري».' }, 404);
   }
+  const rlPath = `arena_world/login_rl/${cleanPhone}`;
+  const rl = (await fbGet(env, rlPath)) || { count: 0, resetAt: 0 };
+  const nowRl = Date.now();
+  if (rl.count >= 5 && nowRl < Number(rl.resetAt || 0)) {
+    const mins = Math.max(1, Math.ceil((rl.resetAt - nowRl) / 60000));
+    return jsonResponse({ code: 'ERR_RATE_LIMIT', message: `تم إيقاف المحاولات مؤقتاً لحماية حسابك. حاول بعد ${mins} دقيقة.` }, 429);
+  }
   const passHash = await hashPass(cleanPass);
   if (passHash !== storeUser.arenaPassHash) {
+    const nextCnt = nowRl >= Number(rl.resetAt || 0) ? 1 : (Number(rl.count || 0) + 1);
+    await fbPatch(env, rlPath, { count: nextCnt, resetAt: nowRl + 15 * 60 * 1000 });
     return jsonResponse({ code: 'ERR_BAD_PASS', message: 'كلمة المرور غير صحيحة.' }, 403);
   }
+  if (rl.count > 0) await fbPatch(env, rlPath, { count: 0, resetAt: 0 });
   const deviceToken = crypto.randomUUID() + '.' + Date.now();
   await fbPatch(env, `arena_world/devices/${deviceId}`, { phone: cleanPhone, token: deviceToken });
   const existingPlayer = await fbGet(env, `arena_world/players/${cleanPhone}`);
