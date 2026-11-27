@@ -479,12 +479,10 @@ export default {
             return handleAdminResolveTopup(env, body);
           case '/admin/records/reset':
             return handleAdminResetRecord(env, body);
-          case '/admin/event/create':
-            return handleAdminEventCreateOrUpdate24(env, body);
+          case '/admin/event/config':
+            return handleAdminEventConfig(env, body);
           case '/admin/event/settle':
-            return handleAdminEventSettle24(env);
-          case '/admin/event/toggle':
-            return handleAdminEventToggle27(env, body);
+            return handleAdminEventSettle(env);
           default:
             return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
         }
@@ -578,10 +576,8 @@ export default {
           return handleSendTaunt(env, player, body);
         case '/player/notifications/read':
           return handleReadNotifications(env, player);
-          case '/event/status':
-            return handleAdminEventStatus24(env, player);
-          case '/event/history':
-            return handleAdminEventHistory25(env);
+        case '/event/status':
+          return handleEventStatus(env, player);
         default:
           return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
@@ -983,8 +979,7 @@ async function handleProfile(env, player, config = {}) {
       adminWhatsApp: String(config.adminWhatsApp || '963965461504'),
       broadcast: getActiveBroadcast(config)
     },
-    records,
-    adminEvent: await (async () => { const s = await handleAdminEventStatus24(env, player); const d = await s.json(); return d; })()
+    records
   });
 }
 
@@ -1455,7 +1450,12 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, updTower);
     streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
   }
-  await recordAdminEventProgress24(env, player, { score, pvpWins: (won && session.mode === 'pvp_join') ? 1 : 0, bosses: Number((telemetry && telemetry.bossesDefeated) || 0) });
+  const isPvpWinForEvent = (session.mode === 'pvp_join' && won) ? 1 : 0;
+  await recordAdminEventProgress(env, player, {
+    score: Number(score || 0),
+    bossesDefeated: Number((telemetry && telemetry.bossesDefeated) || 0),
+    pvpWin: isPvpWinForEvent
+  });
   return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, moveDigest, message: outcomeMsg });
 }
 
@@ -2220,247 +2220,6 @@ async function handleShamCashTopupRequest(env, player, { sypAmount }, config) {
 }
 
 
-
-// ============================================================================
-// المرحلة 24: نظام أحداث تحدي الإدارة (25 مناسبة + مكافأة ثابتة + شارة وإطار لكل رقم حدث)
-// ============================================================================
-const ADMIN_EVENT_OCCASIONS_25 = [
-  'الافتتاح الرسمي لعالم تحديات معاذ',
-  'ليالي رمضان المبارك',
-  'تحدي عيد الفطر السعيد',
-  'تحدي عيد الأضحى المبارك',
-  'رأس السنة الهجرية',
-  'رأس السنة الميلادية',
-  'بداية الموسم الدراسي الجديد',
-  'تحدي التركيز السريع',
-  'عطلة الربيع',
-  'مهرجان الصيف الذهبي',
-  'اليوم الوطني / يوم التأسيس',
-  'ذكرى انطلاق متجر معاذ',
-  'أسبوع كاسري الأرقام القياسية',
-  'بطولة أسياد الكومبو',
-  'سباق صيّادي الجماجم (PvP)',
-  'تحدي قاهرة الزعماء',
-  'أسبوع السرعة القصوى',
-  'تحدي العمالقة',
-  'تحدي المبتدئين والصاعدين',
-  'نهاية الأسبوع الملكية',
-  'ليلة التتويج الكبرى',
-  'تحدي الأصدقاء والفرق',
-  'مهرجان المكافآت المضاعفة',
-  'بطولة حراس العرش',
-  'الحدث الختامي للموسم'
-];
-
-function getEventExclusiveReward24(eventNumber) {
-  const num = Math.max(1, Math.floor(Number(eventNumber || 1)));
-  const badgeIndex = ((num - 1) % 6) + 1;
-  const badgeFiles = {
-    1: './assets/event_badges/event_badge_01_opening.jpg',
-    2: './assets/event_badges/event_badge_02_ramadan.jpg',
-    3: './assets/event_badges/event_badge_03_eid.jpg',
-    4: './assets/event_badges/event_badge_04_masters.jpg',
-    5: './assets/event_badges/event_badge_05_frost.jpg',
-    6: './assets/event_badges/event_badge_06_cosmic.jpg'
-  };
-  return {
-    eventNumber: num,
-    badgeId: `event_badge_${num}`,
-    badgeName: `شارة الحدث #${num}`,
-    badgeFile: badgeFiles[badgeIndex] || './assets/event_badges/event_badge_01_opening.jpg',
-    frameId: `event_frame_${num}`,
-    frameName: `إطار الحدث #${num}`,
-    frameFile: './assets/frames/frame_10_gold_crown.png',
-    frameAnim: 'anim-royal'
-  };
-}
-
-async function ensureAdminEvent24(env) {
-  let ev = await fbGet(env, 'arena_world/admin_event/current');
-  if (!ev || !ev.eventId) {
-    const now = Date.now();
-    ev = {
-      eventId: 'evt_init_1',
-      eventNumber: 1,
-      title: ADMIN_EVENT_OCCASIONS_25[0],
-      occasion: ADMIN_EVENT_OCCASIONS_25[0],
-      type: 'highest_score', // highest_score | pvp_wins | bosses_defeated | cumulative_score
-      category: 'open', // open | beginner | pro
-      fixedRewardPts: 1000,
-      durationDays: 7,
-      startAt: now,
-      endAt: now + 7 * 24 * 60 * 60 * 1000,
-      status: 'active', // active | settled
-      eventEnabled: true,
-      bannerImageUrl: '',
-      entries: {},
-      winners: []
-    };
-    await fbPatch(env, 'arena_world/admin_event/current', ev);
-  }
-  return ev;
-}
-
-
-async function handleAdminEventToggle27(env, { enabled, bannerImageUrl }) {
-  const ev = await ensureAdminEvent24(env);
-  const updates = {};
-  if (typeof enabled === 'boolean') updates.eventEnabled = enabled;
-  if (bannerImageUrl !== undefined) updates.bannerImageUrl = String(bannerImageUrl || '').trim().slice(0, 400);
-  await fbPatch(env, 'arena_world/admin_event/current', updates);
-  return jsonResponse({
-    ok: true,
-    eventEnabled: updates.eventEnabled !== undefined ? updates.eventEnabled : (ev.eventEnabled !== false),
-    bannerImageUrl: updates.bannerImageUrl !== undefined ? updates.bannerImageUrl : (ev.bannerImageUrl || ''),
-    message: updates.eventEnabled === false ? '🔒 تم قفل غرفة الأحداث من لوحة الإدارة.' : '✅ تم تفعيل وتحديث غرفة الأحداث بنجاح!'
-  });
-}
-
-async function handleAdminEventCreateOrUpdate24(env, body) {
-  const cur = await ensureAdminEvent24(env);
-  const now = Date.now();
-  const nextNumber = Math.max(1, Math.floor(Number(body.eventNumber || (cur.status === 'settled' ? Number(cur.eventNumber || 1) + 1 : cur.eventNumber || 1))));
-  const occasion = String(body.occasion || body.title || ADMIN_EVENT_OCCASIONS_25[(nextNumber - 1) % ADMIN_EVENT_OCCASIONS_25.length]).trim().slice(0, 90);
-  const title = String(body.title || occasion).trim().slice(0, 90);
-  const type = ['highest_score', 'pvp_wins', 'bosses_defeated', 'cumulative_score'].includes(body.type) ? body.type : 'highest_score';
-  const category = ['open', 'beginner', 'pro'].includes(body.category) ? body.category : 'open';
-  const fixedRewardPts = Math.max(0, Math.min(1000000, Math.floor(Number(body.fixedRewardPts !== undefined ? body.fixedRewardPts : 1000))));
-  const durationDays = Math.max(1, Math.min(90, Math.floor(Number(body.durationDays || 7))));
-  const startAt = Number(body.startAt || now);
-  const endAt = startAt + durationDays * 24 * 60 * 60 * 1000;
-  const resetEntries = Boolean(body.resetEntries) || cur.status === 'settled' || Number(body.eventNumber || 0) !== Number(cur.eventNumber || 0);
-
-  const eventId = `evt_${nextNumber}_${now}`;
-  if (resetEntries) {
-    await fbDelete(env, 'arena_world/admin_event/current/entries');
-  }
-  const bannerImageUrl = body.bannerImageUrl !== undefined ? String(body.bannerImageUrl || '').trim().slice(0, 400) : String(cur.bannerImageUrl || '');
-  const eventEnabled = body.eventEnabled !== undefined ? Boolean(body.eventEnabled) : (cur.eventEnabled !== false);
-  const updated = {
-    eventId,
-    eventEnabled,
-    bannerImageUrl,
-    eventNumber: nextNumber,
-    title,
-    occasion,
-    type,
-    category,
-    fixedRewardPts,
-    durationDays,
-    startAt,
-    endAt,
-    status: 'active',
-    winners: resetEntries ? [] : (cur.winners || []),
-    exclusiveReward: getEventExclusiveReward24(nextNumber)
-  };
-  await fbPatch(env, 'arena_world/admin_event/current', updated);
-  return jsonResponse({ ok: true, event: updated, message: `✅ تم حفظ وتفعيل الحدث #${nextNumber} (${title}) بنجاح!` });
-}
-
-async function handleAdminEventSettle24(env) {
-  const ev = await ensureAdminEvent24(env);
-  if (ev.status === 'settled' && Array.isArray(ev.winners) && ev.winners.length > 0) {
-    return jsonResponse({ ok: false, code: 'ERR_ALREADY_SETTLED', message: 'تمت تسوية هذا الحدث مسبقاً.' }, 400);
-  }
-  const now = Date.now();
-  const playersMap = (await fbGet(env, 'arena_world/players')) || {};
-  const rawEntries = Object.values(ev.entries || {}).filter((e) => e && e.phone && !(playersMap[e.phone] && playersMap[e.phone].frozen));
-  rawEntries.sort((a, b) => (Number(b.metricValue || 0) - Number(a.metricValue || 0)) || (Number(a.updatedAt || 0) - Number(b.updatedAt || 0)));
-
-  const top3 = rawEntries.slice(0, 3);
-  const splits = [0.60, 0.25, 0.15];
-  const totalFixed = Math.max(0, Number(ev.fixedRewardPts || 0));
-  const excl = getEventExclusiveReward24(ev.eventNumber);
-  const winners = [];
-
-  for (let i = 0; i < top3.length; i++) {
-    const wRow = top3[i];
-    const p = playersMap[wRow.phone];
-    if (!p) continue;
-    const prizeCoins = Math.floor(totalFixed * splits[i]);
-    if (prizeCoins > 0) {
-      await updatePlayerBalance(env, p, prizeCoins, {
-        txId: `evt_${ev.eventId}_w${i + 1}`,
-        type: `admin_event_reward_rank_${i + 1}`,
-        delta: prizeCoins,
-        at: now
-      });
-    }
-    const cos = { ...(p.cosmetics || {}), [excl.frameId]: true };
-    const tData = getTowerPlayerData(p);
-    const badges = { ...(tData.badges || {}), [excl.badgeId]: { name: `${excl.badgeName} (#${i + 1})`, file: excl.badgeFile } };
-    const titles = { ...(tData.titles || {}), [`event_title_${ev.eventNumber}`]: `بطل ${ev.title} #${i + 1}` };
-    await fbPatch(env, `arena_world/players/${p.phone}`, { cosmetics: cos, activeFrame: excl.frameId });
-    await fbPatch(env, `arena_world/players/${p.phone}/games/tower_match`, { badges, titles, activeBadge: excl.badgeId });
-    await pushPlayerNotification(env, p.phone, {
-      kind: 'admin_event_win',
-      title: `🏆 فوزك في الحدث #${ev.eventNumber}: ${ev.title}!`,
-      body: `حصلت على المركز #${i + 1} وجائزة ${prizeCoins.toLocaleString()} عملة + ${excl.badgeName} + ${excl.frameName}!`
-    });
-    winners.push({ rank: i + 1, phone: p.phone, displayName: wRow.displayName, metricValue: wRow.metricValue, prizeCoins });
-  }
-
-  await fbPatch(env, 'arena_world/admin_event/current', { status: 'settled', settledAt: now, winners });
-  await fbPatch(env, `arena_world/admin_event/history/${ev.eventId}`, { ...ev, status: 'settled', settledAt: now, winners });
-
-  return jsonResponse({ ok: true, winners, message: `✅ تم إغلاق الحدث #${ev.eventNumber} وتوزيع المكافآت والشارات والإطارات الحصرية للفائزين!` });
-}
-
-async function recordAdminEventProgress24(env, player, deltaObj) {
-  const ev = await ensureAdminEvent24(env);
-  if (!ev || ev.status !== 'active' || Date.now() > Number(ev.endAt || 0)) return;
-  const prev = (ev.entries && ev.entries[player.phone]) || { phone: player.phone, displayName: player.displayName || 'لاعب', metricValue: 0, updatedAt: Date.now() };
-  let nextVal = Number(prev.metricValue || 0);
-  if (ev.type === 'highest_score') {
-    nextVal = Math.max(nextVal, Number(deltaObj.score || 0));
-  } else if (ev.type === 'pvp_wins') {
-    nextVal += Number(deltaObj.pvpWins || 0);
-  } else if (ev.type === 'bosses_defeated') {
-    nextVal += Number(deltaObj.bosses || 0);
-  } else if (ev.type === 'cumulative_score') {
-    nextVal += Number(deltaObj.score || 0);
-  }
-  await fbPatch(env, `arena_world/admin_event/current/entries/${player.phone}`, {
-    phone: player.phone,
-    displayName: player.displayName || 'لاعب',
-    metricValue: nextVal,
-    updatedAt: Date.now()
-  });
-}
-
-
-async function handleAdminEventHistory25(env) {
-  const histMap = (await fbGet(env, 'arena_world/admin_event/history')) || {};
-  const list = Object.values(histMap)
-    .filter((h) => h && h.eventId)
-    .sort((a, b) => Number(b.settledAt || 0) - Number(a.settledAt || 0))
-    .slice(0, 15);
-  return jsonResponse({ ok: true, history: list });
-}
-
-async function handleAdminEventStatus24(env, player) {
-  const ev = await ensureAdminEvent24(env);
-  const entries = Object.values(ev.entries || {})
-    .filter((e) => e && e.phone)
-    .sort((a, b) => (Number(b.metricValue || 0) - Number(a.metricValue || 0)) || (Number(a.updatedAt || 0) - Number(b.updatedAt || 0)))
-    .slice(0, 10)
-    .map((e, idx) => ({
-      rank: idx + 1,
-      displayName: e.displayName,
-      metricValue: Number(e.metricValue || 0),
-      isMe: Boolean(player && e.phone === player.phone)
-    }));
-  const myIdx = player ? Object.values(ev.entries || {}).sort((a, b) => Number(b.metricValue || 0) - Number(a.metricValue || 0)).findIndex((x) => x && x.phone === player.phone) : -1;
-  return jsonResponse({
-    ok: true,
-    event: { ...ev, exclusiveReward: getEventExclusiveReward24(ev.eventNumber) },
-    occasions: ADMIN_EVENT_OCCASIONS_25,
-    leaderboard: entries,
-    myRank: myIdx >= 0 ? myIdx + 1 : null,
-    myValue: myIdx >= 0 ? Number(Object.values(ev.entries)[myIdx]?.metricValue || 0) : 0
-  });
-}
-
 async function handleAdminResetRecord(env, { gameId, newRecordScore, newJackpotPts }) {
   if (!['tower_match', 'hill_drive', 'cyber_shooter'].includes(gameId)) {
     return jsonResponse({ code: 'ERR_GAME', message: 'لعبة غير صالحة.' }, 400);
@@ -2604,4 +2363,305 @@ async function handleEquipPvpPrestige(env, player, { prestigeId }) {
     activePvpPrestige: prestigeId || ''
   });
   return jsonResponse({ ok: true, activePvpPrestige: prestigeId || '', message: prestigeId ? '🏆 تم تجهيز وسامك الفخري في ساحة PvP!' : 'تم إزالة الوسام الفخري.' });
+}
+
+
+// ============================================================================
+// المرحلة 24: نظام أحداث تحدي الإدارة الكامل (25 مناسبة + تحكم الإدارة + جوائز + شارات وإطارات حصرية)
+// ============================================================================
+const ADMIN_EVENT_OCCASIONS_25 = [
+  { id: 'occ_01_grand_opening', name: 'الافتتاح الرسمي لعالم تحديات معاذ', kind: 'highest_score', rules: 'حقق أعلى نتيجة منفردة في برج التحدي خلال فترة الحدث لتعتلي منصة الحدث وتفوز بالجائزة الثابتة والشارة والإطار الحصري.' },
+  { id: 'occ_02_ramadan_nights', name: 'ليالي رمضان المبارك', kind: 'cumulative_score', rules: 'اجمع أعلى مجموع نقاط تراكمي عبر جولاتك خلال ليالي رمضان المبارك لتتصدر لوحة الصدارة وتنال المكافأة.' },
+  { id: 'occ_03_eid_fitr', name: 'مهرجان عيد الفطر السعيد', kind: 'highest_score', rules: 'سجّل أعلى رقم قياسي خلال أيام العيد لتحصد المكافأة المالية الثابتة وشارة وإطار عيد الفطر الحصري.' },
+  { id: 'occ_04_eid_adha', name: 'مهرجان عيد الأضحى المبارك', kind: 'pvp_wins', rules: 'حقق أكبر عدد من الانتصارات في تحديات 1 ضد 1 خلال فترة الحدث لتفوز بالمركز الأول والمكافأة الحصرية.' },
+  { id: 'occ_05_hijri_new_year', name: 'رأس السنة الهجرية', kind: 'bosses_defeated', rules: 'اهزم أكبر عدد من زعماء البرج خلال فترة الحدث لتربح المكافأة المالية والشارة والإطار الخاص بالسنة الهجرية.' },
+  { id: 'occ_06_gregorian_new_year', name: 'رأس السنة الميلادية', kind: 'highest_score', rules: 'حقق أعلى نتيجة في جولة واحدة مع انطلاق العام الجديد لتفوز بالجائزة الثابتة وشارة الحدث.' },
+  { id: 'occ_07_school_season', name: 'انطلاق الموسم الدراسي الجديد', kind: 'cumulative_score', rules: 'أثبت تركيزك واجمع أعلى مجموع نقاط خلال فترة الحدث لتفوز بالمكافأة المالية واللقب والشارة الخاصة.' },
+  { id: 'occ_08_exams_focus', name: 'تحدي التركيز والسرعة (موسم الاختبارات)', kind: 'highest_score', rules: 'أعلى نتيجة بأعلى دقة وسرعة خلال فترة الحدث تفوز بالصدارة والمكافأة الثابتة.' },
+  { id: 'occ_09_spring_fest', name: 'مهرجان الربيع الذهبي', kind: 'bosses_defeated', rules: 'تجاوز أكبر عدد من الزعماء في البرج خلال فترة الربيع لتحصد المكافأة والشارة الحصرية.' },
+  { id: 'occ_10_summer_arena', name: 'بطولة الصيف الكبرى', kind: 'pvp_wins', rules: 'حقق أكبر رصيد من انتصارات PvP خلال بطولة الصيف لتنتزع الجائزة الكبرى والشارة.' },
+  { id: 'occ_11_national_day', name: 'اليوم الوطني / يوم التأسيس', kind: 'highest_score', rules: 'حقق أعلى رقم خلال الاحتفالية الوطنية لتحصل على المكافأة المالية والشارة والإطار الخاص.' },
+  { id: 'occ_12_store_anniversary', name: 'ذكرى تأسيس متجر معاذ', kind: 'cumulative_score', rules: 'اجمع أعلى نقاط خلال احتفالية متجر معاذ لتنال المكافأة المالية الثابتة وشارة الذكرى.' },
+  { id: 'occ_13_record_breakers', name: 'أسبوع كاسري الأرقام القياسية', kind: 'highest_score', rules: 'سجّل أعلى نتيجة خلال أسبوع كسر الأرقام لتكون بطل الحدث وتستلم المكافأة والشارة.' },
+  { id: 'occ_14_combo_masters', name: 'بطولة أسياد الكومبو', kind: 'highest_score', rules: 'أعلى نتيجة متحققة عبر سلاسل الكومبو والضربات المتتالية خلال فترة الحدث.' },
+  { id: 'occ_15_bounty_hunters', name: 'سباق صيّادي الجماجم والمكافآت', kind: 'pvp_wins', rules: 'حقق أكبر عدد من الانتصارات في ساحة PvP لصيد الجوائز والجماجم خلال فترة الحدث.' },
+  { id: 'occ_16_boss_slayers', name: 'تحدي قاهرة الزعماء', kind: 'bosses_defeated', rules: 'اهزم أكبر عدد ممكن من زعماء الطوابق خلال فترة الحدث لتفوز بالصدارة والمكافأة.' },
+  { id: 'occ_17_overdrive_week', name: 'أسبوع السرعة القصوى', kind: 'highest_score', rules: 'أعلى نتيجة في جولة واحدة خلال أسبوع السرعة القصوى لتحصد المكافأة والشارة.' },
+  { id: 'occ_18_titans_clash', name: 'صراع العمالقة (مبالغ التحدي الكبرى)', kind: 'pvp_wins', rules: 'تفوّق في أكبر عدد من مواجهات التحدي خلال فترة الحدث لتفوز بالجائزة الثابتة.' },
+  { id: 'occ_19_rising_stars', name: 'تحدي النجوم الصاعدة', kind: 'cumulative_score', rules: 'اجمع أعلى نقاط تراكمية خلال فترة التحدي لتثبت حضورك وتفوز بالمكافأة والشارة.' },
+  { id: 'occ_20_weekend_royale', name: 'نهاية الأسبوع الملكية', kind: 'highest_score', rules: 'سجّل أعلى نتيجة خلال نهاية الأسبوع الملكية لتفوز بالمكافأة الثابتة وشارة التتويج.' },
+  { id: 'occ_21_crowning_night', name: 'ليلة التتويج الكبرى', kind: 'highest_score', rules: 'أعلى نتيجة خلال فترة الحدث تُتوّج صاحبها بالمكافأة المالية والشارة والإطار الخاص.' },
+  { id: 'occ_22_friends_cup', name: 'كأس الأصدقاء والتحديات', kind: 'pvp_wins', rules: 'حقق أكبر عدد من الانتصارات التنافسية خلال فترة الكأس لتفوز بالجائزة والشارة.' },
+  { id: 'occ_23_double_rewards_fest', name: 'مهرجان الجوائز والمكافآت', kind: 'cumulative_score', rules: 'اجمع أعلى نقاط خلال أيام المهرجان لتحصد المكافأة المالية الثابتة وشارة الحدث.' },
+  { id: 'occ_24_throne_guardians', name: 'بطولة حراس العرش', kind: 'bosses_defeated', rules: 'اهزم أكبر عدد من الزعماء في البرج خلال فترة البطولة لتفوز بالمركز الأول والشارة.' },
+  { id: 'occ_25_season_finale', name: 'الحدث الختامي للموسم', kind: 'highest_score', rules: 'أعلى نتيجة في الحدث الختامي للموسم تمنح الفائز المكافأة الكبرى وشارة وإطار الختام الأسطوري.' }
+];
+
+function buildEventBadgeAsset(eventNumber) {
+  const num = Math.max(1, Math.floor(Number(eventNumber || 1)));
+  const modIdx = ((num - 1) % 6) + 1;
+  return {
+    badgeId: `event_badge_${num}`,
+    frameId: `event_frame_${num}`,
+    badgeName: `شارة الحدث #${num}`,
+    frameName: `إطار الحدث #${num}`,
+    badgeFile: `./assets/event_badges/event_badge_0${modIdx}.png`,
+    frameFile: `./assets/tower_match/streak/frame_streak_0${modIdx}_${['copper','silver','ruby','dragon','phoenix','galaxy'][modIdx - 1]}.png`,
+    anim: ['fx-copper','fx-silver','fx-ruby','fx-dragon','fx-phoenix','fx-galaxy'][modIdx - 1]
+  };
+}
+
+async function ensureAdminEvent(env) {
+  let evObj = await fbGet(env, 'arena_world/admin_event');
+  const now = Date.now();
+  if (!evObj || !evObj.eventId) {
+    const occ = ADMIN_EVENT_OCCASIONS_25[0];
+    const ex = buildEventBadgeAsset(1);
+    evObj = {
+      eventId: `evt_1_${now}`,
+      eventNumber: 1,
+      enabled: false, // يُقفل أو يُفعّل من غرفة الإدارة في متجر معاذ
+      occasionId: occ.id,
+      title: occ.name,
+      kind: occ.kind,
+      rulesText: occ.rules,
+      bannerUrl: './game_tower.png',
+      fixedRewardPts: 1000,
+      durationDays: 7,
+      startAt: now,
+      endAt: now + 7 * 86400000,
+      exclusiveBadgeId: ex.badgeId,
+      exclusiveBadgeName: ex.badgeName,
+      exclusiveBadgeFile: ex.badgeFile,
+      exclusiveFrameId: ex.frameId,
+      exclusiveFrameName: ex.frameName,
+      exclusiveFrameFile: ex.frameFile,
+      exclusiveAnim: ex.anim,
+      settled: false,
+      winners: [],
+      entries: {}
+    };
+    await fbPatch(env, 'arena_world/admin_event', evObj);
+  }
+  return evObj;
+}
+
+function getEventMetricValue(evObj, entry, scoreDelta, bossesDelta, pvpWinDelta) {
+  const cur = Number((entry && entry.metricValue) || 0);
+  const kind = (evObj && evObj.kind) || 'highest_score';
+  if (kind === 'highest_score') return Math.max(cur, Number(scoreDelta || 0));
+  if (kind === 'cumulative_score') return cur + Number(scoreDelta || 0);
+  if (kind === 'bosses_defeated') return cur + Number(bossesDelta || 0);
+  if (kind === 'pvp_wins') return cur + Number(pvpWinDelta || 0);
+  return Math.max(cur, Number(scoreDelta || 0));
+}
+
+async function recordAdminEventProgress(env, player, { score = 0, bossesDefeated = 0, pvpWin = 0 }) {
+  if (!player || player.frozen) return;
+  const evObj = await ensureAdminEvent(env);
+  if (!evObj.enabled || evObj.settled) return;
+  const now = Date.now();
+  if (now < Number(evObj.startAt || 0) || now >= Number(evObj.endAt || 0)) return;
+
+  const prev = (evObj.entries && evObj.entries[player.phone]) || null;
+  const nextVal = getEventMetricValue(evObj, prev, score, bossesDefeated, pvpWin);
+  const improved = !prev || nextVal > Number(prev.metricValue || 0);
+  await fbPatch(env, `arena_world/admin_event/entries/${player.phone}`, {
+    phone: player.phone,
+    displayName: player.displayName || `لاعب ${String(player.phone || '').slice(-4)}`,
+    characterId: player.activeCharacterId || 'buddy',
+    activeFrame: player.activeFrame || '',
+    metricValue: nextVal,
+    updatedAt: improved ? now : Number((prev && prev.updatedAt) || now)
+  });
+}
+
+async function settleAdminEventIfDue(env, force = false) {
+  const evObj = await ensureAdminEvent(env);
+  const now = Date.now();
+  if (evObj.settled) return { settledNow: false, evObj };
+  if (!force && (!evObj.enabled || now < Number(evObj.endAt || 0))) return { settledNow: false, evObj };
+
+  await fbPatch(env, 'arena_world/admin_event', { settled: true, enabled: false, settledAt: now });
+  evObj.settled = true;
+  evObj.enabled = false;
+
+  const playersMap = (await fbGet(env, 'arena_world/players')) || {};
+  const entriesArr = Object.values(evObj.entries || {})
+    .filter((e) => e && e.phone && !(playersMap[e.phone] && playersMap[e.phone].frozen))
+    .sort((a, b) => (Number(b.metricValue || 0) - Number(a.metricValue || 0)) || (Number(a.updatedAt || 0) - Number(b.updatedAt || 0)));
+
+  const rewardPts = Math.max(0, Math.floor(Number(evObj.fixedRewardPts || 1000)));
+  const ex = buildEventBadgeAsset(evObj.eventNumber || 1);
+  const winners = [];
+
+  if (entriesArr.length > 0) {
+    const top1 = entriesArr[0];
+    const p1 = playersMap[top1.phone] || (await fbGet(env, `arena_world/players/${top1.phone}`));
+    if (p1 && !p1.frozen) {
+      if (rewardPts > 0) {
+        await updatePlayerBalance(env, p1, rewardPts, {
+          txId: `evt_win_${evObj.eventId}`,
+          type: `admin_event_reward_${evObj.eventNumber || 1}`,
+          delta: rewardPts,
+          at: now
+        });
+      }
+      const nextBadges = { ...((((p1.games && p1.games.tower_match) || {}).badges) || {}), [ex.badgeId]: { name: ex.badgeName, file: ex.badgeFile } };
+      const nextCos = { ...(p1.cosmetics || {}), [ex.frameId]: true };
+      await fbPatch(env, `arena_world/players/${p1.phone}`, { cosmetics: nextCos, activeFrame: ex.frameId });
+      await fbPatch(env, `arena_world/players/${p1.phone}/games/tower_match`, { badges: nextBadges, activeBadge: ex.badgeId });
+      await pushPlayerNotification(env, p1.phone, {
+        kind: 'admin_event_winner',
+        title: `🏆 فزت بحدث «${evObj.title}»!`,
+        body: `حصلت على المكافأة الثابتة (${rewardPts.toLocaleString()} عملة) + ${ex.badgeName} + ${ex.frameName}!`
+      });
+    }
+    entriesArr.slice(0, 7).forEach((row, idx) => {
+      winners.push({
+        rank: idx + 1,
+        phone: row.phone,
+        displayName: row.displayName,
+        metricValue: Number(row.metricValue || 0),
+        rewardPts: idx === 0 ? rewardPts : 0,
+        badgeId: idx === 0 ? ex.badgeId : '',
+        frameId: idx === 0 ? ex.frameId : ''
+      });
+    });
+  }
+
+  await fbPatch(env, 'arena_world/admin_event', { winners, settledAt: now });
+  await fbPatch(env, `arena_world/admin_event_history/${evObj.eventId}`, {
+    ...evObj, winners, settledAt: now
+  });
+
+  return { settledNow: true, winners, rewardPts };
+}
+
+async function handleAdminEventConfig(env, body) {
+  const cur = await ensureAdminEvent(env);
+  const now = Date.now();
+  const occId = String(body.occasionId || cur.occasionId || '');
+  const matchedOcc = ADMIN_EVENT_OCCASIONS_25.find((o) => o.id === occId) || null;
+  const eventNumber = Math.max(1, Math.floor(Number(body.eventNumber !== undefined ? body.eventNumber : (cur.eventNumber || 1))));
+  const durationDays = Math.max(1, Math.min(90, Math.floor(Number(body.durationDays !== undefined ? body.durationDays : (cur.durationDays || 7)))));
+  const fixedRewardPts = Math.max(0, Math.floor(Number(body.fixedRewardPts !== undefined ? body.fixedRewardPts : (cur.fixedRewardPts || 1000))));
+  const kind = ['highest_score', 'cumulative_score', 'pvp_wins', 'bosses_defeated'].includes(body.kind)
+    ? body.kind
+    : ((matchedOcc && matchedOcc.kind) || cur.kind || 'highest_score');
+  const title = String((body.title !== undefined && String(body.title).trim()) ? body.title : ((matchedOcc && matchedOcc.name) || cur.title || 'حدث الإدارة')).trim().slice(0, 100);
+  const rulesText = String((body.rulesText !== undefined && String(body.rulesText).trim()) ? body.rulesText : ((matchedOcc && matchedOcc.rules) || cur.rulesText || '')).trim().slice(0, 400);
+  const bannerUrl = String((body.bannerUrl !== undefined && String(body.bannerUrl).trim()) ? body.bannerUrl : (cur.bannerUrl || './game_tower.png')).trim().slice(0, 300);
+  const enabled = typeof body.enabled === 'boolean' ? body.enabled : Boolean(cur.enabled);
+
+  const ex = buildEventBadgeAsset(eventNumber);
+  const startNewCycle = Boolean(body.startNewCycle);
+  const updates = {
+    eventNumber,
+    occasionId: matchedOcc ? matchedOcc.id : occId,
+    title,
+    kind,
+    rulesText,
+    bannerUrl,
+    fixedRewardPts,
+    durationDays,
+    enabled,
+    exclusiveBadgeId: ex.badgeId,
+    exclusiveBadgeName: ex.badgeName,
+    exclusiveBadgeFile: ex.badgeFile,
+    exclusiveFrameId: ex.frameId,
+    exclusiveFrameName: ex.frameName,
+    exclusiveFrameFile: ex.frameFile,
+    exclusiveAnim: ex.anim
+  };
+
+  if (startNewCycle) {
+    updates.eventId = `evt_${eventNumber}_${now}`;
+    updates.startAt = now;
+    updates.endAt = now + durationDays * 86400000;
+    updates.settled = false;
+    updates.winners = [];
+    await fbDelete(env, 'arena_world/admin_event/entries');
+  } else if (!cur.endAt || Number(cur.endAt) <= now) {
+    updates.startAt = now;
+    updates.endAt = now + durationDays * 86400000;
+    updates.settled = false;
+  }
+
+  await fbPatch(env, 'arena_world/admin_event', updates);
+  return jsonResponse({ ok: true, message: `✅ تم حفظ إعدادات حدث الإدارة #${eventNumber} («${title}») بنجاح!` });
+}
+
+async function handleAdminEventSettle(env) {
+  const res = await settleAdminEventIfDue(env, true);
+  if (!res.settledNow) {
+    return jsonResponse({ code: 'ERR_ALREADY_SETTLED', message: 'تمت تسوية هذا الحدث مسبقاً أو لا يوجد متسابقون.' }, 400);
+  }
+  const topWinner = res.winners && res.winners[0];
+  return jsonResponse({
+    ok: true,
+    winners: res.winners,
+    message: topWinner
+      ? `🏆 تم إغلاق الحدث وتتويج الفائز (${topWinner.displayName}) بمكافأة ${res.rewardPts.toLocaleString()} عملة والشارة والإطار الحصري!`
+      : 'تم إغلاق الحدث وتسجيل النتيجة.'
+  });
+}
+
+async function handleEventStatus(env, player) {
+  await settleAdminEventIfDue(env, false);
+  const evObj = await ensureAdminEvent(env);
+  const playersMap = (await fbGet(env, 'arena_world/players')) || {};
+  const entriesArr = Object.values(evObj.entries || {})
+    .filter((e) => e && e.phone && !(playersMap[e.phone] && playersMap[e.phone].frozen))
+    .sort((a, b) => (Number(b.metricValue || 0) - Number(a.metricValue || 0)) || (Number(a.updatedAt || 0) - Number(b.updatedAt || 0)));
+
+  const leaderboard = entriesArr.slice(0, 10).map((r, i) => ({
+    rank: i + 1,
+    displayName: r.displayName,
+    metricValue: Number(r.metricValue || 0),
+    characterId: r.characterId || 'buddy',
+    activeFrame: r.activeFrame || '',
+    isMe: Boolean(player && r.phone === player.phone)
+  }));
+
+  let myRank = null;
+  let myValue = 0;
+  if (player) {
+    const idx = entriesArr.findIndex((r) => r.phone === player.phone);
+    if (idx >= 0) {
+      myRank = idx + 1;
+      myValue = Number(entriesArr[idx].metricValue || 0);
+    }
+  }
+
+  return jsonResponse({
+    ok: true,
+    event: {
+      eventId: evObj.eventId,
+      eventNumber: Number(evObj.eventNumber || 1),
+      enabled: Boolean(evObj.enabled),
+      settled: Boolean(evObj.settled),
+      occasionId: evObj.occasionId || '',
+      title: evObj.title || 'حدث الإدارة',
+      kind: evObj.kind || 'highest_score',
+      rulesText: evObj.rulesText || '',
+      bannerUrl: evObj.bannerUrl || './game_tower.png',
+      fixedRewardPts: Number(evObj.fixedRewardPts || 1000),
+      durationDays: Number(evObj.durationDays || 7),
+      startAt: Number(evObj.startAt || 0),
+      endAt: Number(evObj.endAt || 0),
+      exclusiveBadgeId: evObj.exclusiveBadgeId || '',
+      exclusiveBadgeName: evObj.exclusiveBadgeName || '',
+      exclusiveBadgeFile: evObj.exclusiveBadgeFile || './assets/event_badges/event_badge_01.png',
+      exclusiveFrameId: evObj.exclusiveFrameId || '',
+      exclusiveFrameName: evObj.exclusiveFrameName || '',
+      exclusiveFrameFile: evObj.exclusiveFrameFile || '',
+      exclusiveAnim: evObj.exclusiveAnim || 'fx-galaxy',
+      winners: Array.isArray(evObj.winners) ? evObj.winners : [],
+      leaderboard,
+      myRank,
+      myValue
+    },
+    occasionsCatalog: ADMIN_EVENT_OCCASIONS_25
+  });
 }
