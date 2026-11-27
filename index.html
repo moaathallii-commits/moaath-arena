@@ -1105,7 +1105,7 @@
     <section id="loginScreen" class="login-hero">
       <div class="login-emblem">🏆</div>
       <h2 style="color:#fde047; font-size:1.25rem; font-weight:900;">بوابة عالم تحديات معاذ</h2>
-      <p style="color:var(--silver); font-size:0.84rem; margin-top:4px;">تنافس أسبوعياً، تصدّر المنصة الملكية، وحوّل أرباحك لرصيد فعلي في متجر معاذ!</p>
+      <p style="color:var(--silver); font-size:0.84rem; margin-top:4px;">تنافس أسبوعياً، تصدّر المنصة الملكية، واسحب أرباحك مباشرة عبر شام كاش!</p>
       <div id="loginLivePrize" class="login-prize-pill">🔥 الجوائز الأسبوعية المتاحة الآن: جاري التحديث...</div>
 
       <div class="login-games-row">
@@ -1115,17 +1115,17 @@
       </div>
 
       <div class="login-steps">
-        <div class="login-step"><b>1. متجر معاذ</b><br>اضغط «عالم التحديات»</div>
-        <div class="login-step"><b>2. ولّد المعرف</b><br>انسخ MTH-XXXX</div>
-        <div class="login-step"><b>3. الصق وانطلق</b><br>ربط آمن وفوري</div>
+        <div class="login-step"><b>1. أنشئ حسابك</b><br>برقم هاتفك وكلمة مرور</div>
+        <div class="login-step"><b>2. اشحن رصيدك</b><br>عبر شام كاش 1:1</div>
+        <div class="login-step"><b>3. نافس واربح</b><br>واسحب أرباحك فوراً</div>
       </div>
 
       <div class="filter-row" style="margin:10px 0 8px;">
-        <button type="button" class="filter-pill active" id="authTabBind" onclick="ArenaApp.switchAuthTab('bind')">🔑 معرف الربط</button>
+        
         <button type="button" class="filter-pill" id="authTabLogin" onclick="ArenaApp.switchAuthTab('login')">👤 دخول مشترك</button>
         <button type="button" class="filter-pill" id="authTabReg" onclick="ArenaApp.switchAuthTab('reg')">✨ حساب جديد</button>
       </div>
-      <div id="authPaneLogin" class="hidden" style="margin:8px 0;">
+      <div id="authPaneLogin" style="margin:8px 0;">
         <input type="tel" id="sharedLoginPhone" dir="ltr" placeholder="09xxxxxxxx" />
         <input type="password" id="sharedLoginPass" placeholder="كلمة المرور" />
         <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedLogin()">🚀 تسجيل الدخول المشترك</button>
@@ -1135,9 +1135,9 @@
         <input type="tel" id="sharedRegPhone" dir="ltr" placeholder="09xxxxxxxx" />
         <input type="password" id="sharedRegPass" placeholder="كلمة المرور (4 أحرف على الأقل)" />
         <input type="text" id="sharedRegRefCode" dir="auto" placeholder="🎁 كود الإحالة (اختياري — مثال: MTH8A3F)" style="font-family:monospace; letter-spacing:1px;" />
-        <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedRegister()">✨ إنشاء حساب مشترك مع متجر معاذ</button>
+        <button type="button" class="btn btn-gold" onclick="ArenaApp.doSharedRegister()">✨ إنشاء حساب جديد</button>
       </div>
-      <div id="authPaneBind">
+      <div id="authPaneBind" class="hidden">
       <div class="bind-input-row">
         <input type="text" id="bindKeyInput" placeholder="MTH-XXXX-XXXX" autocomplete="off" style="margin:0; font-family:monospace; letter-spacing:1px;" oninput="ArenaApp.formatBindInput(this)" />
         <button type="button" class="paste-btn" onclick="ArenaApp.pasteBindKey()">📋 لصق</button>
@@ -1145,15 +1145,15 @@
       <input type="text" id="bindRefCodeInput" dir="auto" placeholder="🎁 كود الإحالة (اختياري — إن وُجد)" style="font-family:monospace; letter-spacing:1px;" />
       <button id="bindSubmitBtn" class="btn btn-gold" onclick="ArenaApp.bindDevice()">🚀 ربط الجهاز والدخول للساحة</button>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 ليس لدي معرف؟ افتح متجر معاذ</button>
+      
       <button id="pwaInstallBtn" class="btn btn-blue btn-sm hidden" onclick="ArenaApp.installPWA()">📲 تثبيت التطبيق على الشاشة الرئيسية</button>
-      <div style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">🛡️ حسابك مرتبط مباشرة بمحفظة متجر معاذ ومؤمّن بالكامل.</div>
+      <div style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">🛡️ حسابك محمي ومؤمّن بالكامل في عالم التحديات.</div>
     </section>
 
     <!-- ================= 1.5 البوابة الرئيسية المعزولة (Arena Hub) ================= -->
     <section id="arenaHubScreen" class="hidden" style="padding:12px;">
       <div class="hub-card" style="text-align:center; padding:12px;">
-        <div style="font-size:0.78rem; color:#94a3b8;">المحفظة الموحدة المرتبطة بمتجر معاذ</div>
+        <div style="font-size:0.78rem; color:#94a3b8;">محفظة عالم التحديات (1 عملة = 1 ل.س)</div>
         <div style="font-size:1.35rem; font-weight:900; color:#4ade80; margin:4px 0;"><span id="hubCoinsVal">0</span> عملة معاذ</div>
         <div style="display:flex; justify-content:center; gap:8px; margin-top:8px;">
           <button class="btn btn-gold btn-sm" style="margin:0; width:auto; padding:8px 14px;" onclick="ArenaApp.openTopupVault()">💳 شحن الرصيد</button>
@@ -1417,9 +1417,9 @@
 
         <div id="profile-wallet" class="hidden">
           <div class="card">
-            <h3>💰 سحب عملات معاذ إلى رصيد متجر معاذ</h3>
+            <h3>💰 سحب الأرباح عبر شام كاش</h3>
             <p style="color:var(--silver); font-size:0.82rem; line-height:1.55; margin-bottom:10px;">
-              تُخصم النقاط فوراً وتُدقق خوارزمياً في السجل المتدحرج خلال ساعة واحدة قبل إضافتها تلقائياً لمحفظتك في متجر معاذ.
+              تُخصم العملات فوراً وتُدقق خوارزمياً في السجل المتدحرج قبل تحويلها إلى حسابك في شام كاش.
             </p>
             <div id="walletSypButtons"></div>
           </div>
@@ -1570,11 +1570,11 @@
           <div style="font-size:0.72rem; color:#94a3b8;">تحويل مباشر إلى معرّف شام كاش الخاص بك مع إيصال محمي</div>
         </div>
       </div>
-      <div id="wvMethodStore" class="vault-method-card" onclick="ArenaApp.selectWithdrawMethod('store')">
+      <div id="wvMethodStore" class="vault-method-card hidden" onclick="ArenaApp.selectWithdrawMethod('shamcash')">
         <div style="width:44px;height:44px;border-radius:10px;background:rgba(245,197,66,0.16);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🛒</div>
         <div style="flex:1;">
-          <strong style="color:#fff; font-size:0.88rem;">محفظة متجر معاذ</strong>
-          <div style="font-size:0.72rem; color:#94a3b8;">إضافة الرصيد مباشرة لمحفظتك للتسوق من متجر معاذ</div>
+          <strong style="color:#fff; font-size:0.88rem;">شام كاش</strong>
+          <div style="font-size:0.72rem; color:#94a3b8;">تحويل مباشر إلى شام كاش</div>
         </div>
       </div>
 
@@ -1635,7 +1635,7 @@
         <button id="tvShamSubmitBtn" type="button" class="btn btn-gold" onclick="ArenaApp.submitTopupVaultSham()">📋 نسخ المعرّف وتأكيد الطلب عبر واتساب</button>
       </div>
 
-      <button type="button" class="btn btn-blue" onclick="window.open('https://moaathallii-commits.github.io/-/', '_blank')">🛒 أو الشحن من محفظة متجر معاذ</button>
+      
     </div>
   </div>
 
@@ -1784,9 +1784,7 @@
       },
 
       openStoreTopupHint() {
-        if (confirm('لشحن عملات معاذ بالليرة السورية من محفظتك في متجر معاذ، هل تريد فتح المتجر الآن؟')) {
-          window.open('https://moaathallii-commits.github.io/-/', '_blank');
-        }
+        this.openTopupVault();
       },
 
       toast(msg) {
@@ -2134,7 +2132,7 @@
                 ? '<button class="btn btn-outline btn-sm" disabled>مفعّلة حالياً</button>'
                 : isUnlocked
                   ? `<button class="btn btn-gold btn-sm" onclick="ArenaApp.selectCharacter('${ch.id}')">اختيار</button>`
-                  : '<button class="btn btn-outline btn-sm" style="opacity:0.6;" disabled>🔒 متاح في متجر معاذ</button>'
+                  : '<button class="btn btn-outline btn-sm" style="opacity:0.6;" disabled>🔒 شخصية VIP حصرية</button>'
               }
             </div>
           `;
@@ -2456,7 +2454,7 @@
       async requestCashout(tierPts) {
         const res = await this.api('/bridge/cashout', { tierPts });
         if (res && res.ok) {
-          this.toast(`تم خصم ${tierPts} عملة بنجاح. سيُراجع السجل خلال ساعة وتُضاف لرصيدك في المتجر.`);
+          this.toast(`تم خصم ${tierPts} عملة بنجاح. سيُراجع طلب السحب ويُحوّل عبر شام كاش.`);
           this.syncProfile();
         }
       }
@@ -2994,7 +2992,7 @@
         if (eco.shamCashTopupEnabled) {
           btns.push({ text: '💳 شحن مباشر عبر شام كاش (1 ل.س = 1 عملة)', cls: 'btn-gold', onClick: () => this.openShamTopupModal() });
         }
-        btns.push({ text: '🛒 شحن من محفظة متجر معاذ', cls: 'btn-blue', onClick: () => window.open('https://moaathallii-commits.github.io/-/', '_blank') });
+        
         btns.push({ text: 'إغلاق', cls: 'btn-outline' });
         ArenaModal.show({
           theme: 'gold', icon: '💎', title: 'شحن عملات عالم تحديات معاذ',
@@ -3051,7 +3049,7 @@
 
         box.innerHTML = `
           <input type="number" id="customCashoutPts" min="${minC}" value="${Math.max(minC, 500)}" placeholder="المبلغ المراد سحبه (الحد الأدنى ${minC} ل.س)" />
-          <button class="btn btn-gold" onclick="ArenaApp.requestCustomCashout('store')">🛒 سحب إلى محفظة متجر معاذ</button>
+          
           ${shamOn ? `<button class="btn btn-blue" onclick="ArenaApp.openShamCashoutModal()">💳 سحب مباشر عبر شام كاش</button>` : ''}
           <div style="margin-top:14px;background:#070c18;border:1px solid rgba(56,189,248,0.28);border-radius:12px;padding:10px;">
             <div style="font-size:0.8rem;font-weight:800;color:#7dd3fc;margin-bottom:4px;">🔒 سجل الإيصالات المحمي على هاتفك</div>
@@ -3275,7 +3273,7 @@
         if (res && res.ok) {
           await ShamLedger.append({
             txId: res.txId,
-            kind: method === 'shamcash' ? 'سحب شام كاش' : 'سحب للمتجر',
+            kind: 'سحب شام كاش',
             amount: res.sypAmount || res.pts,
             shamCashId,
             createdAt: res.createdAt
@@ -3710,7 +3708,7 @@
         { icon: '🏰', title: 'اصعد البرج واهزم الزعماء التسعة!', desc: 'طابق المكعبات بسرعة، فعّل مهارة شخصيتك، وتجاوز الزعماء في الطوابق الحاسمة. احذر من «ظل البطل السابق» الذي يحرس الرقم القياسي!' },
         { icon: '⚔️', title: '3 ساحات تنافسية وجوائز بالليرة (1:1)', desc: 'اختر بين «كسر الرقم» للجائزة الكبرى الفورية، «الساحة الأسبوعية» لتصدر المراكز السبعة، أو «التحدي الدائم PvP» لصيد الجوائز والجماجم 💀!' },
         { icon: '🎁', title: 'متجر البرج + مسار 360 + دعوة الأصدقاء', desc: 'جهّز أداة واحدة تكتيكية (قنبلة / مدفع صف / جوكر)، افتح صناديق الاستفزاز، وشارك رابط دعوتك لتربح 5% من شحن أصدقائك الفعلي!' },
-        { icon: '💳', title: 'اقتصاد موحّد (1 ل.س = 1 عملة) وشام كاش', desc: 'كل عملة في اللعبة تساوي 1 ليرة سورية! يمكنك الشحن والسحب بسهولة وأمان عبر «شام كاش» أو محفظة «متجر معاذ» مع سجل إيصالات محمي على هاتفك.' }
+        { icon: '💳', title: 'اقتصاد موحّد (1 ل.س = 1 عملة) وشام كاش', desc: 'كل عملة في اللعبة تساوي 1 ليرة سورية! يمكنك الشحن والسحب بسهولة وأمان عبر «شام كاش» أو محفظة «عالم التحديات» مع سجل إيصالات محمي على هاتفك.' }
       ];
       if (origOpenOb) {
         ArenaApp._renderOnboardingSlide = function() {
@@ -5678,7 +5676,7 @@
             <div style="padding:18px;text-align:center;">
               <div style="font-size:2.2rem;margin-bottom:6px;">🔒</div>
               <h3 style="color:#fde047;">أحداث تحدي الإدارة مغلقة حالياً</h3>
-              <p style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">يتم تفعيل الأحداث الخاصة بالمناسبات من غرفة الإدارة في متجر معاذ.</p>
+              <p style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">يتم تفعيل الأحداث الخاصة بالمناسبات من الإدارة قريباً.</p>
             </div>
           `;
           return;

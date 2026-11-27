@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>404 Not Found</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Tahoma, sans-serif; }
+    body {
+      background: #060b16; color: #e2e8f0; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px;
+    }
+    .hidden { display: none !important; }
+    /* شاشة التمويه 404 */
+    #decoyScreen {
+      text-align: center; max-width: 380px; color: #64748b; user-select: none;
+    }
+    #decoyCode {
+      font-size: 4.5rem; font-weight: 900; color: #1e293b; letter-spacing: 4px; cursor: default;
+    }
+    /* بوابة الدخول السرية */
+    .box {
+      width: 100%; max-width: 560px;
+      background: linear-gradient(160deg, #0f172a, #070d19);
+      border: 1.5px solid rgba(250, 204, 21, 0.45);
+      border-radius: 18px; padding: 16px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+    }
+    h2, h3 { color: #fde047; margin-bottom: 10px; }
+    .hdr { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .tab-btn {
+      padding: 8px 4px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.25);
+      background: #0b1222; color: #cbd5e1; font-size: 0.74rem; font-weight: 800; cursor: pointer;
+    }
+    .tab-btn.active { background: linear-gradient(135deg, #fde047, #d97706); color: #111827; border-color: #fef08a; }
+    .card { background: rgba(15,23,42,0.88); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+    .card h4 { color: #7dd3fc; font-size: 0.85rem; margin-bottom: 8px; }
+    .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { background: #070c18; border: 1px solid rgba(250,204,21,0.28); border-radius: 10px; padding: 9px; text-align: center; }
+    .stat small { display: block; color: #94a3b8; font-size: 0.68rem; }
+    .stat strong { color: #4ade80; font-size: 0.95rem; }
+    .field { margin-bottom: 8px; }
+    .field label { display: block; font-size: 0.74rem; color: #cbd5e1; margin-bottom: 3px; font-weight: 700; }
+    input, select, textarea {
+      width: 100%; padding: 9px 10px; border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.4); background: #070c18; color: #fff; font-size: 0.84rem;
+    }
+    .check { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; margin: 6px 0; cursor: pointer; }
+    .check input { width: auto; }
+    .btn { padding: 9px 12px; border-radius: 10px; border: none; font-weight: 900; font-size: 0.82rem; cursor: pointer; }
+    .btn-gold { background: linear-gradient(135deg, #fde047, #d97706); color: #111827; width: 100%; }
+    .btn-green { background: #16a34a; color: #fff; }
+    .btn-red { background: #dc2626; color: #fff; }
+    .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid rgba(250,204,21,0.45); color: #fde047; }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.76rem; }
+    .row:first-of-type { border-top: none; }
+    .msg { padding: 8px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; margin-bottom: 10px; }
+    .msg.ok { background: rgba(34,197,94,0.16); border: 1px solid #22c55e; color: #86efac; }
+    .msg.err { background: rgba(239,68,68,0.16); border: 1px solid #ef4444; color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <!-- 1. شاشة التمويه لمنع معرفة وجود لوحة إدارة -->
+  <div id="decoyScreen">
+    <div id="decoyCode">404</div>
+    <p style="font-size:0.9rem; margin-top:6px;">Page not found</p>
+  </div>
+
+  <!-- 2. بوابة التحقق السرية -->
+  <div id="gateScreen" class="box hidden" style="max-width:380px;">
+    <h3 style="text-align:center;">🔐 التحقق الأمني</h3>
+    <div id="gateMsg" class="msg hidden"></div>
+    <div class="field">
+      <label>كلمة المرور الإدارية السرية</label>
+      <input type="password" id="adminPassInput" placeholder="••••••••••••" autocomplete="off" />
+    </div>
+    <button type="button" class="btn btn-gold" id="adminLoginBtn">دخول آمن</button>
+  </div>
+
+  <!-- 3. لوحة الإدارة المستقلة -->
+  <div id="dashScreen" class="box hidden">
+    <div class="hdr">
+      <h3 style="margin:0; font-size:1rem;">🛡️ إدارة عالم التحديات</h3>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="btn btn-outline" id="refreshBtn">🔄</button>
+        <button type="button" class="btn btn-red" id="logoutBtn">خروج</button>
+      </div>
+    </div>
+
+    <div id="dashMsg" class="msg hidden"></div>
+
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="overview">📊 الملخص</button>
+      <button type="button" class="tab-btn" data-tab="requests">💳 الطلبات (<span id="reqCnt">0</span>)</button>
+      <button type="button" class="tab-btn" data-tab="events">🎪 الأحداث</button>
+      <button type="button" class="tab-btn" data-tab="settings">⚙️ الإعدادات</button>
+    </div>
+
+    <div id="pane_overview">
+      <div class="grid2" style="margin-bottom:10px;">
+        <div class="stat"><small>إجمالي إيرادات الإدارة</small><strong id="stPts">0</strong></div>
+        <div class="stat"><small>المعادل بالليرة / الدولار</small><strong id="stSyp">0</strong></div>
+        <div class="stat"><small>عمولات الإحالة</small><strong id="stRef" style="color:#38bdf8;">0</strong></div>
+        <div class="stat"><small>التعزيز الديناميكي</small><strong id="stBoost" style="color:#fde047;">0%</strong></div>
+      </div>
+      <div class="card"><h4>🔒 الحسابات المجمدة</h4><div id="frozenBox"></div></div>
+      <div class="card"><h4>🚨 آخر التنبيهات الأمنية</h4><div id="alertsBox"></div></div>
+    </div>
+
+    <div id="pane_requests" class="hidden">
+      <div class="card"><h4>📥 طلبات شحن شام كاش المعلقة</h4><div id="topupsBox"></div></div>
+      <div class="card"><h4>📤 طلبات سحب شام كاش المعلقة</h4><div id="cashoutsBox"></div></div>
+    </div>
+
+    <div id="pane_events" class="hidden">
+      <div class="card">
+        <h4>🎪 إدارة أحداث التحدي (25 مناسبة)</h4>
+        <label class="check"><input type="checkbox" id="evEnabled" /> <span>تفعيل الحدث الإداري</span></label>
+        <div class="field"><label>المناسبة</label><select id="evSelect"></select></div>
+        <div class="field"><label>عنوان الحدث</label><input type="text" id="evTitle" /></div>
+        <div class="grid2">
+          <div class="field"><label>الجائزة الثابتة (عملة)</label><input type="number" id="evReward" value="1000" /></div>
+          <div class="field"><label>المدة (ساعات)</label><input type="number" id="evHours" value="168" /></div>
+        </div>
+        <div class="field"><label>شروط الفوز</label><textarea id="evRules" rows="2"></textarea></div>
+        <div class="grid2">
+          <button type="button" class="btn btn-gold" id="evSaveBtn">💾 حفظ وتفعيل</button>
+          <button type="button" class="btn btn-green" id="evSettleBtn">🏆 تصفية الحدث</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pane_settings" class="hidden">
+      <div class="card">
+        <h4>⚙️ الإعدادات العامة وشام كاش</h4>
+        <label class="check"><input type="checkbox" id="cfgKill" /> <span style="color:#fca5a5;">وضع الصيانة الطارئ</span></label>
+        <label class="check"><input type="checkbox" id="cfgShamIn" /> <span>تفعيل شحن شام كاش</span></label>
+        <label class="check"><input type="checkbox" id="cfgShamOut" /> <span>تفعيل سحب شام كاش</span></label>
+        <div class="field"><label>معرّف شام كاش الإدارة</label><input type="text" id="cfgShamId" /></div>
+        <div class="grid2">
+          <div class="field"><label>رسم كسر الرقم</label><input type="number" id="cfgRecFee" value="10" /></div>
+          <div class="field"><label>الحد الأدنى للسحب</label><input type="number" id="cfgMinOut" value="100" /></div>
+          <div class="field"><label>الحد الأدنى للشحن</label><input type="number" id="cfgMinIn" value="100" /></div>
+          <div class="field"><label>سعر الصرف (ل.س/$)</label><input type="number" id="cfgUsd" value="150" /></div>
+        </div>
+        <button type="button" class="btn btn-gold" id="cfgSaveBtn">💾 حفظ الإعدادات</button>
+      </div>
+      <div class="card">
+        <h4>📢 إعلان فوري في الشريط العلوي</h4>
+        <div class="field"><input type="text" id="bcText" placeholder="اكتب نص الإعلان..." /></div>
+        <div class="grid2">
+          <button type="button" class="btn btn-gold" id="bcSendBtn">نشر الإعلان</button>
+          <button type="button" class="btn btn-outline" id="bcClearBtn">إخفاء الإعلان</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
+    const TOKEN_KEY = 'mth_standalone_adm_tok';
+    const OCCASIONS_25 = [
+      { id: 'occ_01_grand_opening', name: 'الافتتاح الرسمي لعالم التحديات', kind: 'highest_score' },
+      { id: 'occ_02_ramadan_nights', name: 'ليالي رمضان المبارك', kind: 'cumulative_score' },
+      { id: 'occ_03_eid_fitr', name: 'مهرجان عيد الفطر السعيد', kind: 'highest_score' },
+      { id: 'occ_04_eid_adha', name: 'مهرجان عيد الأضحى المبارك', kind: 'pvp_wins' },
+      { id: 'occ_05_hijri_new_year', name: 'رأس السنة الهجرية', kind: 'bosses_defeated' },
+      { id: 'occ_06_gregorian_new_year', name: 'رأس السنة الميلادية', kind: 'highest_score' },
+      { id: 'occ_07_school_season', name: 'انطلاق الموسم الدراسي الجديد', kind: 'cumulative_score' },
+      { id: 'occ_08_exams_focus', name: 'تحدي التركيز والسرعة', kind: 'highest_score' },
+      { id: 'occ_09_spring_fest', name: 'مهرجان الربيع الذهبي', kind: 'bosses_defeated' },
+      { id: 'occ_10_summer_arena', name: 'بطولة الصيف الكبرى', kind: 'pvp_wins' },
+      { id: 'occ_11_national_day', name: 'اليوم الوطني', kind: 'highest_score' },
+      { id: 'occ_12_store_anniversary', name: 'ذكرى التأسيس', kind: 'cumulative_score' },
+      { id: 'occ_13_record_breakers', name: 'أسبوع كاسري الأرقام القياسية', kind: 'highest_score' },
+      { id: 'occ_14_combo_masters', name: 'بطولة أسياد الكومبو', kind: 'highest_score' },
+      { id: 'occ_15_bounty_hunters', name: 'سباق صيّادي الجماجم والمكافآت', kind: 'pvp_wins' },
+      { id: 'occ_16_boss_slayers', name: 'تحدي قاهرة الزعماء', kind: 'bosses_defeated' },
+      { id: 'occ_17_overdrive_week', name: 'أسبوع السرعة القصوى', kind: 'highest_score' },
+      { id: 'occ_18_titans_clash', name: 'صراع العمالقة', kind: 'pvp_wins' },
+      { id: 'occ_19_rising_stars', name: 'تحدي النجوم الصاعدة', kind: 'cumulative_score' },
+      { id: 'occ_20_weekend_royale', name: 'نهاية الأسبوع الملكية', kind: 'highest_score' },
+      { id: 'occ_21_crowning_night', name: 'ليلة التتويج الكبرى', kind: 'highest_score' },
+      { id: 'occ_22_friends_cup', name: 'كأس الأصدقاء والتحديات', kind: 'pvp_wins' },
+      { id: 'occ_23_double_rewards_fest', name: 'مهرجان الجوائز والمكافآت', kind: 'cumulative_score' },
+      { id: 'occ_24_throne_guardians', name: 'بطولة حراس العرش', kind: 'bosses_defeated' },
+      { id: 'occ_25_season_finale', name: 'الحدث الختامي للموسم', kind: 'highest_score' }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    let decoyTaps = 0, decoyTimer = null;
+    function revealGate() {
+      $('decoyScreen').classList.add('hidden');
+      if (sessionStorage.getItem(TOKEN_KEY)) {
+        loadDashboard();
+      } else {
+        $('gateScreen').classList.remove('hidden');
+      }
+    }
+
+    $('decoyCode').addEventListener('click', () => {
+      decoyTaps++;
+      clearTimeout(decoyTimer);
+      if (decoyTaps >= 5) { decoyTaps = 0; revealGate(); }
+      else decoyTimer = setTimeout(() => { decoyTaps = 0; }, 2500);
+    });
+
+    if (window.location.hash === '#mth-vault' || sessionStorage.getItem(TOKEN_KEY)) {
+      revealGate();
+    }
+
+    async function api(path, body = {}) {
+      const tok = sessionStorage.getItem(TOKEN_KEY) || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (tok) headers['Authorization'] = 'Bearer ' + tok;
+      const res = await fetch(WORKER_URL + path, { method: 'POST', headers, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || data.code || 'خطأ في الخادم');
+      return data;
+    }
+
+    function showMsg(elId, txt, isErr = false) {
+      const el = $(elId);
+      el.textContent = txt;
+      el.className = 'msg ' + (isErr ? 'err' : 'ok');
+    }
+
+    $('adminLoginBtn').addEventListener('click', async () => {
+      const pass = $('adminPassInput').value.trim();
+      if (!pass) return showMsg('gateMsg', 'أدخل كلمة المرور السرية.', true);
+      try {
+        const res = await api('/admin/login', { pass });
+        sessionStorage.setItem(TOKEN_KEY, res.adminToken);
+        $('adminPassInput').value = '';
+        $('gateScreen').classList.add('hidden');
+        loadDashboard();
+      } catch (e) {
+        showMsg('gateMsg', e.message, true);
+      }
+    });
+
+    $('logoutBtn').addEventListener('click', async () => {
+      try { await api('/admin/logout', {}); } catch (_) {}
+      sessionStorage.removeItem(TOKEN_KEY);
+      $('dashScreen').classList.add('hidden');
+      $('gateScreen').classList.add('hidden');
+      $('decoyScreen').classList.remove('hidden');
+      history.replaceState(null, '', window.location.pathname);
+    });
+
+    $('refreshBtn').addEventListener('click', loadDashboard);
+
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        ['overview', 'requests', 'events', 'settings'].forEach((t) => {
+          $('pane_' + t).classList.toggle('hidden', t !== btn.dataset.tab);
+        });
+      });
+    });
+
+    async function loadDashboard() {
+      $('dashScreen').classList.remove('hidden');
+      $('dashMsg').classList.add('hidden');
+      try {
+        const dash = await api('/admin/dashboard', {});
+        let evRes = null;
+        try { evRes = await api('/admin/event/status', {}); } catch (_) {}
+        const cfg = dash.config || {};
+        const pr = dash.adminProfit || {};
+        const topups = dash.pendingTopups || [];
+        const cashouts = dash.pendingCashouts || [];
+        const frozen = dash.frozenPlayers || [];
+        const alerts = dash.recentAlerts || [];
+
+        $('stPts').textContent = Number(pr.totalPts || 0).toLocaleString() + ' عملة';
+        $('stSyp').textContent = `${Number(pr.totalSyp || 0).toLocaleString()} ل.س ($${Number(pr.totalUsd || 0)})`;
+        $('stRef').textContent = Number(pr.referralPaidPts || 0).toLocaleString() + ' عملة';
+        $('stBoost').textContent = '+' + Number(cfg.recordDynamicBoostPct || 0) + '%';
+        $('reqCnt').textContent = topups.length + cashouts.length;
+
+        $('frozenBox').innerHTML = frozen.length
+          ? frozen.map((p) => `<div class="row"><span>${esc(p.displayName || p.phone)} (${esc(p.phone)})</span><button class="btn btn-outline" onclick="unfreeze('${esc(p.phone)}')">فك التجميد</button></div>`).join('')
+          : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد حسابات مجمدة.</div>';
+
+        $('alertsBox').innerHTML = alerts.slice(0, 6).length
+          ? alerts.slice(0, 6).map((a) => `<div class="row"><strong style="color:#fde047;">${esc(a.reason || 'تنبيه')}</strong><span>${esc(a.phone || '-')}</span></div>`).join('')
+          : '<div style="color:#94a3b8;font-size:0.75rem;">السجل نظيف.</div>';
+
+        $('topupsBox').innerHTML = topups.length
+          ? topups.map((t) => `<div class="row"><div><b>${esc(t.displayName || t.phone)}</b> (${esc(t.phone)})<br><span style="color:#4ade80;">${Number(t.sypAmount || 0).toLocaleString()} ل.س</span></div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resTopup('${esc(t.txId)}','approve')">قبول</button><button class="btn btn-red" onclick="resTopup('${esc(t.txId)}','reject')">رفض</button></div></div>`).join('')
+          : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات شحن معلقة.</div>';
+
+        $('cashoutsBox').innerHTML = cashouts.length
+          ? cashouts.map((c) => `<div class="row"><div><b>${esc(c.displayName || c.phone)}</b> (${esc(c.phone)})<br><span style="color:#38bdf8;">${Number(c.sypAmount || c.pts || 0).toLocaleString()} ل.س</span> • ${esc(c.shamCashId || '-')}</div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resCash('${esc(c.txId)}','approve')">اعتماد</button><button class="btn btn-red" onclick="resCash('${esc(c.txId)}','reject')">رفض</button></div></div>`).join('')
+          : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات سحب معلقة.</div>';
+
+        const ev = (evRes && evRes.event) || {};
+        $('evEnabled').checked = Boolean(ev.enabled);
+        $('evSelect').innerHTML = OCCASIONS_25.map((o, i) => `<option value="${i+1}" data-kind="${o.kind}" data-name="${esc(o.name)}" ${Number(ev.eventNumber || 1) === i + 1 ? 'selected' : ''}>#${i+1} - ${esc(o.name)}</option>`).join('');
+        $('evTitle').value = ev.title || OCCASIONS_25[0].name;
+        $('evReward').value = Number(ev.fixedRewardPts || 1000);
+        $('evRules').value = ev.rulesText || 'حقق أعلى إنجاز قبل انتهاء مدة الحدث.';
+
+        $('cfgKill').checked = Boolean(cfg.killSwitch);
+        $('cfgShamIn').checked = Boolean(cfg.shamCashTopupEnabled);
+        $('cfgShamOut').checked = Boolean(cfg.shamCashCashoutEnabled);
+        $('cfgShamId').value = cfg.adminShamCashId || '';
+        $('cfgRecFee').value = Number(cfg.recordEntryCostPts || 10);
+        $('cfgMinOut').value = Number(cfg.minCashoutPts || 100);
+        $('cfgMinIn').value = Number(cfg.minTopupSYP || 100);
+        $('cfgUsd').value = Number(cfg.usdToSypRate || 150);
+      } catch (e) {
+        if (String(e.message).includes('ADMIN_SESSION_EXPIRED') || String(e.message).includes('NO_ADMIN_TOKEN')) {
+          sessionStorage.removeItem(TOKEN_KEY);
+          $('dashScreen').classList.add('hidden');
+          $('gateScreen').classList.remove('hidden');
+          showMsg('gateMsg', 'انتهت الجلسة، أعد تسجيل الدخول.', true);
+        } else {
+          showMsg('dashMsg', e.message, true);
+        }
+      }
+    }
+
+    window.unfreeze = async (phone) => {
+      try { const r = await api('/admin/player/unfreeze', { phone }); showMsg('dashMsg', r.message); loadDashboard(); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    };
+    window.resTopup = async (txId, action) => {
+      try { const r = await api('/admin/topup/resolve', { txId, action }); showMsg('dashMsg', r.message); loadDashboard(); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    };
+    window.resCash = async (txId, action) => {
+      try { const r = await api('/admin/cashout/resolve', { txId, action }); showMsg('dashMsg', r.message); loadDashboard(); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    };
+
+    $('evSelect').addEventListener('change', () => {
+      const opt = $('evSelect').options[$('evSelect').selectedIndex];
+      if (opt) $('evTitle').value = opt.dataset.name || '';
+    });
+
+    $('evSaveBtn').addEventListener('click', async () => {
+      const sel = $('evSelect'), opt = sel.options[sel.selectedIndex];
+      const num = Number(sel.value || 1);
+      const hrs = Math.max(1, Number($('evHours').value || 168));
+      try {
+        const r = await api('/admin/event/config', {
+          enabled: $('evEnabled').checked, eventNumber: num,
+          occasionId: OCCASIONS_25[num - 1].id, title: $('evTitle').value.trim(),
+          kind: opt.dataset.kind, fixedRewardPts: Number($('evReward').value || 1000),
+          rulesText: $('evRules').value.trim(), endAt: Date.now() + hrs * 3600000
+        });
+        showMsg('dashMsg', r.message);
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('evSettleBtn').addEventListener('click', async () => {
+      try { const r = await api('/admin/event/settle', {}); showMsg('dashMsg', r.message); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('cfgSaveBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('/admin/config', {
+          killSwitch: $('cfgKill').checked,
+          shamCashTopupEnabled: $('cfgShamIn').checked,
+          shamCashCashoutEnabled: $('cfgShamOut').checked,
+          adminShamCashId: $('cfgShamId').value.trim(),
+          recordEntryCostPts: Number($('cfgRecFee').value || 10),
+          minCashoutPts: Number($('cfgMinOut').value || 100),
+          minTopupSYP: Number($('cfgMinIn').value || 100),
+          usdToSypRate: Number($('cfgUsd').value || 150)
+        });
+        showMsg('dashMsg', r.message);
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('bcSendBtn').addEventListener('click', async () => {
+      try { const r = await api('/admin/broadcast', { text: $('bcText').value.trim(), hours: 24 }); showMsg('dashMsg', r.message); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+    $('bcClearBtn').addEventListener('click', async () => {
+      try { const r = await api('/admin/broadcast', { clear: true }); showMsg('dashMsg', r.message); }
+      catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+  </script>
+</body>
+</html>

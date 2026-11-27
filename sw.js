@@ -6,7 +6,7 @@
  * - استثناء تام لـ workers.dev و firebaseio.com لمنع الغش
  */
 
-const CACHE_NAME = 'moaath-arena-smart-cache-v24';
+const CACHE_NAME = 'moaath-arena-smart-cache-v25';
 
 const CORE_ASSETS = [
   './',
@@ -85,7 +85,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.hostname.includes('workers.dev') || url.hostname.includes('firebaseio.com')) return;
+  if (url.hostname.includes('workers.dev') || url.hostname.includes('firebaseio.com') || url.pathname.includes('admin.html')) return;
 
   const isMedia = /\.(mp3|wav|ogg|png|jpg|jpeg|webp|svg|ico)$/i.test(url.pathname);
   if (isMedia) {
