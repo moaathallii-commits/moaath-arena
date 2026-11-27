@@ -456,33 +456,35 @@ export default {
         }
         switch (url.pathname) {
           case '/admin/dashboard':
-            return handleAdminDashboard(env, config);
+            return await handleAdminDashboard(env, config);
           case '/admin/config':
-            return handleAdminUpdateConfig(env, body);
+            return await handleAdminUpdateConfig(env, body);
           case '/admin/cashout/resolve':
-            return handleAdminResolveCashout(env, body);
+            return await handleAdminResolveCashout(env, body);
           case '/admin/player/unfreeze':
-            return handleAdminUnfreeze(env, body);
+            return await handleAdminUnfreeze(env, body);
           case '/admin/weekly/config':
-            return handleAdminWeeklyConfig(env, body);
+            return await handleAdminWeeklyConfig(env, body);
           case '/admin/weekly/settle':
-            return handleAdminWeeklySettle(env, body);
+            return await handleAdminWeeklySettle(env, body);
           case '/admin/frames/config':
-            return handleAdminFramesConfig(env, body);
+            return await handleAdminFramesConfig(env, body);
           case '/admin/frames/bulk':
-            return handleAdminFramesBulk(env, body, config);
+            return await handleAdminFramesBulk(env, body, config);
           case '/admin/broadcast':
-            return handleAdminBroadcast(env, body);
+            return await handleAdminBroadcast(env, body);
           case '/admin/player/trust':
-            return handleAdminPlayerTrust(env, body);
+            return await handleAdminPlayerTrust(env, body);
           case '/admin/topup/resolve':
-            return handleAdminResolveTopup(env, body);
+            return await handleAdminResolveTopup(env, body);
           case '/admin/records/reset':
-            return handleAdminResetRecord(env, body);
+            return await handleAdminResetRecord(env, body);
+          case '/admin/event/status':
+            return await handleEventStatus(env, null);
           case '/admin/event/config':
-            return handleAdminEventConfig(env, body);
+            return await handleAdminEventConfig(env, body);
           case '/admin/event/settle':
-            return handleAdminEventSettle(env);
+            return await handleAdminEventSettle(env);
           default:
             return jsonResponse({ code: 'ERR_404', message: 'مسار إدارة غير موجود' }, 404);
         }
@@ -494,37 +496,37 @@ export default {
 
       // ب-0) نقطة معاينة عامة لشاشة الدخول الأول (الجوائز الأسبوعية الحية)
       if (url.pathname === '/public/preview') {
-        return handlePublicPreview(env, config);
+        return await handlePublicPreview(env, config);
       }
 
       // ب) نقاط نهاية جسر متجر معاذ
       if (url.pathname === '/bridge/store-info') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
         if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return handleBridgeStoreInfo(env, storeAuth, config);
+        return await handleBridgeStoreInfo(env, storeAuth, config);
       }
 
       if (url.pathname === '/bridge/generate-bind-key') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
         if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return handleGenerateBindKey(env, storeAuth);
+        return await handleGenerateBindKey(env, storeAuth);
       }
 
       if (url.pathname === '/bridge/store-to-arena') {
         const storeAuth = await verifyStoreFirebaseToken(env, request);
         if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return handleStoreToArenaTransfer(env, storeAuth, body, config);
+        return await handleStoreToArenaTransfer(env, storeAuth, body, config);
       }
 
       // ج) نقاط نهاية تطبيق عالم التحديات (Arena PWA)
       if (url.pathname === '/auth/bind') {
-        return handleBindDevice(env, body, config);
+        return await handleBindDevice(env, body, config);
       }
       if (url.pathname === '/auth/register-shared') {
-        return handleSharedRegister(env, body, config);
+        return await handleSharedRegister(env, body, config);
       }
       if (url.pathname === '/auth/login-shared') {
-        return handleSharedLogin(env, body, config);
+        return await handleSharedLogin(env, body, config);
       }
 
       const authHeader = request.headers.get('Authorization') || '';
@@ -535,49 +537,49 @@ export default {
 
       switch (url.pathname) {
         case '/player/profile':
-          return handleProfile(env, player, config);
+          return await handleProfile(env, player, config);
         case '/character/select':
-          return handleSelectCharacter(env, player, body);
+          return await handleSelectCharacter(env, player, body);
         case '/shop/buy':
-          return handleShopBuy(env, player, body, config);
+          return await handleShopBuy(env, player, body, config);
         case '/cosmetic/equip':
-          return handleEquipCosmetic(env, player, body);
+          return await handleEquipCosmetic(env, player, body);
         case '/session/start':
-          return handleSessionStart(env, player, body, config);
+          return await handleSessionStart(env, player, body, config);
         case '/session/submit':
-          return handleSessionSubmit(env, player, body, config);
+          return await handleSessionSubmit(env, player, body, config);
         case '/weekly/status':
-          return handleWeeklyStatus(env, player);
+          return await handleWeeklyStatus(env, player);
         case '/pvp/list':
-          return handlePvpList(env, player, body);
+          return await handlePvpList(env, player, body);
         case '/pvp/bounty-leaders':
-          return handlePvpBountyLeaders(env);
+          return await handlePvpBountyLeaders(env);
         case '/pvp/cancel':
-          return handlePvpCancel(env, player, body);
+          return await handlePvpCancel(env, player, body);
         case '/pvp/prestige/equip':
-          return handleEquipPvpPrestige(env, player, body);
+          return await handleEquipPvpPrestige(env, player, body);
         case '/pvp/create':
-          return handlePvpCreate(env, player, body, config);
+          return await handlePvpCreate(env, player, body, config);
         case '/pvp/join':
-          return handlePvpJoin(env, player, body, config);
+          return await handlePvpJoin(env, player, body, config);
         case '/bridge/cashout':
-          return handleCashoutRequest(env, player, body, config);
+          return await handleCashoutRequest(env, player, body, config);
         case '/bridge/shamcash-topup-request':
-          return handleShamCashTopupRequest(env, player, body, config);
+          return await handleShamCashTopupRequest(env, player, body, config);
         case '/tower/streak/claim':
-          return handleTowerStreakClaim(env, player);
+          return await handleTowerStreakClaim(env, player);
         case '/tower/cosmetic/equip':
-          return handleTowerCosmeticEquip(env, player, body);
+          return await handleTowerCosmeticEquip(env, player, body);
         case '/tower/taunt/open-crate':
-          return handleOpenTauntCrate(env, player, body);
+          return await handleOpenTauntCrate(env, player, body);
         case '/tower/taunt/equip':
-          return handleEquipTaunt(env, player, body);
+          return await handleEquipTaunt(env, player, body);
         case '/tower/taunt/send':
-          return handleSendTaunt(env, player, body);
+          return await handleSendTaunt(env, player, body);
         case '/player/notifications/read':
-          return handleReadNotifications(env, player);
+          return await handleReadNotifications(env, player);
         case '/event/status':
-          return handleEventStatus(env, player);
+          return await handleEventStatus(env, player);
         default:
           return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
@@ -708,13 +710,15 @@ async function handleStoreToArenaTransfer(env, { phone }, { sypAmount, usdAmount
 
 async function handleAdminDashboard(env, config) {
   await processDueAutoCashouts(env, config);
-  const [cashouts, topups, alerts, players, adminStats] = await Promise.all([
+  const [cashouts, topups, alerts, players, adminStats, recordsRaw] = await Promise.all([
     fbGet(env, 'arena_world/pending_cashouts'),
     fbGet(env, 'arena_world/pending_topups'),
     fbGet(env, 'arena_world/admin_alerts'),
     fbGet(env, 'arena_world/players'),
-    fbGet(env, 'arena_world/admin_stats')
+    fbGet(env, 'arena_world/admin_stats'),
+    fbGet(env, 'arena_world/admin_records')
   ]);
+  const records = recordsRaw || {};
   const pendingTopups = topups
     ? Object.entries(topups).map(([txId, v]) => ({ txId, ...v })).filter((t) => t.status === 'pending').sort((a, b) => a.createdAt - b.createdAt)
     : [];
