@@ -1002,6 +1002,93 @@
     }
     body.beginner-ui .support-fab22 { display: none !important; }
 
+  
+    /* === Phase 23: Slower Clearer VFX, 7-Tab Bottom Dock & Clean Tower Workspace === */
+    #bottomDock {
+      grid-template-columns: repeat(7, 1fr) !important;
+      max-width: 680px !important;
+      padding: 5px 3px 8px !important;
+      gap: 1px !important;
+    }
+    #bottomDock .dock-btn {
+      font-size: 0.56rem !important;
+      padding: 4px 1px !important;
+      gap: 1px !important;
+    }
+    #bottomDock .dock-btn .dock-ico {
+      font-size: 1.02rem !important;
+    }
+
+    /* Hide redundant buttons/bars for cleaner UI */
+    #quickPlayBar18,
+    #modeRuleBar9,
+    #recordGapNudge9,
+    #pvpRevengeBox {
+      display: none !important;
+    }
+
+    .wk-rank-badge23 {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      font-weight: 900;
+      background: rgba(250, 204, 21, 0.16);
+      border: 1px solid rgba(250, 204, 21, 0.55);
+      color: #fde047;
+    }
+
+  
+    /* === Phase 24: Admin Events System Card, Badges & Modal === */
+    .admin-event-card24 {
+      background: linear-gradient(155deg, rgba(120, 53, 15, 0.35), rgba(15, 23, 42, 0.96));
+      border: 1.5px solid #f59e0b; border-radius: 18px;
+      padding: 12px; margin-bottom: 12px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+    }
+    .event-badge-img24 {
+      width: 52px; height: 52px; border-radius: 12px; object-fit: cover;
+      border: 1.5px solid #fde047; flex-shrink: 0;
+    }
+
+  
+    /* === Phase 25: Event History Archive & Winner Showcase === */
+    .ev-hist-card25 {
+      background: rgba(7, 12, 24, 0.9);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      border-radius: 12px; padding: 9px; margin-top: 8px; text-align: right;
+    }
+
+  
+    /* === Phase 27: Dedicated Events Tab (8-Tab Dock, Top Banner, Conditions, Flashy Reward, Timer, Standings & Admin Room) === */
+    #bottomDock {
+      grid-template-columns: repeat(8, 1fr) !important;
+      max-width: 760px !important;
+    }
+    #bottomDock .dock-btn {
+      font-size: 0.52rem !important;
+    }
+    .ev27-banner-box {
+      width: 100%; height: 150px; border-radius: 16px; overflow: hidden;
+      border: 1.5px solid rgba(250, 204, 21, 0.55);
+      background: radial-gradient(circle at 50% 0%, rgba(250,204,21,0.18), #070c18);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+    }
+    .ev27-banner-box img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .ev27-reward-flash {
+      background: linear-gradient(135deg, rgba(250,204,21,0.22), rgba(168,85,247,0.2), rgba(34,197,94,0.2));
+      border: 2px solid #fde047; border-radius: 16px; padding: 12px; text-align: center;
+      margin: 10px 0; box-shadow: 0 0 24px rgba(250,204,21,0.28);
+      animation: frRoyal 2.2s ease-in-out infinite;
+    }
+    .ev27-locked-box {
+      background: rgba(15, 23, 42, 0.94); border: 1.5px dashed rgba(244, 63, 94, 0.65);
+      border-radius: 18px; padding: 20px; text-align: center; margin-bottom: 12px;
+    }
+
   </style>
 </head>
 <body>
@@ -1235,6 +1322,51 @@
         </div>
       </div>
 
+
+      <!-- تبويب غرفة كسر الرقم العالمي -->
+      <div id="tab-record_room" class="hidden">
+        <div id="recordRoomMount23"></div>
+      </div>
+
+
+      <!-- تبويب الأحداث الإدارية المستقل -->
+      <div id="tab-events" class="hidden">
+        <div id="eventsTabBody27"></div>
+        <div id="adminEventControlRoom27" class="card hidden" style="border-color:#38bdf8;">
+          <h3 style="color:#38bdf8;">🎛️ غرفة تحكم الإدارة المستقلة للأحداث</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
+            <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.toggleEventRoomLock27(true)">🔓 تفعيل التبويب</button>
+            <button type="button" class="btn btn-outline btn-sm" style="margin:0; border-color:#f43f5e; color:#fda4af;" onclick="ArenaApp.toggleEventRoomLock27(false)">🔒 قفل التبويب</button>
+          </div>
+          <label style="font-size:0.74rem; color:#cbd5e1; display:block; margin-bottom:4px;">🖼️ رفع صورة الحدث (الثلث العلوي) أو لصق رابط صورة:</label>
+          <input type="file" id="aeBannerFile27" accept="image/*" style="font-size:0.76rem; padding:6px;" onchange="ArenaApp.handleBannerFileUpload27(this)" />
+          <input type="text" id="aeBannerUrl27" dir="ltr" placeholder="رابط صورة الحدث (أو يُعبّأ تلقائياً عند الرفع)" />
+          <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:0.78rem; font-weight:900; color:#fde047; margin-bottom:4px;">اختر من الـ 25 مناسبة المعتمدة:</div>
+            <select id="ae27OccasionSel"></select>
+            <input type="number" id="ae27NumberInp" min="1" max="25" value="1" placeholder="رقم الحدث (1 - 25)" />
+            <input type="text" id="ae27TitleInp" placeholder="اسم الحدث (يُملأ تلقائياً أو عدّله)" />
+            <select id="ae27TypeInp">
+              <option value="highest_score">أعلى نتيجة خلال فترة الحدث</option>
+              <option value="pvp_wins">أكبر عدد انتصارات PvP</option>
+              <option value="bosses_defeated">أكثر زعماء مهزومين في البرج</option>
+              <option value="cumulative_score">أعلى مجموع نقاط تراكمي</option>
+            </select>
+            <select id="ae27CategoryInp">
+              <option value="open">التصنيف: عام مفتوح للجميع</option>
+              <option value="beginner">التصنيف: الصاعدون والمبتدئون</option>
+              <option value="pro">التصنيف: المحترفون</option>
+            </select>
+            <input type="number" id="ae27RewardInp" min="0" value="2000" placeholder="المكافأة المالية الثابتة (عملة)" />
+            <input type="number" id="ae27DaysInp" min="1" max="90" value="14" placeholder="مدة الحدث بالأيام" />
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">
+              <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.publishEvent27()">🚀 حفظ وإطلاق الحدث</button>
+              <button type="button" class="btn btn-blue btn-sm" style="margin:0;" onclick="ArenaApp.settleAdminEvent24()">🏁 إنهاء وتوزيع الجوائز</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- التبويب 2: البطولات الأسبوعية المفصّلة -->
       <div id="tab-weekly" class="hidden">
         <div class="filter-row">
@@ -1362,10 +1494,13 @@
     </section>
   </main>
 
-  <!-- شريط التنقل السفلي الزجاجي الثابت -->
+  <!-- شريط التنقل السفلي الزجاجي الثابت (8 أقسام شاملة الأحداث) -->
   <nav id="bottomDock" class="bottom-dock hidden">
     <button class="dock-btn active" data-tab="home" onclick="ArenaApp.switchTab('home')"><span class="dock-ico">🏠</span><span>الرئيسية</span></button>
     <button class="dock-btn" data-tab="streak" onclick="ArenaApp.switchTab('streak')"><span class="dock-ico">🔥</span><span>مسار 360</span></button>
+    <button class="dock-btn" data-tab="record_room" onclick="ArenaApp.switchTab('record_room')"><span class="dock-ico">👑</span><span>كسر الرقم</span></button>
+    <button class="dock-btn" data-tab="weekly" onclick="ArenaApp.switchTab('weekly')"><span class="dock-ico">🏆</span><span>الأسبوعية</span></button>
+    <button class="dock-btn" data-tab="events" onclick="ArenaApp.switchTab('events')"><span class="dock-ico">🎪</span><span>الأحداث</span></button>
     <button class="dock-btn" data-tab="pvp" onclick="ArenaApp.switchTab('pvp')"><span class="dock-ico">⚔️</span><span>PvP</span><span id="pvpCountBadge" class="dock-badge hidden">0</span></button>
     <button class="dock-btn" data-tab="shop" onclick="ArenaApp.switchTab('shop')"><span class="dock-ico">🛒</span><span>المتجر</span></button>
     <button class="dock-btn" data-tab="profile" onclick="ArenaApp.switchTab('profile')"><span class="dock-ico">👤</span><span>ملفي</span></button>
@@ -1579,6 +1714,41 @@
     </div>
   </div>
 
+
+  <!-- نافذة أحداث تحدي الإدارة (للاعبين وللإدارة) -->
+  <div id="adminEventModal24" class="overlay hidden" style="z-index:2650;">
+    <div class="vault-modal-box" style="border-color:#f59e0b;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="color:#fde047; font-size:0.98rem;">🎪 أحداث تحدي الإدارة</strong>
+        <button type="button" class="ws-back-btn" style="padding:4px 10px;" onclick="document.getElementById('adminEventModal24').classList.add('hidden')">✕</button>
+      </div>
+      <div id="adminEventPlayerView24"></div>
+      <div id="adminEventCreatorBox24" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.12);">
+        <div style="font-size:0.82rem; font-weight:900; color:#4ade80; margin-bottom:6px;">🛠️ إنشاء / تحديث حدث إداري جديد</div>
+        <input type="number" id="aeNumberInp24" min="1" value="1" placeholder="رقم الحدث (مثال: 1)" />
+        <select id="aeOccasionSel24"></select>
+        <input type="text" id="aeTitleInp24" placeholder="اسم الحدث المخصص (اختياري)" />
+        <select id="aeTypeInp24">
+          <option value="highest_score">أعلى نتيجة خلال فترة الحدث</option>
+          <option value="pvp_wins">أكبر عدد انتصارات PvP</option>
+          <option value="bosses_defeated">أكثر زعماء مهزومين في البرج</option>
+          <option value="cumulative_score">أعلى مجموع نقاط تراكمي</option>
+        </select>
+        <select id="aeCategoryInp24">
+          <option value="open">التصنيف: عام مفتوح للجميع</option>
+          <option value="beginner">التصنيف: الصاعدون والمبتدئون</option>
+          <option value="pro">التصنيف: المحترفون</option>
+        </select>
+        <input type="number" id="aeRewardInp24" min="0" value="1000" placeholder="المكافأة المالية الثابتة (عملة)" />
+        <input type="number" id="aeDaysInp24" min="1" max="90" value="7" placeholder="عدد أيام التحدي (أسبوع 7 / شهر 30)" />
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">
+          <button type="button" class="btn btn-gold btn-sm" style="margin:0;" onclick="ArenaApp.saveAdminEvent24()">🚀 إطلاق الحدث</button>
+          <button type="button" class="btn btn-blue btn-sm" style="margin:0;" onclick="ArenaApp.settleAdminEvent24()">🏁 إنهاء وتوزيع الجوائز</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- شاشة الطوارئ -->
   <div id="maintenanceOverlay" class="overlay hidden">
     <h1 style="color: var(--gold-light); margin-bottom: 12px;">⚙️ قيد التطوير</h1>
@@ -1600,6 +1770,7 @@
   <script src="./js/tower_match/tower_board.js"></script>
   <script src="./js/tower_match/tower_engine.js"></script>
   <script src="./js/tower_match/tower_ui.js"></script>
+  <script src="./js/admin_events_25.js"></script>
 
   <script>
     const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
@@ -5133,7 +5304,7 @@
           if (!this.ensureCanvas()) return;
           const cx = x || window.innerWidth * 0.5;
           const cy = y || window.innerHeight * 0.58;
-          this.rings.push({ x: cx, y: cy, r: 8, maxR: 72, color, alpha: 0.9 });
+          this.rings.push({ x: cx, y: cy, r: 8, maxR: 130, color, alpha: 0.9 });
           for (let i = 0; i < count; i++) {
             const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
             const spd = 2.5 + Math.random() * 6.5;
@@ -5141,10 +5312,10 @@
               x: cx, y: cy,
               vx: Math.cos(ang) * spd,
               vy: Math.sin(ang) * spd - 1.5,
-              size: 3 + Math.random() * 4.5,
+              size: 6 + Math.random() * 6.5,
               color: i % 3 === 0 ? '#ffffff' : color,
               alpha: 1,
-              decay: 0.026 + Math.random() * 0.018
+              decay: 0.013 + Math.random() * 0.008
             });
           }
           this.startLoop();
@@ -5153,7 +5324,7 @@
         spawnLaser(y, color = '#38bdf8') {
           if (!this.ensureCanvas()) return;
           const ly = y || window.innerHeight * 0.58;
-          this.beams.push({ y: ly, color, alpha: 1, width: 10 });
+          this.beams.push({ y: ly, color, alpha: 1, width: 22 });
           this.startLoop();
         },
 
@@ -5188,7 +5359,7 @@
             for (let i = this.rings.length - 1; i >= 0; i--) {
               const rg = this.rings[i];
               rg.r += (rg.maxR - rg.r) * 0.22;
-              rg.alpha -= 0.055;
+              rg.alpha -= 0.024;
               if (rg.alpha <= 0.02) { this.rings.splice(i, 1); continue; }
               ctx.save();
               ctx.globalAlpha = Math.max(0, rg.alpha);
@@ -5202,7 +5373,7 @@
 
             for (let i = this.beams.length - 1; i >= 0; i--) {
               const bm = this.beams[i];
-              bm.alpha -= 0.065;
+              bm.alpha -= 0.028;
               if (bm.alpha <= 0.02) { this.beams.splice(i, 1); continue; }
               ctx.save();
               ctx.globalAlpha = Math.max(0, bm.alpha);
@@ -5452,6 +5623,552 @@
           document.body.appendChild(btn);
         }
         return res;
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 23: إبطاء ووضوح الانفجار والليزر + ضبط دقات القلب + شريط الـ 7 أقسام + شعارات متصدر الأسبوع
+    // ========================================================================
+    (function extendArenaAppPhase23() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Support 7 tabs including 'record_room' seamlessly
+      const origSwitch23 = ArenaApp.switchTab.bind(ArenaApp);
+      ArenaApp.switchTab = function(tab) {
+        const rr = document.getElementById('tab-record_room');
+        if (rr) rr.classList.toggle('hidden', tab !== 'record_room');
+
+        if (tab === 'record_room') {
+          ['home', 'weekly', 'pvp', 'shop', 'profile', 'streak'].forEach((t) => {
+            const el = document.getElementById(`tab-${t}`);
+            if (el) el.classList.add('hidden');
+          });
+          document.querySelectorAll('.dock-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === 'record_room'));
+          this.mountRecordRoom23();
+          return;
+        }
+        origSwitch23(tab);
+      };
+
+      ArenaApp.mountRecordRoom23 = function() {
+        const mount = document.getElementById('recordRoomMount23');
+        const towerCard = document.querySelector('#tab-home .hero-game-card.tower');
+        if (!mount || !towerCard) return;
+        towerCard.classList.remove('hidden');
+        const wkBtn = towerCard.querySelector('.btn-blue');
+        if (wkBtn) wkBtn.classList.add('hidden');
+        if (towerCard.parentElement !== mount) {
+          mount.appendChild(towerCard);
+        }
+      };
+
+      // Hide #roomSwitchBar since navigation is now directly in the 7-item bottom dock
+      const origSync23 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync23(...args);
+        document.getElementById('roomSwitchBar')?.remove();
+        const activeTabBtn = document.querySelector('#bottomDock .dock-btn.active');
+        if (activeTabBtn && activeTabBtn.dataset.tab === 'record_room') {
+          this.mountRecordRoom23();
+        }
+        return res;
+      };
+
+      // 2. Add weekly rank badges ("متصدر الأسبوع #1", "وصيف الأسبوع #2"...) to Podium & Weekly table
+      const origRenderPodium23 = ArenaApp.renderRoyalPodium.bind(ArenaApp);
+      ArenaApp.renderRoyalPodium = function() {
+        origRenderPodium23();
+        const w = this.weeklyData && this.weeklyData[this.podiumGame];
+        if (!w || !Array.isArray(w.top7)) return;
+        const slots = document.querySelectorAll('#royalPodiumStage .podium-slot');
+        const order = [1, 0, 2];
+        slots.forEach((slotEl, sIdx) => {
+          const rIdx = order[sIdx];
+          const row = w.top7[rIdx];
+          if (row && !slotEl.querySelector('.wk-rank-badge23')) {
+            const badgeDiv = document.createElement('div');
+            badgeDiv.className = 'wk-rank-badge23';
+            badgeDiv.textContent = row.rankBadge || `#${row.rank}`;
+            const prizeEl = slotEl.querySelector('.podium-prize');
+            if (prizeEl) slotEl.insertBefore(badgeDiv, prizeEl);
+          }
+        });
+      };
+
+      // 3. Synchronized & non-overlapping heartbeat audio (once per 950ms only when timeWarning fires)
+      if (typeof MythicFX !== 'undefined') {
+        MythicFX._lastBeatAt = 0;
+        MythicFX.playHeartbeat = function() {
+          const now = Date.now();
+          if (now - this._lastBeatAt < 950) return;
+          this._lastBeatAt = now;
+          this.tone(110, 0.11, 'sine', 0.12, 0);
+          this.tone(92, 0.13, 'triangle', 0.1, 0.16);
+        };
+      }
+
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origEmit23 = TEProto._emit;
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit23.apply(this, arguments);
+          if (ev === 'timeWarning' && typeof MythicFX !== 'undefined' && MythicFX.playHeartbeat) {
+            MythicFX.playHeartbeat();
+          }
+          return r;
+        };
+      }
+
+      // 4. Slower, bolder, more readable explosion & laser beams over the board
+      setTimeout(() => {
+        const jc = document.getElementById('juiceCanvas20');
+        if (jc && jc.parentElement) {
+          jc.style.zIndex = '2300000';
+        }
+      }, 400);
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 24: واجهة أحداث تحدي الإدارة (اللاعب + الإدارة)
+    // ========================================================================
+    (function extendArenaAppPhase24() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      const OCCASIONS_25 = [
+        'الافتتاح الرسمي لعالم تحديات معاذ',
+        'ليالي رمضان المبارك',
+        'تحدي عيد الفطر السعيد',
+        'تحدي عيد الأضحى المبارك',
+        'رأس السنة الهجرية',
+        'رأس السنة الميلادية',
+        'بداية الموسم الدراسي الجديد',
+        'تحدي التركيز السريع',
+        'عطلة الربيع',
+        'مهرجان الصيف الذهبي',
+        'اليوم الوطني / يوم التأسيس',
+        'ذكرى انطلاق متجر معاذ',
+        'أسبوع كاسري الأرقام القياسية',
+        'بطولة أسياد الكومبو',
+        'سباق صيّادي الجماجم (PvP)',
+        'تحدي قاهرة الزعماء',
+        'أسبوع السرعة القصوى',
+        'تحدي العمالقة',
+        'تحدي المبتدئين والصاعدين',
+        'نهاية الأسبوع الملكية',
+        'ليلة التتويج الكبرى',
+        'تحدي الأصدقاء والفرق',
+        'مهرجان المكافآت المضاعفة',
+        'بطولة حراس العرش',
+        'الحدث الختامي للموسم'
+      ];
+
+      ArenaApp.renderEventCardOnHome24 = function() {
+        const homeTab = document.getElementById('tab-home');
+        const evPack = this.profile && this.profile.adminEvent;
+        const ev = evPack && evPack.event;
+        if (!homeTab || !ev) return;
+
+        let card = document.getElementById('adminEventCard24');
+        if (!card) {
+          card = document.createElement('div');
+          card.id = 'adminEventCard24';
+          card.className = 'admin-event-card24';
+          const compBar = homeTab.querySelector('.companion-bar');
+          if (compBar && compBar.nextSibling) homeTab.insertBefore(card, compBar.nextSibling);
+          else homeTab.appendChild(card);
+        }
+
+        const excl = ev.exclusiveReward || {};
+        const typeNames = {
+          highest_score: 'أعلى نتيجة',
+          pvp_wins: 'أكبر عدد فوز PvP',
+          bosses_defeated: 'قهر الزعماء',
+          cumulative_score: 'مجموع النقاط'
+        };
+        const daysLeft = Math.max(0, Math.ceil((Number(ev.endAt || 0) - Date.now()) / 86400000));
+
+        card.innerHTML = `
+          <div style="display:flex; gap:10px; align-items:center;">
+            <img src="${excl.badgeFile || './assets/event_badges/event_badge_01_opening.jpg'}" class="event-badge-img24" alt="${excl.badgeName || 'شارة الحدث'}" onerror="this.src='./game_tower.png'" />
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
+                <strong style="color:#fde047; font-size:0.86rem;">🎪 الحدث #${ev.eventNumber || 1}: ${ev.title}</strong>
+                <span style="font-size:0.68rem; color:#7dd3fc; font-weight:800;">⏳ ${daysLeft}ي</span>
+              </div>
+              <div style="font-size:0.72rem; color:#cbd5e1; margin-top:2px;">
+                النوع: <b>${typeNames[ev.type] || ev.type}</b> • الجائزة الثابتة: <b style="color:#4ade80;">${Number(ev.fixedRewardPts || 0).toLocaleString()} عملة</b>
+              </div>
+              <div style="font-size:0.68rem; color:#fde047; margin-top:2px;">
+                🎁 حصري: ${excl.badgeName || ''} + ${excl.frameName || ''}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-gold btn-sm" style="margin-top:8px;" onclick="ArenaApp.openAdminEventModal24()">🏅 عرض لوحة الحدث والمكافآت</button>
+        `;
+      };
+
+      ArenaApp.openAdminEventModal24 = async function() {
+        const sel = document.getElementById('aeOccasionSel24');
+        if (sel && sel.options.length === 0) {
+          sel.innerHTML = OCCASIONS_25.map((o, idx) => `<option value="${o}">#${idx + 1} — ${o}</option>`).join('');
+        }
+        const isAdmin = String((this.profile && this.profile.phone) || '') === '0965461504';
+        document.getElementById('adminEventCreatorBox24')?.classList.toggle('hidden', !isAdmin);
+
+        const res = await this.api('/event/status');
+        const pView = document.getElementById('adminEventPlayerView24');
+        if (pView && res && res.event) {
+          const ev = res.event;
+          const excl = ev.exclusiveReward || {};
+          const rows = (res.leaderboard || []).map((r) => `
+            <div class="stat-row" style="padding:5px 7px; border-radius:8px; background:${r.isMe ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.03)'};">
+              <span><b>#${r.rank}</b> ${r.displayName}</span>
+              <strong style="color:#fde047;">${Number(r.metricValue || 0).toLocaleString()}</strong>
+            </div>
+          `).join('') || '<div style="font-size:0.74rem; color:#94a3b8;">لا توجد مشاركات مسجلة بعد في هذا الحدث.</div>';
+
+          pView.innerHTML = `
+            <div style="background:#070c18; border:1px solid rgba(245,158,11,0.4); border-radius:14px; padding:10px; margin-bottom:10px;">
+              <div style="font-size:0.9rem; font-weight:900; color:#fde047;">الحدث #${ev.eventNumber}: ${ev.title}</div>
+              <div style="font-size:0.74rem; color:#cbd5e1; margin-top:3px;">المكافأة المالية الثابتة: <b style="color:#4ade80;">${Number(ev.fixedRewardPts || 0).toLocaleString()} عملة</b> • المدة: <b>${ev.durationDays} يوم</b></div>
+              <div style="font-size:0.72rem; color:#7dd3fc; margin-top:3px;">مكافآت الفائزين الحصرية: <b>${excl.badgeName}</b> + <b>${excl.frameName}</b></div>
+              <div style="font-size:0.74rem; color:#fde047; margin-top:4px;">ترتيبك الحالي: <b>${res.myRank ? '#' + res.myRank : 'غير مصنّف بعد'}</b> (رصيدك بالحدث: <b>${Number(res.myValue || 0).toLocaleString()}</b>)</div>
+            </div>
+            <div style="font-size:0.78rem; font-weight:900; color:#fde047; margin-bottom:4px;">👑 متصدرو الحدث</div>
+            ${rows}
+          `;
+        }
+        document.getElementById('adminEventModal24')?.classList.remove('hidden');
+      };
+
+      ArenaApp.saveAdminEvent24 = async function() {
+        const eventNumber = Number(document.getElementById('aeNumberInp24')?.value || 1);
+        const occasion = document.getElementById('aeOccasionSel24')?.value || OCCASIONS_25[0];
+        const customTitle = document.getElementById('aeTitleInp24')?.value.trim() || '';
+        const type = document.getElementById('aeTypeInp24')?.value || 'highest_score';
+        const category = document.getElementById('aeCategoryInp24')?.value || 'open';
+        const fixedRewardPts = Number(document.getElementById('aeRewardInp24')?.value || 1000);
+        const durationDays = Number(document.getElementById('aeDaysInp24')?.value || 7);
+
+        const res = await this.api('/admin/event/create', {
+          eventNumber,
+          occasion,
+          title: customTitle || occasion,
+          type,
+          category,
+          fixedRewardPts,
+          durationDays,
+          resetEntries: true
+        });
+        if (res && res.ok) {
+          this.toast(res.message);
+          await this.syncProfile();
+          this.openAdminEventModal24();
+        }
+      };
+
+      ArenaApp.settleAdminEvent24 = async function() {
+        const res = await this.api('/admin/event/settle', {});
+        if (res && res.ok) {
+          this.toast(res.message);
+          await this.syncProfile();
+          this.openAdminEventModal24();
+        }
+      };
+
+      const origSync24 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const r = await origSync24(...args);
+        if (this.profile) this.renderEventCardOnHome24();
+        return r;
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 25: أرشيف الأحداث الإدارية السابقة وسجل الفائزين والأوسمة
+    // ========================================================================
+    (function extendArenaAppPhase25() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      ArenaApp.toggleEventHistory25 = async function() {
+        let box = document.getElementById('adminEventHistoryBox25');
+        const pView = document.getElementById('adminEventPlayerView24');
+        if (!pView) return;
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'adminEventHistoryBox25';
+          pView.parentElement.insertBefore(box, pView.nextSibling);
+        }
+        if (!box.classList.contains('hidden') && box.innerHTML.trim() !== '') {
+          box.classList.add('hidden');
+          return;
+        }
+        box.innerHTML = '<div style="font-size:0.74rem;color:#94a3b8;text-align:center;padding:6px;">جاري تحميل سجل الأحداث السابقة...</div>';
+        box.classList.remove('hidden');
+
+        const res = await this.api('/event/history');
+        const list = (res && Array.isArray(res.history)) ? res.history : [];
+        if (list.length === 0) {
+          box.innerHTML = '<div class="ev-hist-card25" style="font-size:0.74rem;color:#94a3b8;text-align:center;">لا توجد أحداث مغلقة مسجلة في الأرشيف بعد.</div>';
+          return;
+        }
+        box.innerHTML = `<div style="font-size:0.78rem;font-weight:900;color:#7dd3fc;margin-top:10px;">📜 أرشيف الأحداث السابقة (${list.length})</div>` +
+          list.map((h) => {
+            const wRows = (h.winners || []).map((w) =>
+              `<div class="stat-row" style="font-size:0.72rem;"><span>#${w.rank} ${w.displayName}</span><strong style="color:#4ade80;">+${Number(w.prizeCoins || 0).toLocaleString()} عملة</strong></div>`
+            ).join('') || '<div style="font-size:0.7rem;color:#94a3b8;">لم تُسجّل مشاركات</div>';
+            return `
+              <div class="ev-hist-card25">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="color:#fde047;font-size:0.8rem;">الحدث #${h.eventNumber}: ${h.title}</strong>
+                  <span style="font-size:0.68rem;color:#94a3b8;">${Number(h.fixedRewardPts || 0).toLocaleString()} عملة</span>
+                </div>
+                <div style="margin-top:4px;">${wRows}</div>
+              </div>
+            `;
+          }).join('');
+      };
+
+      const origOpenEv24 = ArenaApp.openAdminEventModal24 ? ArenaApp.openAdminEventModal24.bind(ArenaApp) : null;
+      if (origOpenEv24) {
+        ArenaApp.openAdminEventModal24 = async function() {
+          await origOpenEv24();
+          const pView = document.getElementById('adminEventPlayerView24');
+          if (pView && !document.getElementById('evHistBtn25')) {
+            const btn = document.createElement('button');
+            btn.id = 'evHistBtn25';
+            btn.type = 'button';
+            btn.className = 'btn btn-outline btn-sm';
+            btn.textContent = '📜 عرض أرشيف الأحداث السابقة والفائزين';
+            btn.onclick = () => this.toggleEventHistory25();
+            pView.appendChild(btn);
+          }
+          document.getElementById('adminEventHistoryBox25')?.classList.add('hidden');
+        };
+      }
+    })();
+
+  
+      (function bind25Presets() {
+        const origOpen24 = ArenaApp.openAdminEventModal24 ? ArenaApp.openAdminEventModal24.bind(ArenaApp) : null;
+        if (!origOpen24) return;
+        ArenaApp.openAdminEventModal24 = async function() {
+          await origOpen24();
+          const sel = document.getElementById('aeOccasionSel24');
+          const list = window.MOAATH_ADMIN_EVENTS_25 || [];
+          if (sel && list.length && !sel._p26Bound) {
+            sel._p26Bound = true;
+            sel.innerHTML = list.map((ev) => `<option value="${ev.title}">#${ev.eventNumber} — ${ev.title} (${ev.defaultRewardPts} عملة • ${ev.defaultDays}ي)</option>`).join('');
+            sel.addEventListener('change', () => {
+              const found = list.find((x) => x.title === sel.value);
+              if (!found) return;
+              const numInp = document.getElementById('aeNumberInp24');
+              const typeInp = document.getElementById('aeTypeInp24');
+              const catInp = document.getElementById('aeCategoryInp24');
+              const rewInp = document.getElementById('aeRewardInp24');
+              const daysInp = document.getElementById('aeDaysInp24');
+              if (numInp) numInp.value = found.eventNumber;
+              if (typeInp) typeInp.value = found.type;
+              if (catInp) catInp.value = found.category;
+              if (rewInp) rewInp.value = found.defaultRewardPts;
+              if (daysInp) daysInp.value = found.defaultDays;
+            });
+          }
+        };
+      })();
+
+  
+    // ========================================================================
+    // المرحلة 27: تبويب الأحداث المستقل + غرفة تحكم الإدارة + الثلث العلوي وشروط الفوز والمكافأة والعدّاد والمتصدرين
+    // ========================================================================
+    (function extendArenaAppPhase27() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      const origSwitch27 = ArenaApp.switchTab.bind(ArenaApp);
+      ArenaApp.switchTab = function(tab) {
+        const evTab = document.getElementById('tab-events');
+        if (evTab) evTab.classList.toggle('hidden', tab !== 'events');
+        if (tab === 'events') {
+          ['home', 'weekly', 'pvp', 'shop', 'profile', 'streak', 'record_room'].forEach((t) => {
+            const el = document.getElementById(`tab-${t}`);
+            if (el) el.classList.add('hidden');
+          });
+          document.querySelectorAll('.dock-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === 'events'));
+          this.renderEventsTab27();
+          return;
+        }
+        origSwitch27(tab);
+      };
+
+      ArenaApp.handleBannerFileUpload27 = function(input) {
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const urlInp = document.getElementById('aeBannerUrl27');
+          if (urlInp && typeof reader.result === 'string') {
+            urlInp.value = reader.result.slice(0, 380);
+            this.toast('🖼️ تم تجهيز الصورة بنجاح!');
+          }
+        };
+        reader.readAsDataURL(file);
+      };
+
+      ArenaApp.toggleEventRoomLock27 = async function(enabled) {
+        const bannerImageUrl = document.getElementById('aeBannerUrl27')?.value.trim() || '';
+        const res = await this.api('/admin/event/toggle', { enabled: Boolean(enabled), bannerImageUrl });
+        if (res && res.ok) {
+          this.toast(res.message);
+          await this.syncProfile();
+          this.renderEventsTab27();
+        }
+      };
+
+      ArenaApp._populate25Select27 = function(ev) {
+        const sel = document.getElementById('ae27OccasionSel');
+        const list = window.MOAATH_ADMIN_EVENTS_25 || [];
+        if (!sel || !list.length) return;
+        if (sel.options.length === 0) {
+          sel.innerHTML = list.map((item) => `<option value="${item.eventNumber}">#${item.eventNumber} — ${item.title} (${item.defaultRewardPts} عملة • ${item.defaultDays}ي)</option>`).join('');
+          sel.addEventListener('change', () => {
+            const found = list.find((x) => String(x.eventNumber) === String(sel.value));
+            if (!found) return;
+            document.getElementById('ae27NumberInp').value = found.eventNumber;
+            document.getElementById('ae27TitleInp').value = found.title;
+            document.getElementById('ae27TypeInp').value = found.type;
+            document.getElementById('ae27CategoryInp').value = found.category;
+            document.getElementById('ae27RewardInp').value = found.defaultRewardPts;
+            document.getElementById('ae27DaysInp').value = found.defaultDays;
+          });
+        }
+        if (ev && ev.eventNumber) {
+          sel.value = String(ev.eventNumber);
+          document.getElementById('ae27NumberInp').value = ev.eventNumber;
+          document.getElementById('ae27TitleInp').value = ev.title || '';
+          document.getElementById('ae27TypeInp').value = ev.type || 'highest_score';
+          document.getElementById('ae27CategoryInp').value = ev.category || 'open';
+          document.getElementById('ae27RewardInp').value = ev.fixedRewardPts || 1000;
+          document.getElementById('ae27DaysInp').value = ev.durationDays || 7;
+          if (ev.bannerImageUrl && document.getElementById('aeBannerUrl27')) {
+            document.getElementById('aeBannerUrl27').value = ev.bannerImageUrl;
+          }
+        }
+      };
+
+      ArenaApp.publishEvent27 = async function() {
+        const eventNumber = Number(document.getElementById('ae27NumberInp')?.value || 1);
+        const list = window.MOAATH_ADMIN_EVENTS_25 || [];
+        const matched = list.find((x) => Number(x.eventNumber) === eventNumber);
+        const title = (document.getElementById('ae27TitleInp')?.value.trim() || (matched && matched.title) || `الحدث #${eventNumber}`);
+        const type = document.getElementById('ae27TypeInp')?.value || 'highest_score';
+        const category = document.getElementById('ae27CategoryInp')?.value || 'open';
+        const fixedRewardPts = Number(document.getElementById('ae27RewardInp')?.value || 1000);
+        const durationDays = Number(document.getElementById('ae27DaysInp')?.value || 7);
+        const bannerImageUrl = document.getElementById('aeBannerUrl27')?.value.trim() || '';
+
+        const res = await this.api('/admin/event/create', {
+          eventNumber,
+          occasion: title,
+          title,
+          type,
+          category,
+          fixedRewardPts,
+          durationDays,
+          bannerImageUrl,
+          eventEnabled: true,
+          resetEntries: true
+        });
+        if (res && res.ok) {
+          this.toast(res.message);
+          await this.syncProfile();
+          this.renderEventsTab27();
+        }
+      };
+
+      ArenaApp.renderEventsTab27 = async function() {
+        const bodyEl = document.getElementById('eventsTabBody27');
+        const ctrlBox = document.getElementById('adminEventControlRoom27');
+        if (!bodyEl) return;
+
+        const isAdmin = String((this.profile && this.profile.phone) || '') === '0965461504';
+        if (ctrlBox) ctrlBox.classList.toggle('hidden', !isAdmin);
+
+        const res = await this.api('/event/status');
+        const ev = res && res.event;
+        const lb = (res && Array.isArray(res.leaderboard)) ? res.leaderboard : [];
+        if (isAdmin && ev) this._populate25Select27(ev);
+
+        if (!ev || ev.eventEnabled === false) {
+          bodyEl.innerHTML = `
+            <div class="ev27-locked-box">
+              <div style="font-size:2rem; margin-bottom:6px;">🔒</div>
+              <strong style="color:#fda4af; font-size:0.95rem;">تبويب الأحداث مقفل حالياً من الإدارة</strong>
+              <p style="font-size:0.76rem; color:#94a3b8; margin-top:6px;">سيتم فتح الحدث القادم قريباً بإعلان رسمي ومكافآت حصرية.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const excl = ev.exclusiveReward || {};
+        const bannerSrc = ev.bannerImageUrl || excl.badgeFile || './assets/event_badges/event_badge_01_opening.jpg';
+        const diffMs = Math.max(0, Number(ev.endAt || 0) - Date.now());
+        const remDays = Math.floor(diffMs / 86400000);
+        const remHrs = Math.floor((diffMs % 86400000) / 3600000);
+        const remMins = Math.floor((diffMs % 3600000) / 60000);
+
+        const condTextMap = {
+          highest_score: 'أعلى نتيجة منفردة خلال فترة الحدث للفوز بالمراكز الأولى وتحصيل الجائزة.',
+          pvp_wins: 'تحقيق أكبر عدد من الانتصارات الفعلية في ساحة PvP خلال فترة الحدث.',
+          bosses_defeated: 'إسقاط وهزيمة أكبر عدد من زعماء البرج خلال فترة الحدث.',
+          cumulative_score: 'جمع أعلى مجموع نقاط تراكمي عبر جولاتك خلال فترة الحدث.'
+        };
+        const catNames = { open: 'عام (للجميع)', beginner: 'المبتدئون والصاعدون', pro: 'المحترفون' };
+        const leaderName = lb.length > 0 ? lb[0].displayName : 'لا يوجد متصدر بعد';
+        const myRankText = res && res.myRank ? `#${res.myRank}` : 'غير مصنّف بعد';
+
+        const lbHtml = lb.map((r) => `
+          <div class="stat-row" style="padding:6px 8px; border-radius:10px; background:${r.isMe ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${r.isMe ? '#22c55e' : 'rgba(255,255,255,0.06)'};">
+            <span><b>#${r.rank}</b> ${r.displayName}</span>
+            <strong style="color:#fde047;">${Number(r.metricValue || 0).toLocaleString()}</strong>
+          </div>
+        `).join('') || '<div style="font-size:0.76rem; color:#94a3b8; text-align:center; padding:8px;">ابدأ اللعب الآن لتكون أول المتصدرين!</div>';
+
+        bodyEl.innerHTML = `
+          <div class="card">
+            <div class="ev27-banner-box">
+              <img src="${bannerSrc}" alt="${ev.title}" onerror="this.src='./assets/event_badges/event_badge_01_opening.jpg'" />
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+              <strong style="color:#fde047; font-size:1rem;">🎪 الحدث #${ev.eventNumber}: ${ev.title}</strong>
+              <span style="font-size:0.72rem; color:#7dd3fc; font-weight:900;">${catNames[ev.category] || 'عام'}</span>
+            </div>
+
+            <div class="ev27-reward-flash">
+              <div style="font-size:0.74rem; color:#fef08a; font-weight:800;">🎁 المكافأة الكبرى للحدث</div>
+              <div style="font-size:1.25rem; font-weight:900; color:#4ade80; margin:3px 0;">${Number(ev.fixedRewardPts || 0).toLocaleString()} عملة معاذ</div>
+              <div style="font-size:0.76rem; color:#fde047; font-weight:800;">🏅 ${excl.badgeName || ''} • 🖼️ ${excl.frameName || ''}</div>
+              <div style="margin-top:8px; font-size:0.76rem; color:#bae6fd; font-weight:900;">
+                ⏳ المتبقي لنهاية الحدث: ${remDays} يوم و ${remHrs} ساعة و ${remMins} دقيقة
+              </div>
+            </div>
+
+            <div style="background:rgba(7,12,24,0.8); border:1px solid rgba(56,189,248,0.3); border-radius:12px; padding:10px; margin-bottom:10px;">
+              <div style="font-size:0.78rem; font-weight:900; color:#7dd3fc; margin-bottom:3px;">📜 شروط الفوز المفصلة</div>
+              <div style="font-size:0.76rem; color:#e2e8f0; line-height:1.55;">${condTextMap[ev.type] || ''} يُحتسب التقدم تلقائياً في الجولات الرسمية ضمن المدة المحددة، وتُمنح المكافآت عند إغلاق الحدث.</div>
+            </div>
+
+            <div class="my-rank-bar" style="margin-bottom:10px;">
+              <span>👑 المتصدر الحالي: <b>${leaderName}</b></span>
+              <span>🏅 مركزك: <b>${myRankText}</b></span>
+            </div>
+
+            <div style="font-size:0.82rem; font-weight:900; color:#fde047; margin-bottom:6px;">🏆 لوحة متصدري الحدث</div>
+            ${lbHtml}
+          </div>
+        `;
       };
     })();
 
