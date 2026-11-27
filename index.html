@@ -902,9 +902,12 @@
     <button type="button" style="background:none;border:none;color:#fde047;font-weight:900;cursor:pointer;" onclick="document.getElementById('broadcastBanner').classList.add('hidden')">✕</button>
   </div>
   <div id="workspaceBar" class="ws-bar hidden">
-    <button type="button" class="ws-back-btn" onclick="ArenaApp.exitToHub()">← البوابة الرئيسية</button>
-    <strong style="color:#fde047; font-size:0.86rem;">🏰 مساحة برج التحدي اللانهائي</strong>
-    <button type="button" id="fxSoundBtn" class="ws-back-btn" onclick="MythicFX.toggleMute()">🔊</button>
+    <button type="button" class="ws-back-btn" onclick="ArenaApp.exitToHub()">← البوابة</button>
+    <strong style="color:#fde047; font-size:0.82rem;">🏰 برج التحدي</strong>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button type="button" id="uiModeToggleBtn16" class="ws-back-btn" style="padding:5px 9px; font-size:0.72rem;" onclick="ArenaApp.toggleBeginnerMode()">✨ بسيطة</button>
+      <button type="button" id="fxSoundBtn" class="ws-back-btn" onclick="MythicFX.toggleMute()">🔊</button>
+    </div>
   </div>
   <canvas id="fxCanvas" class="hidden"></canvas>
   <div id="liveCountdownStrip" class="live-strip hidden">⏳ جاري مزامنة عداد البطولة الأسبوعية...</div>
@@ -1007,10 +1010,7 @@
 
     <!-- ================= 2. اللوبي الرئيسي (مساحة برج التحدي المعزولة) ================= -->
     <section id="lobbyScreen" class="hidden">
-      <div id="begModeTopBar15" class="beg-mode-bar" style="margin: 10px 12px 0;">
-        <span id="begModeLabel15">🌱 وضع المبتدئ: واجهة مبسّطة</span>
-        <button type="button" id="begModeBtn15" class="beg-switch-btn" onclick="ArenaApp.toggleBeginnerMode()">عرض الكل ▾</button>
-      </div>
+
 
       <!-- التبويب 1: الرئيسية (منصة الصدارة الملكية + بطاقات الألعاب) -->
       <div id="tab-home">
@@ -1049,7 +1049,7 @@
         </div>
 
         <!-- اختيار الأداة التكتيكية بشكل مدمج -->
-        <div class="card" style="padding:10px 12px;">
+        <div id="tacticalToolCard16" class="card" style="padding:10px 12px;">
           <div style="display:flex; gap:8px; align-items:center;">
             <span style="font-size:0.78rem; color:var(--silver); white-space:nowrap;">🛡️ أداة الجولة:</span>
             <select id="tacticalItemSelect" style="margin:0; padding:7px; font-size:0.8rem;"><option value="">بدون أداة تكتيكية</option></select>
@@ -4645,6 +4645,58 @@
         const res = await origSync15(...args);
         this.applyBeginnerMode();
         return res;
+      };
+    })();
+
+  
+    // === Phase 16: Compact Header Toggle (Simple / Full UI) + Hide Empty Tool Card in Simple UI ===
+    (function refineSimpleUiPhase16() {
+      if (typeof ArenaApp === 'undefined') return;
+      const BEG_KEY = 'moaath_beginner_ui_mode_v1';
+
+      function computeSimpleActive() {
+        const saved = localStorage.getItem(BEG_KEY);
+        if (saved === '0') return false;
+        if (saved === '1') return true;
+        const p = ArenaApp.profile || {};
+        const rounds = Number(p.totalRoundsPlayed || p.wins || 0);
+        return rounds < 3;
+      }
+
+      ArenaApp.applyBeginnerMode = function() {
+        const active = computeSimpleActive();
+        document.body.classList.toggle('beginner-ui', active);
+
+        // Remove legacy standalone bar if created
+        document.getElementById('begModeBar14')?.remove();
+
+        // Update compact button in #workspaceBar
+        const btn = document.getElementById('uiModeToggleBtn16');
+        if (btn) {
+          btn.textContent = active ? '✨ بسيطة' : '⚡ كاملة';
+          btn.title = active ? 'التبديل إلى الوضع الكامل' : 'التبديل إلى الواجهة البسيطة';
+          btn.style.borderColor = active ? '#4ade80' : 'rgba(212,175,55,0.45)';
+          btn.style.color = active ? '#86efac' : '#fde047';
+        }
+
+        // Hide tactical tool card in Simple UI when player has 0 tactical tools and 0 passes
+        const toolCard = document.getElementById('tacticalToolCard16');
+        if (toolCard) {
+          const inv = (this.profile && this.profile.inventory) || {};
+          const ownedToolsCount = ['tower_bomb', 'tower_row', 'tower_wildcard', 'double_xp', 'arena_pass']
+            .reduce((sum, id) => sum + Number(inv[id] || 0), 0);
+          toolCard.classList.toggle('hidden', active && ownedToolsCount === 0);
+        }
+
+        const cm = document.getElementById('comboMeter13');
+        if (active && cm) cm.classList.add('hidden');
+      };
+
+      ArenaApp.toggleBeginnerMode = function(forceVal = null) {
+        const next = forceVal !== null ? Boolean(forceVal) : !document.body.classList.contains('beginner-ui');
+        localStorage.setItem(BEG_KEY, next ? '1' : '0');
+        this.applyBeginnerMode();
+        this.toast(next ? '✨ تم تفعيل الواجهة البسيطة' : '⚡ تم تفعيل الوضع الكامل');
       };
     })();
 
