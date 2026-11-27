@@ -9,67 +9,65 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Tahoma, sans-serif; }
     body {
       background: #060b16; color: #e2e8f0; min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 14px;
     }
     .hidden { display: none !important; }
-    /* شاشة التمويه 404 */
     #decoyScreen {
-      text-align: center; max-width: 380px; color: #64748b; user-select: none;
+      text-align: center; max-width: 380px; color: #64748b; user-select: none; margin: auto;
     }
     #decoyCode {
       font-size: 4.5rem; font-weight: 900; color: #1e293b; letter-spacing: 4px; cursor: default;
     }
-    /* بوابة الدخول السرية */
     .box {
-      width: 100%; max-width: 560px;
+      width: 100%; max-width: 620px;
       background: linear-gradient(160deg, #0f172a, #070d19);
       border: 1.5px solid rgba(250, 204, 21, 0.45);
-      border-radius: 18px; padding: 16px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+      border-radius: 18px; padding: 14px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6); margin-top: 8px;
     }
     h2, h3 { color: #fde047; margin-bottom: 10px; }
-    .hdr { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .hdr { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
     .tab-btn {
       padding: 8px 4px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.25);
-      background: #0b1222; color: #cbd5e1; font-size: 0.74rem; font-weight: 800; cursor: pointer;
+      background: #0b1222; color: #cbd5e1; font-size: 0.72rem; font-weight: 800; cursor: pointer;
     }
     .tab-btn.active { background: linear-gradient(135deg, #fde047, #d97706); color: #111827; border-color: #fef08a; }
-    .card { background: rgba(15,23,42,0.88); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
-    .card h4 { color: #7dd3fc; font-size: 0.85rem; margin-bottom: 8px; }
+    .card { background: rgba(15,23,42,0.88); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 11px; margin-bottom: 10px; }
+    .card h4 { color: #7dd3fc; font-size: 0.84rem; margin-bottom: 8px; }
     .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat { background: #070c18; border: 1px solid rgba(250,204,21,0.28); border-radius: 10px; padding: 9px; text-align: center; }
-    .stat small { display: block; color: #94a3b8; font-size: 0.68rem; }
-    .stat strong { color: #4ade80; font-size: 0.95rem; }
-    .field { margin-bottom: 8px; }
-    .field label { display: block; font-size: 0.74rem; color: #cbd5e1; margin-bottom: 3px; font-weight: 700; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat { background: #070c18; border: 1px solid rgba(250,204,21,0.28); border-radius: 10px; padding: 8px; text-align: center; }
+    .stat small { display: block; color: #94a3b8; font-size: 0.66rem; }
+    .stat strong { color: #4ade80; font-size: 0.9rem; }
+    .field { margin-bottom: 7px; }
+    .field label { display: block; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 3px; font-weight: 700; }
     input, select, textarea {
-      width: 100%; padding: 9px 10px; border-radius: 10px;
-      border: 1px solid rgba(212,175,55,0.4); background: #070c18; color: #fff; font-size: 0.84rem;
+      width: 100%; padding: 8px 9px; border-radius: 9px;
+      border: 1px solid rgba(212,175,55,0.4); background: #070c18; color: #fff; font-size: 0.82rem;
     }
-    .check { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; margin: 6px 0; cursor: pointer; }
+    .check { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; margin: 5px 0; cursor: pointer; }
     .check input { width: auto; }
-    .btn { padding: 9px 12px; border-radius: 10px; border: none; font-weight: 900; font-size: 0.82rem; cursor: pointer; }
+    .btn { padding: 8px 10px; border-radius: 9px; border: none; font-weight: 900; font-size: 0.78rem; cursor: pointer; }
     .btn-gold { background: linear-gradient(135deg, #fde047, #d97706); color: #111827; width: 100%; }
     .btn-green { background: #16a34a; color: #fff; }
     .btn-red { background: #dc2626; color: #fff; }
     .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid rgba(250,204,21,0.45); color: #fde047; }
-    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.76rem; }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.74rem; flex-wrap: wrap; }
     .row:first-of-type { border-top: none; }
-    .msg { padding: 8px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; margin-bottom: 10px; }
+    .msg { padding: 8px 10px; border-radius: 10px; font-size: 0.76rem; font-weight: 800; margin-bottom: 10px; }
     .msg.ok { background: rgba(34,197,94,0.16); border: 1px solid #22c55e; color: #86efac; }
     .msg.err { background: rgba(239,68,68,0.16); border: 1px solid #ef4444; color: #fca5a5; }
+    .ledger-box { max-height: 220px; overflow-y: auto; background: #060b16; border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 8px; margin-top: 8px; }
   </style>
 </head>
 <body>
-  <!-- 1. شاشة التمويه لمنع معرفة وجود لوحة إدارة -->
   <div id="decoyScreen">
     <div id="decoyCode">404</div>
     <p style="font-size:0.9rem; margin-top:6px;">Page not found</p>
   </div>
 
-  <!-- 2. بوابة التحقق السرية -->
-  <div id="gateScreen" class="box hidden" style="max-width:380px;">
+  <div id="gateScreen" class="box hidden" style="max-width:380px; margin:auto;">
     <h3 style="text-align:center;">🔐 التحقق الأمني</h3>
     <div id="gateMsg" class="msg hidden"></div>
     <div class="field">
@@ -79,10 +77,9 @@
     <button type="button" class="btn btn-gold" id="adminLoginBtn">دخول آمن</button>
   </div>
 
-  <!-- 3. لوحة الإدارة المستقلة -->
   <div id="dashScreen" class="box hidden">
     <div class="hdr">
-      <h3 style="margin:0; font-size:1rem;">🛡️ إدارة عالم التحديات</h3>
+      <h3 style="margin:0; font-size:0.98rem;">🛡️ إدارة عالم التحديات</h3>
       <div style="display:flex; gap:6px;">
         <button type="button" class="btn btn-outline" id="refreshBtn">🔄</button>
         <button type="button" class="btn btn-red" id="logoutBtn">خروج</button>
@@ -94,10 +91,13 @@
     <div class="tabs">
       <button type="button" class="tab-btn active" data-tab="overview">📊 الملخص</button>
       <button type="button" class="tab-btn" data-tab="requests">💳 الطلبات (<span id="reqCnt">0</span>)</button>
-      <button type="button" class="tab-btn" data-tab="events">🎪 الأحداث</button>
-      <button type="button" class="tab-btn" data-tab="settings">⚙️ الإعدادات</button>
+      <button type="button" class="tab-btn" data-tab="players">👥 اللاعبون</button>
+      <button type="button" class="tab-btn" data-tab="shop">🛒 المتجر والرسوم</button>
+      <button type="button" class="tab-btn" data-tab="locks">🔒 قفل الألعاب</button>
+      <button type="button" class="tab-btn" data-tab="events">🎪 الأحداث والتصفير</button>
     </div>
 
+    <!-- 1. الملخص -->
     <div id="pane_overview">
       <div class="grid2" style="margin-bottom:10px;">
         <div class="stat"><small>إجمالي إيرادات الإدارة</small><strong id="stPts">0</strong></div>
@@ -109,11 +109,110 @@
       <div class="card"><h4>🚨 آخر التنبيهات الأمنية</h4><div id="alertsBox"></div></div>
     </div>
 
+    <!-- 2. الطلبات -->
     <div id="pane_requests" class="hidden">
       <div class="card"><h4>📥 طلبات شحن شام كاش المعلقة</h4><div id="topupsBox"></div></div>
       <div class="card"><h4>📤 طلبات سحب شام كاش المعلقة</h4><div id="cashoutsBox"></div></div>
     </div>
 
+    <!-- 3. اللاعبون والسجل المفصل -->
+    <div id="pane_players" class="hidden">
+      <div class="card">
+        <h4>🔎 البحث عن لاعب وتعديله</h4>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <input type="text" id="playerSearchInput" placeholder="رقم الهاتف أو الاسم..." />
+          <button type="button" class="btn btn-outline" id="playerSearchBtn">بحث</button>
+        </div>
+        <div id="playersListBox"></div>
+      </div>
+
+      <div class="card hidden" id="playerEditorCard">
+        <h4>✏️ تعديل اللاعب وسجله المفصل</h4>
+        <div class="grid2">
+          <div class="field"><label>رقم الهاتف</label><input type="text" id="edPhone" disabled /></div>
+          <div class="field"><label>الاسم الظاهر</label><input type="text" id="edName" /></div>
+          <div class="field"><label>الرصيد (عملة)</label><input type="number" id="edPoints" /></div>
+          <div class="field"><label>الخبرة (XP)</label><input type="number" id="edXp" /></div>
+          <div class="field"><label>الانتصارات (Wins)</label><input type="number" id="edWins" /></div>
+          <div class="field"><label>الخسائر / السلسلة</label><div class="grid2"><input type="number" id="edLosses" placeholder="خسائر" /><input type="number" id="edStreak" placeholder="سلسلة" /></div></div>
+        </div>
+        <div class="grid2">
+          <label class="check"><input type="checkbox" id="edFrozen" /> <span>تجميد الحساب</span></label>
+          <label class="check"><input type="checkbox" id="edTrusted" /> <span>حساب موثوق</span></label>
+        </div>
+        <div class="grid2" style="margin-top:6px;">
+          <button type="button" class="btn btn-gold" id="savePlayerBtn">💾 حفظ تعديل اللاعب</button>
+          <button type="button" class="btn btn-outline" id="loadLedgerBtn">📜 عرض السجل المفصل</button>
+        </div>
+        <div id="playerLedgerBox" class="ledger-box hidden"></div>
+      </div>
+    </div>
+
+    <!-- 4. التحكم في تسعير الأدوات + رسوم الدخول لكل جولة + حد XP -->
+    <div id="pane_shop" class="hidden">
+      <div class="card">
+        <h4>🎟️ رسوم الدخول لكل جولة (حسب اللعبة)</h4>
+        <div class="grid3">
+          <div class="field"><label>برج التحدي</label><input type="number" id="feeTower" value="10" /></div>
+          <div class="field"><label>قيادة التلال</label><input type="number" id="feeHill" value="10" /></div>
+          <div class="field"><label>ميجا شوتر</label><input type="number" id="feeShooter" value="10" /></div>
+        </div>
+        <button type="button" class="btn btn-gold" id="saveFeesBtn">💾 حفظ رسوم الجولات</button>
+      </div>
+
+      <div class="card">
+        <h4>🛒 تسعير الأدوات وحدّ الـ XP لفتح القطع في المتجر</h4>
+        <div class="field">
+          <label>اختر الأداة أو القطعة</label>
+          <select id="shopItemSelect"></select>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>السعر (عملة)</label><input type="number" id="shopItemPrice" value="0" /></div>
+          <div class="field"><label>الحد المطلوب من XP</label><input type="number" id="shopItemReqXp" value="0" /></div>
+        </div>
+        <button type="button" class="btn btn-green" style="width:100%;" id="saveShopItemBtn">💾 حفظ سعر وحدّ XP للأداة</button>
+      </div>
+
+      <div class="card">
+        <h4>⚙️ الإعدادات العامة وشام كاش</h4>
+        <label class="check"><input type="checkbox" id="cfgKill" /> <span style="color:#fca5a5;">وضع الصيانة الطارئ</span></label>
+        <label class="check"><input type="checkbox" id="cfgShamIn" /> <span>تفعيل شحن شام كاش</span></label>
+        <label class="check"><input type="checkbox" id="cfgShamOut" /> <span>تفعيل سحب شام كاش</span></label>
+        <div class="field"><label>معرّف شام كاش الإدارة</label><input type="text" id="cfgShamId" /></div>
+        <div class="grid2">
+          <div class="field"><label>الحد الأدنى للسحب</label><input type="number" id="cfgMinOut" value="100" /></div>
+          <div class="field"><label>الحد الأدنى للشحن</label><input type="number" id="cfgMinIn" value="100" /></div>
+          <div class="field"><label>سعر الصرف (ل.س/$)</label><input type="number" id="cfgUsd" value="150" /></div>
+          <div class="field"><label>نقاط الترحيب</label><input type="number" id="cfgWelcome" value="0" /></div>
+        </div>
+        <button type="button" class="btn btn-gold" id="cfgSaveBtn">💾 حفظ الإعدادات العامة</button>
+      </div>
+    </div>
+
+    <!-- 5. قفل الألعاب والمسابقات والتحديات -->
+    <div id="pane_locks" class="hidden">
+      <div class="card">
+        <h4>🔒 قفل أو فتح كل لعبة أو مسابقة</h4>
+        <label class="check"><input type="checkbox" id="lk_tower_match" /> <span>قفل لعبة: برج التحدي اللانهائي</span></label>
+        <label class="check"><input type="checkbox" id="lk_hill_drive" /> <span>قفل لعبة: قيادة التلال 2D</span></label>
+        <label class="check"><input type="checkbox" id="lk_cyber_shooter" /> <span>قفل لعبة: ميجا شوتر 2D</span></label>
+        <label class="check"><input type="checkbox" id="lk_weekly" /> <span>قفل المسابقة الأسبوعية</span></label>
+        <label class="check"><input type="checkbox" id="lk_pvp" /> <span>قفل التحدي المباشر (PvP)</span></label>
+        <label class="check"><input type="checkbox" id="lk_events" /> <span>قفل أحداث التحدي</span></label>
+        <button type="button" class="btn btn-gold" style="margin-top:8px;" id="saveLocksBtn">💾 حفظ حالة القفل</button>
+      </div>
+
+      <div class="card">
+        <h4>📢 إعلان فوري في الشريط العلوي</h4>
+        <div class="field"><input type="text" id="bcText" placeholder="اكتب نص الإعلان..." /></div>
+        <div class="grid2">
+          <button type="button" class="btn btn-gold" id="bcSendBtn">نشر الإعلان</button>
+          <button type="button" class="btn btn-outline" id="bcClearBtn">إخفاء الإعلان</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. الأحداث والتصفير الشامل -->
     <div id="pane_events" class="hidden">
       <div class="card">
         <h4>🎪 إدارة أحداث التحدي (25 مناسبة)</h4>
@@ -130,30 +229,12 @@
           <button type="button" class="btn btn-green" id="evSettleBtn">🏆 تصفية الحدث</button>
         </div>
       </div>
-    </div>
 
-    <div id="pane_settings" class="hidden">
-      <div class="card">
-        <h4>⚙️ الإعدادات العامة وشام كاش</h4>
-        <label class="check"><input type="checkbox" id="cfgKill" /> <span style="color:#fca5a5;">وضع الصيانة الطارئ</span></label>
-        <label class="check"><input type="checkbox" id="cfgShamIn" /> <span>تفعيل شحن شام كاش</span></label>
-        <label class="check"><input type="checkbox" id="cfgShamOut" /> <span>تفعيل سحب شام كاش</span></label>
-        <div class="field"><label>معرّف شام كاش الإدارة</label><input type="text" id="cfgShamId" /></div>
-        <div class="grid2">
-          <div class="field"><label>رسم كسر الرقم</label><input type="number" id="cfgRecFee" value="10" /></div>
-          <div class="field"><label>الحد الأدنى للسحب</label><input type="number" id="cfgMinOut" value="100" /></div>
-          <div class="field"><label>الحد الأدنى للشحن</label><input type="number" id="cfgMinIn" value="100" /></div>
-          <div class="field"><label>سعر الصرف (ل.س/$)</label><input type="number" id="cfgUsd" value="150" /></div>
-        </div>
-        <button type="button" class="btn btn-gold" id="cfgSaveBtn">💾 حفظ الإعدادات</button>
-      </div>
-      <div class="card">
-        <h4>📢 إعلان فوري في الشريط العلوي</h4>
-        <div class="field"><input type="text" id="bcText" placeholder="اكتب نص الإعلان..." /></div>
-        <div class="grid2">
-          <button type="button" class="btn btn-gold" id="bcSendBtn">نشر الإعلان</button>
-          <button type="button" class="btn btn-outline" id="bcClearBtn">إخفاء الإعلان</button>
-        </div>
+      <div class="card" style="border-color:rgba(239,68,68,0.55); background:rgba(127,29,29,0.16);">
+        <h4 style="color:#fca5a5;">⚠️ منطقة خطرة: تصفير جميع بيانات اللعبة</h4>
+        <p style="font-size:0.74rem; color:#fecaca; margin-bottom:8px;">يمسح جميع اللاعبين والسجلات والبطولات والتحديات والطلبات والرصيد والإحصائيات ويعيد الأرقام القياسية للوضع الأولي. اكتب <b>RESET_ALL_ARENA</b> للتأكيد:</p>
+        <div class="field"><input type="text" id="resetConfirmInput" placeholder="RESET_ALL_ARENA" autocomplete="off" /></div>
+        <button type="button" class="btn btn-red" style="width:100%;" id="resetAllGameBtn">🗑️ تصفير جميع بيانات اللعبة بالكامل</button>
       </div>
     </div>
   </div>
@@ -189,8 +270,18 @@
       { id: 'occ_25_season_finale', name: 'الحدث الختامي للموسم', kind: 'highest_score' }
     ];
 
+    let shopCatalogCache = [];
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function getDeviceFp() {
+      let fp = localStorage.getItem('arena_device_fp');
+      if (!fp) {
+        fp = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev_' + Date.now());
+        localStorage.setItem('arena_device_fp', fp);
+      }
+      return fp;
+    }
 
     let decoyTaps = 0, decoyTimer = null;
     function revealGate() {
@@ -215,7 +306,7 @@
 
     async function api(path, body = {}) {
       const tok = sessionStorage.getItem(TOKEN_KEY) || '';
-      const headers = { 'Content-Type': 'application/json' };
+      const headers = { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceFp() };
       if (tok) headers['Authorization'] = 'Bearer ' + tok;
       const res = await fetch(WORKER_URL + path, { method: 'POST', headers, body: JSON.stringify(body) });
       const data = await res.json().catch(() => ({}));
@@ -233,7 +324,7 @@
       const pass = $('adminPassInput').value.trim();
       if (!pass) return showMsg('gateMsg', 'أدخل كلمة المرور السرية.', true);
       try {
-        const res = await api('/admin/login', { pass });
+        const res = await api('/admin/login', { pass, deviceId: getDeviceFp() });
         sessionStorage.setItem(TOKEN_KEY, res.adminToken);
         $('adminPassInput').value = '';
         $('gateScreen').classList.add('hidden');
@@ -258,11 +349,20 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        ['overview', 'requests', 'events', 'settings'].forEach((t) => {
+        ['overview', 'requests', 'players', 'shop', 'locks', 'events'].forEach((t) => {
           $('pane_' + t).classList.toggle('hidden', t !== btn.dataset.tab);
         });
+        if (btn.dataset.tab === 'players') searchPlayers();
       });
     });
+
+    function fillShopItemForm() {
+      const id = $('shopItemSelect').value;
+      const it = shopCatalogCache.find((x) => x.id === id);
+      if (!it) return;
+      $('shopItemPrice').value = Number(it.price || 0);
+      $('shopItemReqXp').value = Number(it.reqXp || 0);
+    }
 
     async function loadDashboard() {
       $('dashScreen').classList.remove('hidden');
@@ -300,6 +400,25 @@
           ? cashouts.map((c) => `<div class="row"><div><b>${esc(c.displayName || c.phone)}</b> (${esc(c.phone)})<br><span style="color:#38bdf8;">${Number(c.sypAmount || c.pts || 0).toLocaleString()} ل.س</span> • ${esc(c.shamCashId || '-')}</div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resCash('${esc(c.txId)}','approve')">اعتماد</button><button class="btn btn-red" onclick="resCash('${esc(c.txId)}','reject')">رفض</button></div></div>`).join('')
           : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات سحب معلقة.</div>';
 
+        const fees = cfg.gameEntryFees || {};
+        $('feeTower').value = Number(fees.tower_match || cfg.recordEntryCostPts || 10);
+        $('feeHill').value = Number(fees.hill_drive || cfg.recordEntryCostPts || 10);
+        $('feeShooter').value = Number(fees.cyber_shooter || cfg.recordEntryCostPts || 10);
+
+        shopCatalogCache = Array.isArray(dash.shopCatalog) ? dash.shopCatalog : [];
+        const prevShopId = $('shopItemSelect').value;
+        $('shopItemSelect').innerHTML = shopCatalogCache.map((it) => `<option value="${esc(it.id)}">${esc(it.name)} (سعر: ${Number(it.price || 0)} | XP: ${Number(it.reqXp || 0)})</option>`).join('');
+        if (prevShopId) $('shopItemSelect').value = prevShopId;
+        fillShopItemForm();
+
+        const locks = cfg.lockedModes || {};
+        $('lk_tower_match').checked = Boolean(locks.tower_match);
+        $('lk_hill_drive').checked = Boolean(locks.hill_drive);
+        $('lk_cyber_shooter').checked = Boolean(locks.cyber_shooter);
+        $('lk_weekly').checked = Boolean(locks.weekly);
+        $('lk_pvp').checked = Boolean(locks.pvp);
+        $('lk_events').checked = Boolean(locks.events);
+
         const ev = (evRes && evRes.event) || {};
         $('evEnabled').checked = Boolean(ev.enabled);
         $('evSelect').innerHTML = OCCASIONS_25.map((o, i) => `<option value="${i+1}" data-kind="${o.kind}" data-name="${esc(o.name)}" ${Number(ev.eventNumber || 1) === i + 1 ? 'selected' : ''}>#${i+1} - ${esc(o.name)}</option>`).join('');
@@ -311,21 +430,142 @@
         $('cfgShamIn').checked = Boolean(cfg.shamCashTopupEnabled);
         $('cfgShamOut').checked = Boolean(cfg.shamCashCashoutEnabled);
         $('cfgShamId').value = cfg.adminShamCashId || '';
-        $('cfgRecFee').value = Number(cfg.recordEntryCostPts || 10);
         $('cfgMinOut').value = Number(cfg.minCashoutPts || 100);
         $('cfgMinIn').value = Number(cfg.minTopupSYP || 100);
         $('cfgUsd').value = Number(cfg.usdToSypRate || 150);
+        $('cfgWelcome').value = Number(cfg.welcomePoints || 0);
       } catch (e) {
-        if (String(e.message).includes('ADMIN_SESSION_EXPIRED') || String(e.message).includes('NO_ADMIN_TOKEN')) {
+        if (String(e.message).includes('ADMIN_SESSION_EXPIRED') || String(e.message).includes('NO_ADMIN_TOKEN') || String(e.message).includes('DEVICE_MISMATCH')) {
           sessionStorage.removeItem(TOKEN_KEY);
           $('dashScreen').classList.add('hidden');
           $('gateScreen').classList.remove('hidden');
-          showMsg('gateMsg', 'انتهت الجلسة، أعد تسجيل الدخول.', true);
+          showMsg('gateMsg', e.message, true);
         } else {
           showMsg('dashMsg', e.message, true);
         }
       }
     }
+
+    async function searchPlayers() {
+      try {
+        const res = await api('/admin/players/list', { q: $('playerSearchInput').value.trim() });
+        const list = res.players || [];
+        $('playersListBox').innerHTML = list.length
+          ? list.map((p) => `<div class="row"><div><b>${esc(p.displayName || 'لاعب')}</b> (${esc(p.phone)})<br><span style="color:#fde047;">رصيد: ${Number(p.points).toLocaleString()}</span> • <span style="color:#38bdf8;">XP: ${Number(p.xp).toLocaleString()}</span> ${p.frozen ? '<b style="color:#f87171;">[مجمد]</b>' : ''}</div><button type="button" class="btn btn-outline" onclick="selectPlayerForEdit('${esc(p.phone)}')">تعديل / سجل</button></div>`).join('')
+          : '<div style="color:#94a3b8;font-size:0.75rem;">لا يوجد لاعبون مطابقون.</div>';
+      } catch (e) {
+        showMsg('dashMsg', e.message, true);
+      }
+    }
+
+    window.selectPlayerForEdit = async (phone) => {
+      try {
+        const res = await api('/admin/player/ledger', { phone });
+        const p = res.player || {};
+        $('playerEditorCard').classList.remove('hidden');
+        $('edPhone').value = p.phone || phone;
+        $('edName').value = p.displayName || '';
+        $('edPoints').value = Number(p.points || 0);
+        $('edXp').value = Number(p.xp || 0);
+        $('edWins').value = Number(p.wins || 0);
+        $('edLosses').value = Number(p.losses || 0);
+        $('edStreak').value = Number(p.winStreak || 0);
+        $('edFrozen').checked = Boolean(p.frozen);
+        $('edTrusted').checked = Boolean(p.trusted);
+        renderPlayerLedgerBox(res);
+      } catch (e) {
+        showMsg('dashMsg', e.message, true);
+      }
+    };
+
+    function renderPlayerLedgerBox(res) {
+      const p = res.player || {};
+      const entries = res.ledger || [];
+      const box = $('playerLedgerBox');
+      box.classList.remove('hidden');
+      const rowsHtml = entries.length
+        ? entries.map((x) => `<div class="row"><span><b>${esc(x.type)}</b> <small style="color:#94a3b8;">(${esc(x.dayKey)})</small></span><strong style="color:${x.delta >= 0 ? '#4ade80' : '#f87171'};">${x.delta >= 0 ? '+' : ''}${Number(x.delta).toLocaleString()}</strong></div>`).join('')
+        : '<div style="color:#94a3b8;font-size:0.74rem;">لا توجد حركات مسجلة في السجل المتدحرج.</div>';
+      box.innerHTML = `<div style="font-size:0.74rem; color:#fde047; margin-bottom:6px;">الجولات: <b>${Number(p.totalRoundsPlayed || 0)}</b> • الأرقام المكسورة: <b>${Number(p.recordsBroken || 0)}</b> • المخالفات: <b>${Number(p.antiCheatFlags || 0)}</b> • المدعوون: <b>${Number((p.referralStats && p.referralStats.totalCount) || 0)}</b></div>${rowsHtml}`;
+    }
+
+    $('playerSearchBtn').addEventListener('click', searchPlayers);
+    $('savePlayerBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('/admin/player/update', {
+          phone: $('edPhone').value.trim(),
+          displayName: $('edName').value.trim(),
+          points: Number($('edPoints').value || 0),
+          xp: Number($('edXp').value || 0),
+          wins: Number($('edWins').value || 0),
+          losses: Number($('edLosses').value || 0),
+          winStreak: Number($('edStreak').value || 0),
+          frozen: $('edFrozen').checked,
+          trusted: $('edTrusted').checked
+        });
+        showMsg('dashMsg', r.message);
+        searchPlayers();
+        selectPlayerForEdit($('edPhone').value.trim());
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+    $('loadLedgerBtn').addEventListener('click', () => {
+      if ($('edPhone').value.trim()) selectPlayerForEdit($('edPhone').value.trim());
+    });
+
+    $('shopItemSelect').addEventListener('change', fillShopItemForm);
+    $('saveShopItemBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('/admin/shop/config', {
+          itemId: $('shopItemSelect').value,
+          price: Number($('shopItemPrice').value || 0),
+          reqXp: Number($('shopItemReqXp').value || 0)
+        });
+        showMsg('dashMsg', r.message);
+        loadDashboard();
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('saveFeesBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('/admin/config', {
+          gameEntryFees: {
+            tower_match: Number($('feeTower').value || 10),
+            hill_drive: Number($('feeHill').value || 10),
+            cyber_shooter: Number($('feeShooter').value || 10)
+          }
+        });
+        showMsg('dashMsg', r.message);
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('saveLocksBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('/admin/config', {
+          lockedModes: {
+            tower_match: $('lk_tower_match').checked,
+            hill_drive: $('lk_hill_drive').checked,
+            cyber_shooter: $('lk_cyber_shooter').checked,
+            weekly: $('lk_weekly').checked,
+            pvp: $('lk_pvp').checked,
+            events: $('lk_events').checked
+          }
+        });
+        showMsg('dashMsg', r.message);
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
+
+    $('resetAllGameBtn').addEventListener('click', async () => {
+      const code = $('resetConfirmInput').value.trim();
+      if (code !== 'RESET_ALL_ARENA') {
+        return showMsg('dashMsg', 'اكتب RESET_ALL_ARENA أولاً للتأكيد.', true);
+      }
+      try {
+        const r = await api('/admin/game/reset-all', { confirmCode: code });
+        $('resetConfirmInput').value = '';
+        showMsg('dashMsg', r.message);
+        loadDashboard();
+      } catch (e) { showMsg('dashMsg', e.message, true); }
+    });
 
     window.unfreeze = async (phone) => {
       try { const r = await api('/admin/player/unfreeze', { phone }); showMsg('dashMsg', r.message); loadDashboard(); }
@@ -372,10 +612,10 @@
           shamCashTopupEnabled: $('cfgShamIn').checked,
           shamCashCashoutEnabled: $('cfgShamOut').checked,
           adminShamCashId: $('cfgShamId').value.trim(),
-          recordEntryCostPts: Number($('cfgRecFee').value || 10),
           minCashoutPts: Number($('cfgMinOut').value || 100),
           minTopupSYP: Number($('cfgMinIn').value || 100),
-          usdToSypRate: Number($('cfgUsd').value || 150)
+          usdToSypRate: Number($('cfgUsd').value || 150),
+          welcomePoints: Number($('cfgWelcome').value || 0)
         });
         showMsg('dashMsg', r.message);
       } catch (e) { showMsg('dashMsg', e.message, true); }

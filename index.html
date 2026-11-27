@@ -1382,9 +1382,6 @@
       </div>
 
       <div id="tab-profile" class="hidden">
-    <div id="adminEntryBox25" class="card hidden" style="border-color:#fde047; background:linear-gradient(135deg, rgba(250,204,21,0.14), rgba(15,23,42,0.95)); text-align:center;">
-      <button type="button" class="btn btn-gold" style="margin:0;" onclick="window.location.href='./admin.html#mth-vault'">🛡️ دخول الإدارة</button>
-    </div>
         <div class="filter-row">
           <button class="filter-pill active" onclick="ArenaApp.setProfileSub('chars', this)">🎭 الشخصيات (18)</button>
           <button class="filter-pill" onclick="ArenaApp.setProfileSub('wallet', this)">💰 المحفظة والسحب (ل.س)</button>
@@ -1436,9 +1433,6 @@
               <span>⚡ وضع توفير البطارية (تقليل المؤثرات الضوئية للأجهزة الضعيفة)</span>
             </label>
           </div>
-        </div>
-        <div class="card" style="border-color:rgba(239,68,68,0.4); margin-top:10px; text-align:center;">
-          <button type="button" class="btn btn-outline" style="margin:0; border-color:#ef4444; color:#fca5a5;" onclick="ArenaApp.logoutAccount()">🚪 تسجيل الخروج من الحساب</button>
         </div>
       </div>
     </section>
@@ -1871,7 +1865,7 @@
         try {
           const res = await fetch(`${WORKER_URL}${path}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token || ''}`, 'X-Device-Id': localStorage.getItem('arena_device_fp') || '' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token || ''}` },
             body: JSON.stringify(body)
           });
           const data = await res.json();
@@ -5748,43 +5742,6 @@
       };
     })();
 
-  
-// المرحلة 25: إظهار زر دخول الإدارة في تبويب ملفي حصراً لجهاز الإدارة الموثق
-(function extendArenaAppPhase25() {
-  if (typeof ArenaApp === 'undefined') return;
-  const origSync25 = ArenaApp.syncProfile.bind(ArenaApp);
-  ArenaApp.syncProfile = async function(...args) {
-    const res = await origSync25(...args);
-    const admBox = document.getElementById('adminEntryBox25');
-    if (admBox) {
-      admBox.classList.toggle('hidden', !(this.profile && this.profile.isAdmin === true));
-    }
-    return res;
-  };
-  ArenaApp.logoutAccount = function() {
-    const doLogout = () => {
-      localStorage.removeItem('arena_device_token');
-      sessionStorage.removeItem('mth_standalone_adm_tok');
-      this.token = null;
-      this.profile = null;
-      window.location.reload();
-    };
-    if (typeof ArenaModal !== 'undefined' && ArenaModal.show) {
-      ArenaModal.show({
-        theme: 'crimson',
-        icon: '🚪',
-        title: 'تسجيل الخروج',
-        bodyHtml: 'هل تريد تسجيل الخروج والعودة إلى شاشة تسجيل الدخول؟<br><small style="color:#94a3b8;">(ستبقى بصمة جهازك محفوظة بأمان)</small>',
-        buttons: [
-          { text: 'نعم، تسجيل الخروج', cls: 'btn-gold', onClick: doLogout },
-          { text: 'إلغاء', cls: 'btn-outline' }
-        ]
-      });
-    } else if (confirm('هل تريد تسجيل الخروج من الحساب؟')) {
-      doLogout();
-    }
-  };
-})();
-</script>
+  </script>
 </body>
 </html>
