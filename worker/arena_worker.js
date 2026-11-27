@@ -8,6 +8,7 @@ const ALLOWED_CASHOUT_TIERS = [100, 200, 500, 1000];
 const CASHOUT_AUDIT_DELAY_MS = 60 * 60 * 1000;
 const ROLLING_LEDGER_DAYS = 7;
 const ADMIN_EMAIL = '0965461504@moaath.store';
+const ADMIN_PHONE = '0965461504';
 const WEEKLY_GAMES = ['tower_match', 'hill_drive', 'cyber_shooter'];
 const WEEKLY_GAME_TITLES = {
   tower_match: 'برج التحدي اللانهائي',
@@ -448,11 +449,17 @@ export default {
       const body = await request.json().catch(() => ({}));
       const config = (await fbGet(env, 'arena_world/config')) || {};
 
-      // أ) نقاط نهاية الإدارة
+      // أ) نقاط نهاية الإدارة المستقلة (بدون أي ارتباط بالمتجر)
+      if (url.pathname === '/admin/login') {
+        return await handleAdminLogin(env, body, request);
+      }
+      if (url.pathname === '/admin/logout') {
+        return await handleAdminLogout(env, request);
+      }
       if (url.pathname.startsWith('/admin/')) {
-        const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth.ok || !storeAuth.isAdmin) {
-          return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: `صلاحية الإدارة مطلوبة. [${storeAuth.reason || 'NOT_ADMIN'}]` }, 403);
+        const admAuth = await verifyAdminSession(env, request);
+        if (!admAuth.ok) {
+          return jsonResponse({ code: 'ERR_ADMIN_ONLY', message: `صلاحية الإدارة مطلوبة. [${admAuth.reason || 'UNAUTHORIZED'}]` }, 403);
         }
         switch (url.pathname) {
           case '/admin/dashboard':
@@ -499,24 +506,8 @@ export default {
         return await handlePublicPreview(env, config);
       }
 
-      // ب) نقاط نهاية جسر متجر معاذ
-      if (url.pathname === '/bridge/store-info') {
-        const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return await handleBridgeStoreInfo(env, storeAuth, config);
-      }
+      // تم عزل المنصة بالكامل عن أي جسر خارجي
 
-      if (url.pathname === '/bridge/generate-bind-key') {
-        const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return await handleGenerateBindKey(env, storeAuth);
-      }
-
-      if (url.pathname === '/bridge/store-to-arena') {
-        const storeAuth = await verifyStoreFirebaseToken(env, request);
-        if (!storeAuth.ok) return jsonResponse({ code: 'ERR_STORE_AUTH', message: `الرجاء تسجيل الدخول في متجر معاذ أولاً. [${storeAuth.reason}]` }, 401);
-        return await handleStoreToArenaTransfer(env, storeAuth, body, config);
-      }
 
       // ج) نقاط نهاية تطبيق عالم التحديات (Arena PWA)
       if (url.pathname === '/auth/bind') {
@@ -537,7 +528,7 @@ export default {
 
       switch (url.pathname) {
         case '/player/profile':
-          return await handleProfile(env, player, config);
+          return await handleProfile(env, player, config, request);
         case '/character/select':
           return await handleSelectCharacter(env, player, body);
         case '/shop/buy':
@@ -902,7 +893,15 @@ async function handleBindDevice(env, { bindKey, deviceId, refCode }, config) {
   return jsonResponse({ ok: true, deviceToken });
 }
 
-async function handleProfile(env, player, config = {}) {
+async function handleProfile(env, player, config = {}, request = null) {
+  let isAdmin = false;
+  if (String(player.phone || '') === ADMIN_PHONE && request) {
+    const reqDevId = String(request.headers.get('X-Device-Id') || '').trim();
+    const admDev = await fbGet(env, 'arena_world/admin_device');
+    if (admDev && admDev.deviceId && reqDevId && admDev.deviceId === reqDevId) {
+      isAdmin = true;
+    }
+  }
   const unlockedVips = await getPlayerUnlockedVips(env, player.phone);
   let activeChar = player.activeCharacterId || 'buddy';
   if (VIP_CHARS.includes(activeChar) && !unlockedVips.includes(activeChar)) {
@@ -923,6 +922,7 @@ async function handleProfile(env, player, config = {}) {
   const canCheckInToday = towerData.lastCheckInDate !== todayStr;
   const myRefCode = await ensurePlayerRefCode(env, player);
   return jsonResponse({
+    isAdmin,
     refCode: myRefCode,
     referralStats: player.referralStats || { totalCount: 0, totalEarnedPts: 0 },
     pvpPrestige: (((player.games && player.games.tower_match) || {}).prestige) || {},
@@ -1724,7 +1724,7 @@ function corsResponse(body, status = 200, extraHeaders = {}) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Device-Id',
       ...extraHeaders
     }
   });
@@ -2323,6 +2323,55 @@ async function handleSharedLogin(env, { phone, password, deviceId }, config) {
   if (cleanPhone.length < 8 || !cleanPass || !deviceId) {
     return jsonResponse({ code: 'ERR_LOGIN', message: 'أدخل رقم الهاتف وكلمة المرور.' }, 400);
   }
+  // تحقق خاص لحساب الإدارة: ربط بصمة الجهاز عند أول تسجيل دخول بـ ADMIN_PASS + خطة الطوارئ (10 محاولات خلال دقيقتين)
+  if (cleanPhone === ADMIN_PHONE && env && env.ADMIN_PASS && cleanPass === String(env.ADMIN_PASS).trim()) {
+    const now = Date.now();
+    const admDev = await fbGet(env, 'arena_world/admin_device');
+    if (!admDev || !admDev.deviceId) {
+      await fbPatch(env, 'arena_world/admin_device', {
+        phone: ADMIN_PHONE, deviceId, boundAt: now
+      });
+    } else if (admDev.deviceId !== deviceId) {
+      // جهاز جديد مختلف عن بصمة الإدارة المسجلة: نطبّق عدّاد الطوارئ السري (10 محاولات خلال 120 ثانية)
+      const emPath = `arena_world/admin_emergency_attempts/${deviceId}`;
+      const em = (await fbGet(env, emPath)) || { count: 0, firstAt: 0 };
+      const withinWindow = em.firstAt && (now - Number(em.firstAt)) <= 120 * 1000;
+      const nextCount = withinWindow ? (Number(em.count || 0) + 1) : 1;
+      const firstAt = withinWindow ? Number(em.firstAt) : now;
+
+      if (nextCount < 10) {
+        await fbPatch(env, emPath, { count: nextCount, firstAt, lastAt: now });
+        // رسالة تمويه مطابقة تماماً لرسالة كلمة المرور الخاطئة
+        return jsonResponse({ code: 'ERR_BAD_PASS', message: 'كلمة المرور غير صحيحة.' }, 403);
+      }
+
+      // عند المحاولة العاشرة المتتالية خلال دقيقتين: نقل بصمة الجهاز الجديد + تسجيل تنبيه أمني
+      await fbPatch(env, 'arena_world/admin_device', {
+        phone: ADMIN_PHONE, deviceId, boundAt: now, previousDeviceId: admDev.deviceId
+      });
+      await fbDelete(env, emPath);
+      await fbPatch(env, `arena_world/admin_alerts/${now}`, {
+        phone: ADMIN_PHONE,
+        reason: 'DEVICE_REPLACED',
+        details: { oldDeviceId: admDev.deviceId, newDeviceId: deviceId },
+        at: now
+      });
+    }
+    const deviceToken = crypto.randomUUID() + '.' + Date.now();
+    await fbPatch(env, `arena_world/devices/${deviceId}`, { phone: cleanPhone, token: deviceToken });
+    const existingPlayer = await fbGet(env, `arena_world/players/${cleanPhone}`);
+    if (!existingPlayer) {
+      const welcomePts = Number(config.welcomePoints || 0);
+      await fbPatch(env, `arena_world/players/${cleanPhone}`, {
+        phone: cleanPhone, displayName: 'الإدارة', activeCharacterId: 'buddy', activeFrame: '',
+        points: welcomePts, verifiedCheckpointBalance: welcomePts, xp: 0, wins: 0, losses: 0,
+        winStreak: 0, recordsBroken: 0, inventory: {}, cosmetics: {}, shopHistory: [], frozen: false, antiCheatFlags: 0, deviceToken
+      });
+    } else {
+      await fbPatch(env, `arena_world/players/${cleanPhone}`, { deviceToken });
+    }
+    return jsonResponse({ ok: true, deviceToken, isAdmin: true, message: '✅ أهلاً بعودتك إلى عالم التحديات!' });
+  }
   const storeUser = await fbGet(env, `users/${cleanPhone}`);
   if (!storeUser || !storeUser.arenaPassHash) {
     return jsonResponse({ code: 'ERR_NOT_FOUND', message: 'الحساب غير مسجل بكلمة مرور. استخدم «تسجيل جديد» أو «معرف الربط السري».' }, 404);
@@ -2668,4 +2717,86 @@ async function handleEventStatus(env, player) {
     },
     occasionsCatalog: ADMIN_EVENT_OCCASIONS_25
   });
+}
+
+
+// ============================================================================
+// نظام مصادقة الإدارة المستقل والمحمي ببصمة الجهاز (0% كلمات مرور في الكود)
+// يعتمد على متغير سري في Cloudflare (ADMIN_PASS) + بصمة الجهاز (arena_world/admin_device)
+// ============================================================================
+async function verifyAdminSession(env, request) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  const reqDevId = String(request.headers.get('X-Device-Id') || '').trim();
+  if (!token || token.length < 32) return { ok: false, reason: 'NO_ADMIN_TOKEN' };
+  const [ses, admDev] = await Promise.all([
+    fbGet(env, `arena_world/admin_sessions/${token}`),
+    fbGet(env, 'arena_world/admin_device')
+  ]);
+  if (!ses || !ses.active || Date.now() > Number(ses.expiresAt || 0)) {
+    return { ok: false, reason: 'ADMIN_SESSION_EXPIRED' };
+  }
+  if (admDev && admDev.deviceId && (!reqDevId || admDev.deviceId !== reqDevId)) {
+    return { ok: false, reason: 'DEVICE_MISMATCH' };
+  }
+  return { ok: true, token };
+}
+
+async function handleAdminLogin(env, body, request) {
+  const expectedPass = String((env && env.ADMIN_PASS) || '').trim();
+  if (!expectedPass) {
+    return jsonResponse({
+      code: 'ERR_NO_ADMIN_PASS',
+      message: 'يرجى تعيين المتغير السري ADMIN_PASS في إعدادات Cloudflare Worker أولاً.'
+    }, 500);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const ipKey = ip.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 40);
+  const rlPath = `arena_world/admin_login_rl/${ipKey}`;
+  const rl = (await fbGet(env, rlPath)) || { count: 0, resetAt: 0 };
+  const now = Date.now();
+  if (rl.count >= 5 && now < Number(rl.resetAt || 0)) {
+    const mins = Math.max(1, Math.ceil((rl.resetAt - now) / 60000));
+    return jsonResponse({ code: 'ERR_RATE_LIMIT', message: `تم إيقاف المحاولات مؤقتاً. حاول بعد ${mins} دقيقة.` }, 429);
+  }
+
+  const inputPass = String((body && body.pass) || '').trim();
+  const reqDevId = String((body && body.deviceId) || request.headers.get('X-Device-Id') || '').trim();
+  if (!inputPass || inputPass !== expectedPass) {
+    const nextCnt = now >= Number(rl.resetAt || 0) ? 1 : Number(rl.count || 0) + 1;
+    await fbPatch(env, rlPath, { count: nextCnt, resetAt: now + 15 * 60 * 1000 });
+    return jsonResponse({ code: 'ERR_BAD_ADMIN_PASS', message: 'بيانات الدخول غير صحيحة.' }, 403);
+  }
+
+  // التحقق من بصمة الجهاز أو ربطها في المرة الأولى
+  const admDev = await fbGet(env, 'arena_world/admin_device');
+  if (admDev && admDev.deviceId) {
+    if (!reqDevId || admDev.deviceId !== reqDevId) {
+      return jsonResponse({ code: 'ERR_DEVICE_MISMATCH', message: 'هذا الجهاز غير مصرّح له بدخول الإدارة.' }, 403);
+    }
+  } else if (reqDevId) {
+    await fbPatch(env, 'arena_world/admin_device', {
+      phone: ADMIN_PHONE, deviceId: reqDevId, boundAt: now
+    });
+  }
+
+  if (rl.count > 0) await fbPatch(env, rlPath, { count: 0, resetAt: 0 });
+  const randBytes = new Uint8Array(24);
+  crypto.getRandomValues(randBytes);
+  const adminToken = Array.from(randBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  const expiresAt = now + 12 * 60 * 60 * 1000;
+  await fbPatch(env, `arena_world/admin_sessions/${adminToken}`, {
+    active: true, createdAt: now, expiresAt, ip: ipKey, deviceId: reqDevId
+  });
+  return jsonResponse({ ok: true, adminToken, expiresAt });
+}
+
+async function handleAdminLogout(env, request) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (token && token.length >= 32) {
+    await fbDelete(env, `arena_world/admin_sessions/${token}`);
+  }
+  return jsonResponse({ ok: true });
 }
