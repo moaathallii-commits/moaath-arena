@@ -96,6 +96,10 @@
       this.activeItem = config.activeItem || null;
       this.opponentTargetScore = Number(config.opponentTargetScore || 0);
       this.isBalancedPvp = this.mode === "pvp";
+      this.dynamicBoostPct = this.isBalancedPvp ? 0 : Math.max(0, Number(config.dynamicBoostPct || 0));
+      this.dynamicBoostMult = 1 + (this.dynamicBoostPct / 100);
+      this.ceilingGuardianSpawned = false;
+      this.ceilingGuardianActive = false;
 
       this.board = new window.MoaathTowerBoard.TowerBoard({
         rows: config.rows || 6, cols: config.cols || 6, seed: this.seed
@@ -170,6 +174,8 @@
       this.totalMoves = 0;
       this.floorsCleared = 0;
       this.bossesDefeated = 0;
+      this.ceilingGuardianSpawned = false;
+      this.ceilingGuardianActive = false;
       this.specialsDetonated = 0;
       this.elapsedMs = 0;
       this.endReason = null;
@@ -414,15 +420,42 @@
         }
       }
 
-      if (addedSec > 0) this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + addedSec);
+      if (addedSec > 0 && !this.ceilingGuardianActive) {
+        this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + addedSec);
+      }
 
       const goldenBonus = (t.goldenCollected || 0) * 180 + (t.chestsOpened || 0) * 250;
       const rawScore =
         t.clearedCount * 10 + byType.coin * 24 * coinMult +
         t.specialsTriggered * 60 + t.locksBroken * 35 + (t.iceBroken || 0) * 25 + goldenBonus;
 
-      const gainedScore = Math.round(rawScore * comboMult * scoreMult * this.riskMultiplier * feverMult);
+      // Phase 17: Compact Score Scaling (÷20) + Dynamic Prize Boost (0 in PvP)
+      const gainedScore = Math.max(1, Math.round((rawScore * comboMult * scoreMult * this.riskMultiplier * feverMult * this.dynamicBoostMult) / 20));
       this.score += gainedScore;
+
+      // Phase 17: Summon Absolute Throne Guardian once record is exceeded by +5%
+      if (this.mode === "record" && this.opponentTargetScore > 0 && !this.ceilingGuardianSpawned) {
+        const ceilingTrigger = Math.ceil(this.opponentTargetScore * 1.05);
+        if (this.score >= ceilingTrigger) {
+          this.ceilingGuardianSpawned = true;
+          this.ceilingGuardianActive = true;
+          this.isBossFloor = true;
+          this.guardianMaxHp = Math.max(600, Math.round(this.guardianMaxHp * 2.2));
+          this.guardianHp = this.guardianMaxHp;
+          this.bossAttackMaxSec = 4.5;
+          this.bossAttackCooldownSec = 3.0;
+          this.bossTheme = {
+            tier: 99,
+            name: "👑 حارس العرش المطلق",
+            accent: "#f43f5e",
+            bgTop: "#2e0219",
+            bgBot: "#09040e",
+            isNemesis: true,
+            ability: "يمنع تمديد الوقت ويحرق الثواني بسرعة لمنع تضخم الرقم!"
+          };
+          this._emit("ceilingGuardian", { name: this.bossTheme.name, hp: this.guardianMaxHp });
+        }
+      }
 
       const prevReady = this.skillCharge >= 100;
       const chargeGain = (byType.star * 14 + t.clearedCount * 2.2) * chargeMult;
@@ -492,7 +525,7 @@
       }
 
       if (addedSec > 0) this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + addedSec);
-      if (bonusScore > 0) this.score += Math.round(bonusScore * this.riskMultiplier);
+      if (bonusScore > 0) this.score += Math.max(1, Math.round((bonusScore * this.riskMultiplier * this.dynamicBoostMult) / 20));
       if (directDmg > 0) this.guardianHp = Math.max(0, this.guardianHp - directDmg);
 
       const payload = {
@@ -507,7 +540,7 @@
     _onFloorDefeated() {
       const wasBoss = this.isBossFloor;
       this.floorsCleared++;
-      this.score += Math.round((wasBoss ? 250 : 80) * this.floor * this.riskMultiplier);
+      this.score += Math.max(5, Math.round(((wasBoss ? 250 : 80) * this.floor * this.riskMultiplier * this.dynamicBoostMult) / 20));
 
       if (wasBoss) {
         this.bossesDefeated++;
@@ -563,26 +596,27 @@
         : null;
       this.miniObjective = this._makeMiniObjective(this.floor);
 
-      // أشكال لوحات متغيرة في الطوابق العليا
-      if (this.floor >= 6 && this.floor % 4 === 2) this.board.applyFloorMask("corners");
-      else if (this.floor >= 8 && this.floor % 4 === 0 && !this.isBossFloor) this.board.applyFloorMask("center");
+      // Phase 21: Progressive pacing so early floors stay clean and welcoming
+      if (this.floor >= 7 && this.floor % 4 === 3) this.board.applyFloorMask("corners");
+      else if (this.floor >= 9 && this.floor % 4 === 1 && !this.isBossFloor) this.board.applyFloorMask("center");
       else this.board.applyFloorMask("none");
 
       this.guardianMaxHp = this._calcFloorHp(this.floor);
       this.guardianHp = this.guardianMaxHp;
 
-      const timeRefill = afterBoss ? 18 : 9;
+      const timeRefill = afterBoss ? 18 : (this.floor <= 3 ? 11 : 9);
       this.timeLeftSec = Math.min(this.maxTimeSec, this.timeLeftSec + timeRefill);
 
-      if (this.floor % 3 === 0) this.board.spawnGoldenProductTile();
-      if (this.floor >= 10 && !this.isBossFloor) {
-        this.board.applyIceObstacles(Math.min(4, 1 + Math.floor((this.floor - 10) / 3)), 2);
+      if (this.floor >= 4 && this.floor % 3 === 0) this.board.spawnGoldenProductTile();
+      if (this.floor >= 11 && !this.isBossFloor) {
+        this.board.applyIceObstacles(Math.min(4, 1 + Math.floor((this.floor - 11) / 3)), 2);
       }
 
       let bossLocks = [];
       if (this.isBossFloor) {
-        bossLocks = this.board.applyBossLocks(Math.min(5, 2 + Math.floor(this.floor / 5)));
-        this.board.spawnChainBarrel();
+        const lockCount = this.floor <= 5 ? 1 : Math.min(4, 2 + Math.floor(this.floor / 6));
+        bossLocks = this.board.applyBossLocks(lockCount);
+        if (this.floor >= 10) this.board.spawnChainBarrel();
       }
 
       this._emit("floorCleared", {
