@@ -473,7 +473,10 @@ function getTodayDailyDeal() {
 }
 
 export default {
-  async fetch(request, env) {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runHourlyAutoVoiceBatch(env, false));
+  },
+  async fetch(request, env, ctx) {
     try {
       if (request.method === 'OPTIONS') return corsResponse(null, 204);
 
@@ -501,6 +504,9 @@ export default {
       }
 
       const body = await request.json().catch(() => ({}));
+      if (ctx && typeof ctx.waitUntil === 'function') {
+        ctx.waitUntil(runHourlyAutoVoiceBatch(env, false).catch(() => {}));
+      }
       const config = (await fbGet(env, 'arena_world/config')) || {};
 
       // أ) نقاط نهاية الإدارة المستقلة (بدون أي ارتباط بالمتجر)
@@ -572,6 +578,8 @@ export default {
             return await handleAdminPlayerUnbindDevice(env, body);
           case '/admin/voice/generate':
             return await handleAdminVoiceGenerate(env, body);
+          case '/admin/voice/auto-batch':
+            return await handleAdminVoiceAutoBatch(env);
           case '/admin/game/reset-all':
             return await handleAdminResetAllGameData(env, body);
           default:
@@ -3229,6 +3237,11 @@ const CHARACTER_VOICE_PERSONAS = {
 
 function buildVoiceLineText(characterId, cue, customText = '') {
   if (customText && String(customText).trim()) return String(customText).trim().slice(0, 160);
+  const cid = String(characterId || 'buddy');
+  const ck = String(cue || 'welcome');
+  if (PROPOSED_CHARACTER_VOICE_LINES[cid] && PROPOSED_CHARACTER_VOICE_LINES[cid][ck]) {
+    return PROPOSED_CHARACTER_VOICE_LINES[cid][ck];
+  }
   const map = {
     welcome: 'أهلاً بك في عالم التحديات! لنصعد إلى القمة معاً!',
     start: 'انطلق الآن! أرِهم قوة الكومبو في البرج!',
@@ -3237,7 +3250,7 @@ function buildVoiceLineText(characterId, cue, customText = '') {
     shop: 'اختيار ممتاز! هذه الأداة ستقلب الموازين!',
     taunt: 'عرشك أصبح تحت الضغط.. هل أنت مستعد للمواجهة؟'
   };
-  return map[cue] || 'هيا بنا نواصل التحدي!';
+  return map[ck] || 'هيا بنا نواصل التحدي!';
 }
 
 async function generateAndStoreVoiceClip(env, characterId, cue, customText = '') {
@@ -3250,8 +3263,13 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
     return { ok: true, cached: true, ...existing };
   }
 
-  const apiKey = String((env && (env.GEMINI_API_KEY || env.GOOGLE_API_KEY)) || '').trim();
-  if (!apiKey) {
+  const keyCandidates = [
+    { name: 'GEMINI_API_KEY', val: String((env && env.GEMINI_API_KEY) || '').trim() },
+    { name: 'GEMINI_API_KEY_TOEER', val: String((env && env.GEMINI_API_KEY_TOEER) || '').trim() },
+    { name: 'GOOGLE_API_KEY', val: String((env && env.GOOGLE_API_KEY) || '').trim() }
+  ].filter((k, idx, arr) => k.val && arr.findIndex((x) => x.val === k.val) === idx);
+
+  if (!keyCandidates.length) {
     return {
       ok: false,
       code: 'ERR_NO_GEMINI_KEY',
@@ -3261,8 +3279,6 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
 
   const persona = CHARACTER_VOICE_PERSONAS[charKey] || CHARACTER_VOICE_PERSONAS.buddy;
   const lineText = buildVoiceLineText(charKey, cueKey, customText);
-
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(apiKey)}`;
   const payload = {
     contents: [{
       parts: [{
@@ -3281,26 +3297,46 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
     }
   };
 
-  const gRes = await fetch(geminiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  let lastStatus = 500;
+  let lastErrTxt = '';
+  let inlineData = null;
+  let usedKeyName = '';
 
-  if (!gRes.ok) {
-    const errTxt = await gRes.text().catch(() => '');
-    return {
-      ok: false,
-      code: `ERR_GEMINI_${gRes.status}`,
-      message: `تعذر توليد الصوت من Gemini API (${gRes.status}). ${errTxt.slice(0, 120)}`
-    };
+  for (const keyObj of keyCandidates) {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(keyObj.val)}`;
+    const gRes = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (gRes.ok) {
+      const gData = await gRes.json().catch(() => ({}));
+      const part = (((gData.candidates || [])[0] || {}).content || {}).parts?.[0] || {};
+      const foundAudio = part.inlineData || part.inline_data || null;
+      if (foundAudio && foundAudio.data) {
+        inlineData = foundAudio;
+        usedKeyName = keyObj.name;
+        break;
+      }
+      lastStatus = 200;
+      lastErrTxt = 'استجابة فارغة بدون صوت';
+    } else {
+      lastStatus = gRes.status;
+      lastErrTxt = await gRes.text().catch(() => '');
+      // التبديل التلقائي للمفتاح الاحتياطي عند استنفاد الحصة أو رفض المفتاح أو خطأ الخادم
+      if (![400, 401, 403, 429, 500, 502, 503, 504].includes(gRes.status)) {
+        break;
+      }
+    }
   }
 
-  const gData = await gRes.json().catch(() => ({}));
-  const part = (((gData.candidates || [])[0] || {}).content || {}).parts?.[0] || {};
-  const inlineData = part.inlineData || part.inline_data || null;
   if (!inlineData || !inlineData.data) {
-    return { ok: false, code: 'ERR_NO_AUDIO_DATA', message: 'لم تُرجع استجابة Gemini مقطعاً صوتياً.' };
+    return {
+      ok: false,
+      code: `ERR_GEMINI_${lastStatus}`,
+      message: `تعذر توليد الصوت من Gemini API (${lastStatus}). ${lastErrTxt.slice(0, 120)}`
+    };
   }
 
   const record = {
@@ -3309,6 +3345,7 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
     text: lineText,
     mimeType: inlineData.mimeType || inlineData.mime_type || 'audio/wav',
     audioBase64: inlineData.data,
+    keySource: usedKeyName,
     generatedAt: Date.now()
   };
 
@@ -3344,5 +3381,253 @@ async function handleAdminVoiceGenerate(env, body) {
     message: res.cached
       ? `✅ تم جلب الصوت المحفوظ مسبقاً من السحابة (${res.characterId} - ${res.cue}).`
       : `✅ تم توليد الصوت من Gemini وحفظه في السحابة لنشره للمستخدمين (${res.characterId} - ${res.cue})!`
+  });
+}
+
+
+// ============================================================================
+// التوليد التلقائي الدوري لأصوات الشخصيات (كل ساعة بمعدل 10 أصوات لكل الجمل المقترحة)
+// يعمل عبر scheduled (Cron Trigger كل ساعة) + استدعاء تلقائي آمن عند النشاط إذا مرّت ساعة
+// مع الإبقاء الكامل على خيار التوليد الفوري من لوحة الإدارة (/admin/voice/generate)
+// ============================================================================
+const PROPOSED_CHARACTER_VOICE_LINES = {
+  "buddy": {
+    "welcome": "أهلاً يا صديقي! اشتقت لك، جاهز للمغامرة؟",
+    "start": "يلا بينا! خلّينا نكسر البرج سوا!",
+    "win": "يا سلام! فوز رائع، كنت عارف إنك قدّها!",
+    "lose": "ولا يهمك يا بطل، الجاية إلنا أكيد!",
+    "shop": "اختيار حلو! رح يساعدنا كتير!",
+    "taunt": "ههه، العب على مهلك.. الصدارة محجوزة لنا!"
+  },
+  "lolo": {
+    "welcome": "أهلاً وسهلاً! اليوم رح يكون كله حماس!",
+    "start": "انطلق بسرعة! أرِهم شطارتك!",
+    "win": "واو! انتصار بيجنن، برافو عليك!",
+    "lose": "لا تزعل، المرة الجاية رح تكون أقوى!",
+    "shop": "يا عيني على الذوق! أداة ولا أروع!",
+    "taunt": "قريب مني؟ لسا بدك شوية تدريب يا حلو!"
+  },
+  "noor": {
+    "welcome": "نورت الساحة! خلّينا نبدأ بقوة وثقة!",
+    "start": "ركّز منيح.. النصر قريب جداً!",
+    "win": "فوز مستحق! أداء نظيف ومشرق!",
+    "lose": "تعثّر بسيط، انهض وأكمل الطريق!",
+    "shop": "استثمار ذكي! رح يفرق معنا بالجولة!",
+    "taunt": "ضوء القمة ساطع.. تقدر تتحمّل وهجه؟"
+  },
+  "chef": {
+    "welcome": "أهلاً بمطبخ التحديات! الطبخة اليوم ساخنة!",
+    "start": "اشعل النار! وقت تجهيز الكومبو!",
+    "win": "يا سلام! انتصار بطعم ولا أشهى!",
+    "lose": "انحرقت الطبخة شوي، بنعيدها أضبط!",
+    "shop": "بهارات إضافية للجولة.. ممتاز!",
+    "taunt": "رح نطبخ نتيجتك على نار هادية!"
+  },
+  "pastry": {
+    "welcome": "أهلاً يا غالي! يومك اليوم أحلى من العسل!",
+    "start": "يلا نزيّن البرج بأحلى النقاط!",
+    "win": "فوز حلو متلك! طعم النصر غير شكل!",
+    "lose": "شوية سكر زيادة بالمرة الجاية وبتضبط!",
+    "shop": "قطعة فاخرة! رح تحلّي اللعب!",
+    "taunt": "نتيجتك حلوة.. بس نتيجتي أحلى بكتير!"
+  },
+  "athlete": {
+    "welcome": "جاهز للتمرين؟ اللياقة اليوم مية بالمية!",
+    "start": "انطلاق! سرعة، تركيز، وبدون توقف!",
+    "win": "بطل! رقم قياسي ولياقة خارقة!",
+    "lose": "استراحة محارب، ارجع للملعب أقوى!",
+    "shop": "تجهيز احترافي! هيك شغل الأبطال!",
+    "taunt": "تتعب بسرعة؟ أنا لسا ما بلّشت إحماء!"
+  },
+  "sheikh": {
+    "welcome": "حياك الله يا بطل، توكلنا على الله!",
+    "start": "بالهدوء والحكمة، نصل إلى القمة!",
+    "win": "بارك الله فيك، فوزٌ يرفع الرأس!",
+    "lose": "كل كبوة درس، والقادم أجمل بإذن الله!",
+    "shop": "اختيار موفق وفي محله تماماً!",
+    "taunt": "العجلة من الندامة.. والقمة لأهل الثبات!"
+  },
+  "saver": {
+    "welcome": "أهلاً! خلّينا نحسبها صح ونربح أكتر!",
+    "start": "كل حركة بحسابها، ابدأ بذكاء!",
+    "win": "ربح صافي! صفقة ناجحة مية بالمية!",
+    "lose": "خسارة بسيطة، بنعوّضها بالضعف!",
+    "shop": "خصم وتوفير وأداة قوية.. يا بلاش!",
+    "taunt": "تحرق نقاطك عالفاضي؟ خلّيك مع المحترفين!"
+  },
+  "homemaker": {
+    "welcome": "يا مية أهلاً! الساحة مرتبة وجاهزة إلك!",
+    "start": "بسم الله، خطوة بخطوة بنوصل!",
+    "win": "ما شاء الله! فوز مرتب وبيفرح القلب!",
+    "lose": "بسيطة ولا تهتم، المرة الجاية بتنجح!",
+    "shop": "غرض مهم وبوقته تماماً!",
+    "taunt": "شغلك حلو، بس الترتيب عندي أتقن!"
+  },
+  "coach_sakhr": {
+    "welcome": "أهلاً بالمقاتل! اليوم رح نحرق البرج!",
+    "start": "فجّر اللوحة! لا رحمة للزعماء!",
+    "win": "سحقٌ ناري كامل! هذا هو مستوى الكبار!",
+    "lose": "النار ما بتطفي، ارجع واشعلها أقوى!",
+    "shop": "سلاح فتاك! جاهزين للانفجار!",
+    "taunt": "رح تذوب قدام هجومي.. انسحب أحسنلك!"
+  },
+  "grand_chef": {
+    "welcome": "أهلاً في صالة النخبة! الوليمة بدأت!",
+    "start": "حرارة قصوى! أرِهم فن المطبخ الملكي!",
+    "win": "تحفة فنية! انتصار يستحق خمس نجوم!",
+    "lose": "خطأ بسيط بالوصفة، الجولة الجاية مثالية!",
+    "shop": "مكوّن فاخر لا يليق إلا بالأبطال!",
+    "taunt": "نتيجتك نيّة.. تعال أعلّمك كيف تنضج!"
+  },
+  "princess_layla": {
+    "welcome": "أهلاً بك في قصري الجليدي!",
+    "start": "بأناقة وبرود.. لنجمّد المنافسين!",
+    "win": "انتصار ملكي ناصع كالكريستال!",
+    "lose": "حتى الجليد يتشقق أحياناً، سنعود أصلب!",
+    "shop": "جوهرة نادرة تليق بالتاج!",
+    "taunt": "هل تشعر بالبرد؟ هذه هيبة القمة فقط!"
+  },
+  "butler_farid": {
+    "welcome": "مساؤك فاخر سيدي، كل شيء تحت السيطرة!",
+    "start": "دعني أريك كيف تُحسم الجولات بهدوء!",
+    "win": "كما هو متوقع، نصرٌ أنيق بلا أخطاء!",
+    "lose": "لا تقلق سيدي، لقد استرددنا جزءاً من الخسارة!",
+    "shop": "اختيار راقٍ يليق بمكانتك!",
+    "taunt": "محاولة لطيفة.. لكنها لم تقترب من مستواي!"
+  },
+  "friend_fadi": {
+    "welcome": "هلا بالغالي! جاهز نعمل شرارة بالساحة؟",
+    "start": "بسرعة البرق! خلّيهم ما يلحقوا يشوفونا!",
+    "win": "صاعقة! فوز سريع وممتع يا وحش!",
+    "lose": "عادي يا صاحبي، بنردّها إلهم دبل!",
+    "shop": "يا سلام! هيك صرنا جاهزين نكهرب الجو!",
+    "taunt": "لحّقني إذا بتقدر.. سرعتي ما بترحم!"
+  },
+  "anime_zain": {
+    "welcome": "طاقتي مشحونة للآخر! هيا بنا!",
+    "start": "انطلاق الصاعقة! كومبو لا يتوقف!",
+    "win": "قوة البرق لا تُقهر! انتصار ساحق!",
+    "lose": "سأشحن طاقتي أكثر وأعود لأحطم الرقم!",
+    "shop": "ترقية أسطورية! طاقتي تضاعفت!",
+    "taunt": "هل رأيت وميض البرق؟ لقد فاتك الأوان!"
+  },
+  "anime_ryu": {
+    "welcome": "من قلب الظلال.. حان وقت التحدي!",
+    "start": "تحرّك بصمت.. واضرب في الصميم!",
+    "win": "اختفوا جميعاً في الظلام.. النصر لنا!",
+    "lose": "الظل لا يُهزم، إنه يستعد للضربة القادمة!",
+    "shop": "أداة مظلمة.. مثالية لخطتي!",
+    "taunt": "أنت تطارد ظلي فقط.. العرش بعيد عنك!"
+  },
+  "anime_ritaj": {
+    "welcome": "أهلاً! مستعد لعاصفة جليدية لا تُنسى؟",
+    "start": "تجمّد أيها البرج! حان وقت تألقي!",
+    "win": "رائع! انتصار لامع كالثلج!",
+    "lose": "لن أستسلم، العاصفة القادمة أقوى!",
+    "shop": "قطعة رائعة! ستزيد قوتي الجليدية!",
+    "taunt": "تحاول اللحاق بي؟ طريقك متجمّد يا منافس!"
+  },
+  "friend_saad": {
+    "welcome": "أهلاً يا أسطورة! العرش ينتظرنا اليوم!",
+    "start": "بقوة المجرة! لنكتب تاريخاً جديداً!",
+    "win": "انتصار كوني! لا أحد يقف في طريقنا!",
+    "lose": "حتى النجوم تخفت لحظة قبل أن تنفجر نوراً!",
+    "shop": "عتاد ملكي لبطل لا يُقهر!",
+    "taunt": "أنظر للأعلى.. أنا هناك فوق القمة!"
+  }
+};
+
+const VOICE_AUTO_BATCH_SIZE = 10;
+const VOICE_AUTO_INTERVAL_MS = 60 * 60 * 1000; // كل ساعة
+
+function buildProposedVoiceQueue() {
+  const queue = [];
+  const charOrder = [...BASIC_CHARS, ...VIP_CHARS];
+  const cueOrder = ['welcome', 'start', 'win', 'lose', 'shop', 'taunt'];
+  for (const cid of charOrder) {
+    const charLines = PROPOSED_CHARACTER_VOICE_LINES[cid] || {};
+    for (const cue of cueOrder) {
+      const txt = charLines[cue] || buildVoiceLineText(cid, cue, '');
+      queue.push({ characterId: cid, cue, text: txt });
+    }
+  }
+  return queue;
+}
+
+async function runHourlyAutoVoiceBatch(env, force = false) {
+  if (!env || !env.FIREBASE_DB_URL || !env.FIREBASE_DB_SECRET) {
+    return { ok: false, generated: 0, skipped: 0, reason: 'ENV_MISSING' };
+  }
+  const now = Date.now();
+  const statePath = 'arena_world/voice_auto_state';
+  const state = (await fbGet(env, statePath)) || { cursor: 0, lastRunAt: 0, totalGenerated: 0 };
+
+  if (!force && state.lastRunAt && (now - Number(state.lastRunAt)) < VOICE_AUTO_INTERVAL_MS) {
+    return { ok: true, throttled: true, generated: 0, cursor: Number(state.cursor || 0) };
+  }
+
+  let cursor = Number(state.cursor || 0);
+  const queue = buildProposedVoiceQueue();
+  const qLen = queue.length;
+  if (!qLen) return { ok: true, generated: 0, cursor: 0 };
+
+  let generatedCount = 0;
+  let alreadyCachedCount = 0;
+  let checkedSlots = 0;
+  let nextCursor = cursor % qLen;
+  let lastError = '';
+
+  while (generatedCount < VOICE_AUTO_BATCH_SIZE && checkedSlots < qLen) {
+    const item = queue[nextCursor];
+    nextCursor = (nextCursor + 1) % qLen;
+    checkedSlots++;
+
+    const cachePath = `arena_world/voice_cache/${item.characterId}/${item.cue}`;
+    const existing = await fbGet(env, cachePath);
+    if (existing && existing.audioBase64) {
+      alreadyCachedCount++;
+      continue;
+    }
+
+    const res = await generateAndStoreVoiceClip(env, item.characterId, item.cue, item.text);
+    if (res && res.ok) {
+      if (!res.cached) generatedCount++;
+      else alreadyCachedCount++;
+    } else {
+      lastError = (res && res.message) || 'VOICE_GEN_ERR';
+      if (res && (res.code === 'ERR_NO_GEMINI_KEY' || res.code === 'ERR_GEMINI_429')) {
+        break;
+      }
+    }
+  }
+
+  const totalGenerated = Number(state.totalGenerated || 0) + generatedCount;
+  await fbPatch(env, statePath, {
+    cursor: nextCursor,
+    lastRunAt: now,
+    lastGeneratedCount: generatedCount,
+    lastAlreadyCachedCount: alreadyCachedCount,
+    lastError,
+    totalGenerated,
+    totalQueueSize: qLen
+  });
+
+  return {
+    ok: true,
+    generated: generatedCount,
+    alreadyCached: alreadyCachedCount,
+    cursor: nextCursor,
+    totalGenerated,
+    totalQueueSize: qLen,
+    lastError
+  };
+}
+
+async function handleAdminVoiceAutoBatch(env) {
+  const r = await runHourlyAutoVoiceBatch(env, true);
+  return jsonResponse({
+    ok: true,
+    ...r,
+    message: `🎙️ تمت معالجة دفعة تلقائية: تم توليد ${r.generated || 0} صوت جديد (المخزّن مسبقاً: ${r.alreadyCached || 0} من أصل ${r.totalQueueSize || 108}).`
   });
 }
