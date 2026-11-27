@@ -6,7 +6,7 @@
  * - استثناء تام لـ workers.dev و firebaseio.com لمنع الغش
  */
 
-const CACHE_NAME = 'moaath-arena-smart-cache-v25';
+const CACHE_NAME = 'moaath-arena-smart-cache-v28';
 
 const CORE_ASSETS = [
   './',
