@@ -878,6 +878,130 @@
       font-weight: 900; cursor: pointer; white-space: nowrap;
     }
 
+  
+    /* === Phase 17: Dynamic Prize Boost Badge + Ceiling Guardian Alert === */
+    .dyn-boost-pill17 {
+      background: linear-gradient(90deg, rgba(34,197,94,0.2), rgba(250,204,21,0.22));
+      border: 1.5px solid #4ade80; border-radius: 12px; padding: 6px 10px;
+      margin: 6px 0 8px; text-align: center; font-size: 0.76rem; font-weight: 900;
+      color: #86efac; box-shadow: 0 0 14px rgba(74,222,128,0.2);
+    }
+
+  
+    /* === Phase 18: Fast Entry, 3s Countdown, Quick Play FAB & Auto-Re-Equip === */
+    .quick-play-bar18 {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+    }
+    .quick-play-fab18 {
+      flex: 1; padding: 11px 14px; border-radius: 14px;
+      font-size: 0.9rem; font-weight: 900; margin: 0 !important;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+
+  
+    /* === Phase 19: High-Contrast Tile Clarity, Distinct Shapes & Zero Boss Overlap === */
+    /* Keep all floating damage / combo / popup texts over the board (bottom 65%), never over the boss header */
+    .tm-float-dmg, .tm-floating-text, .tm-combo-pop, [class*="float"], [class*="pop"] {
+      max-height: 28px;
+      pointer-events: none !important;
+    }
+    .tm-float-dmg, .tm-floating-text, .tm-combo-pop {
+      top: 56% !important;
+      z-index: 960 !important;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(250,204,21,0.55) !important;
+      font-weight: 900 !important;
+    }
+
+    /* High-contrast visual polarity for tile classes if rendered in DOM or Canvas overlay */
+    .tm-tile[data-type="sword"], .tile-sword { filter: saturate(1.25) contrast(1.12); }
+    .tm-tile[data-type="bolt"], .tile-bolt { filter: hue-rotate(175deg) saturate(1.45) brightness(1.15); }
+    .tm-tile[data-type="emerald"], .tile-emerald { filter: saturate(1.3) brightness(1.1); }
+    .tm-tile[data-type="coin"], .tile-coin { filter: saturate(1.35) contrast(1.12); }
+
+    /* Selected tile highlight */
+    .tm-tile.selected, .tile-selected {
+      transform: scale(1.14) !important;
+      outline: 2.5px solid #ffffff !important;
+      box-shadow: 0 0 16px rgba(56,189,248,0.85) !important;
+      z-index: 25 !important;
+    }
+
+    /* Special tile glowing halos */
+    .tm-special-bomb, .special-bomb {
+      box-shadow: 0 0 14px rgba(239,68,68,0.85), inset 0 0 8px rgba(254,202,202,0.5) !important;
+    }
+    .tm-special-row, .special-row {
+      box-shadow: 0 0 14px rgba(56,189,248,0.85), inset 0 0 8px rgba(186,230,253,0.5) !important;
+    }
+    .tm-special-prism, .special-prism {
+      animation: frGalaxy 2.4s linear infinite !important;
+    }
+
+    /* Urgent timer pulse in last 10 seconds */
+    .tm-timer-urgent, .timer-urgent {
+      color: #fda4af !important;
+      animation: frFlame 0.9s ease-in-out infinite !important;
+    }
+
+  
+    /* === Phase 20: Tactile Juice, Localized Canvas Bursts, Lasers, Slow-Mo & Pitch Audio === */
+    #juiceCanvas20 {
+      position: fixed; inset: 0; pointer-events: none; z-index: 2250000;
+    }
+    body.lite-fx #juiceCanvas20 { display: none !important; }
+
+    .juice20-slowmo {
+      animation: fx20SlowMo 0.36s ease-out forwards;
+    }
+    @keyframes fx20SlowMo {
+      0%   { filter: contrast(1.35) saturate(1.45) brightness(1.22); transform: scale(1.015); }
+      60%  { filter: contrast(1.15) saturate(1.2) brightness(1.08); transform: scale(1.005); }
+      100% { filter: none; transform: scale(1); }
+    }
+
+    .juice20-shake-soft { animation: fx20ShakeSoft 0.16s ease-in-out; }
+    .juice20-shake-hard { animation: fx20ShakeHard 0.26s ease-in-out; }
+    @keyframes fx20ShakeSoft {
+      0%,100% { transform: translate(0,0); }
+      33% { transform: translate(-3px, 2px); }
+      66% { transform: translate(3px, -2px); }
+    }
+    @keyframes fx20ShakeHard {
+      0%,100% { transform: translate(0,0); }
+      20% { transform: translate(-6px, 4px); }
+      40% { transform: translate(6px, -4px); }
+      60% { transform: translate(-5px, -3px); }
+      80% { transform: translate(5px, 3px); }
+    }
+
+  
+    /* === Phase 21: First-Match Hint Pulse, Progressive Clean UI & Near-Miss Nudge === */
+    .hint-pulse-banner21 {
+      position: fixed; left: 50%; bottom: 132px; transform: translateX(-50%);
+      z-index: 2150000; pointer-events: none;
+      background: rgba(15, 23, 42, 0.94); border: 1.5px solid #38bdf8;
+      border-radius: 999px; padding: 6px 14px; font-size: 0.75rem; font-weight: 900;
+      color: #bae6fd; box-shadow: 0 6px 20px rgba(0,0,0,0.65);
+      animation: frPulseSoft 1.8s ease-in-out infinite;
+    }
+    .near-miss-card21 {
+      background: linear-gradient(90deg, rgba(250,204,21,0.18), rgba(249,115,22,0.18));
+      border: 1.5px solid #facc15; border-radius: 14px; padding: 8px 12px;
+      margin: 8px 0; font-size: 0.76rem; font-weight: 900; color: #fef08a;
+      text-align: center;
+    }
+
+  
+    /* === Phase 22: Final Retention, Social Victory Card, Recent Rounds & Support === */
+    .support-fab22 {
+      position: fixed; left: 12px; bottom: 84px; z-index: 620;
+      background: rgba(22, 163, 74, 0.92); border: 1.5px solid #86efac;
+      color: #ffffff; border-radius: 999px; padding: 6px 12px;
+      font-size: 0.72rem; font-weight: 900; cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+    body.beginner-ui .support-fab22 { display: none !important; }
+
   </style>
 </head>
 <body>
@@ -4697,6 +4821,637 @@
         localStorage.setItem(BEG_KEY, next ? '1' : '0');
         this.applyBeginnerMode();
         this.toast(next ? '✨ تم تفعيل الواجهة البسيطة' : '⚡ تم تفعيل الوضع الكامل');
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 17: تمرير التعزيز الديناميكي + شارة التعزيز الحيّة + إشعار حارس العرش المطلق + توحيد شاشة الانسحاب
+    // ========================================================================
+    (function extendArenaAppPhase17() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Pass dynamicBoostPct into TowerUI.launch
+      const origLaunch17 = ArenaApp.launchGame.bind(ArenaApp);
+      ArenaApp.launchGame = async function(gameId, mode, stakePts, session) {
+        if (gameId === 'tower_match' && window.MoaathTowerUI && !this._p17Wrapped) {
+          this._p17Wrapped = true;
+          const origTL = window.MoaathTowerUI.launch.bind(window.MoaathTowerUI);
+          window.MoaathTowerUI.launch = (opts = {}) => {
+            const boost = Number((this._activeSession17 && this._activeSession17.dynamicBoostPct) || 0);
+            return origTL({ ...opts, dynamicBoostPct: opts.mode === 'pvp' ? 0 : boost });
+          };
+        }
+        this._activeSession17 = session || null;
+        return origLaunch17(gameId, mode, stakePts, session);
+      };
+
+      // 2. Display Live Dynamic Boost Pill inside Record Room
+      const origSync17 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync17(...args);
+        if (!this.profile) return res;
+        const boostPct = Number(this.profile.economy?.recordDynamicBoostPct || 0);
+        const tc = document.querySelector('#tab-home .hero-game-card.tower');
+        let pill = document.getElementById('dynBoostPill17');
+        if (tc && boostPct > 0) {
+          if (!pill) {
+            pill = document.createElement('div');
+            pill.id = 'dynBoostPill17';
+            pill.className = 'dyn-boost-pill17';
+            const btnRow = tc.querySelector('div[style*="grid-template-columns"]');
+            if (btnRow) tc.insertBefore(pill, btnRow);
+            else tc.appendChild(pill);
+          }
+          pill.textContent = `⚡ تعزيز الساحة الحالي: +${boostPct}% قوة وهجوم بسبب ارتفاع الجائزة!`;
+        } else if (pill) {
+          pill.remove();
+        }
+        return res;
+      };
+
+      // 3. Dramatic alert when Absolute Throne Guardian appears
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origEmit17 = TEProto._emit;
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit17.apply(this, arguments);
+          if (ev === 'ceilingGuardian') {
+            ArenaApp.toast('👑 ظهر «حارس العرش المطلق»! يمنع تمديد الوقت ويحمي الرقم القياسي — انسحب بأمان أو قاتل!');
+            if (typeof MythicFX !== 'undefined' && MythicFX.playRevengeClash) MythicFX.playRevengeClash();
+          }
+          return r;
+        };
+      }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 18: اختصار خطوات الدخول + عدّ تنازلي 3 ثوانٍ + زر «العب فوراً» + التجهيز التلقائي للأداة
+    // ========================================================================
+    (function extendArenaAppPhase18() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      const LAST_MODE_KEY = 'moaath_last_play_mode_v18';
+      const LAST_STAKE_KEY = 'moaath_last_pvp_stake_v18';
+      const LAST_ITEM_KEY = 'moaath_last_used_item_v18';
+
+      // 1. 3-second countdown with pre-fetch at second 2
+      ArenaApp.startFlow = function(gameId, mode, stakePts, pvpMatchId = null) {
+        this.lastSessionCtx = { gameId, mode, stakePts, pvpMatchId };
+        try { localStorage.setItem(LAST_MODE_KEY, mode === 'weekly' ? 'weekly' : 'record'); } catch (_) {}
+
+        const useItem = document.getElementById('tacticalItemSelect')?.value || null;
+        if (useItem) {
+          try { localStorage.setItem(LAST_ITEM_KEY, useItem); } catch (_) {}
+        }
+        const usePass = mode === 'record' && document.getElementById('usePassCheckbox')?.checked;
+        if (this.profile && window.ArenaVoice) window.ArenaVoice.speak(this.profile.activeCharacterId, 'start');
+
+        let sec = 3;
+        let cancelled = false;
+        let prefetchedPromise = null;
+        const idempotencyKey = `run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+        const overlay = document.getElementById('countdownOverlay');
+        const numEl = document.getElementById('countdownNumber');
+        const cancelBtn = document.getElementById('cancelMatchBtn');
+        numEl.innerHTML = sec;
+        cancelBtn.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+
+        this._cancelCb18 = () => { cancelled = true; };
+
+        const fireStartRequest = () => {
+          let endpoint = '/session/start';
+          let payload = { gameId, mode, stakePts, useItem, usePass, idempotencyKey };
+          if (mode === 'pvp_create') { endpoint = '/pvp/create'; payload = { gameId, stakePts, useItem, idempotencyKey }; }
+          if (mode === 'pvp_join') { endpoint = '/pvp/join'; payload = { matchId: pvpMatchId, useItem, idempotencyKey }; }
+          return this.api(endpoint, payload);
+        };
+
+        // Pre-fetch at 2s left so start at 0 is instant
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = setInterval(async () => {
+          if (cancelled) { clearInterval(this.countdownTimer); return; }
+          sec--;
+          if (sec === 2 && !prefetchedPromise) {
+            prefetchedPromise = fireStartRequest();
+          }
+          if (sec <= 1) cancelBtn.classList.add('hidden');
+          if (sec > 0) {
+            numEl.textContent = sec;
+          } else {
+            clearInterval(this.countdownTimer);
+            cancelBtn.classList.add('hidden');
+            numEl.innerHTML = `انطلق!<div class="cd-spinner"></div>`;
+            const session = await (prefetchedPromise || fireStartRequest());
+            overlay.classList.add('hidden');
+            if (!cancelled && session && session.sessionId) {
+              this.launchGame(gameId, mode, stakePts, session);
+            }
+          }
+        }, 1000);
+      };
+
+      const origCancel18 = ArenaApp.cancelCountdown.bind(ArenaApp);
+      ArenaApp.cancelCountdown = function() {
+        if (this._cancelCb18) this._cancelCb18();
+        origCancel18();
+      };
+
+      // 2. Auto-Re-Equip last used tactical item on quickRematch if still available
+      const origQuickRematch18 = ArenaApp.quickRematch ? ArenaApp.quickRematch.bind(ArenaApp) : null;
+      ArenaApp.quickRematch = function() {
+        const lastItem = localStorage.getItem(LAST_ITEM_KEY) || '';
+        const qty = Number((this.profile && this.profile.inventory && this.profile.inventory[lastItem]) || 0);
+        const sel = document.getElementById('tacticalItemSelect');
+        if (lastItem && qty > 0 && sel) {
+          sel.value = lastItem;
+          if (typeof this.renderQuickToolStrip === 'function') this.renderQuickToolStrip();
+        }
+        if (origQuickRematch18) return origQuickRematch18();
+      };
+
+      // 3. One-tap «⚡ العب فوراً» button + remember last PvP stake + preload Tower assets
+      ArenaApp.quickPlayNow18 = function() {
+        const lastMode = localStorage.getItem(LAST_MODE_KEY) || 'record';
+        if (lastMode === 'weekly') this.startWeeklyFlow('tower_match');
+        else this.startRecordFlow('tower_match');
+      };
+
+      ArenaApp._preloadTowerAssets18 = function() {
+        if (this._assetsPreloaded18) return;
+        this._assetsPreloaded18 = true;
+        const urls = [
+          './assets/tower_match/boss_5_frost.png',
+          './assets/tower_match/boss_6_shadow.png',
+          './assets/tower_match/perks/perk_sword.png',
+          './assets/tower_match/perks/perk_clock.png',
+          './assets/tower_match/perks/perk_skill.png'
+        ];
+        urls.forEach((u) => { const im = new Image(); im.src = u; });
+      };
+
+      const origSync18 = ArenaApp.syncProfile.bind(ArenaApp);
+      let directTowerEntered18 = false;
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync18(...args);
+        if (!this.profile) return res;
+
+        this._preloadTowerAssets18();
+
+        // Restore last PvP stake input
+        const pvpInp = document.getElementById('pvpStakeInput');
+        if (pvpInp && !pvpInp._p18Bound) {
+          pvpInp._p18Bound = true;
+          const savedStake = Number(localStorage.getItem(LAST_STAKE_KEY) || 0);
+          if (savedStake >= 10) pvpInp.value = savedStake;
+          pvpInp.addEventListener('change', () => {
+            const v = Number(pvpInp.value || 0);
+            if (v >= 10) localStorage.setItem(LAST_STAKE_KEY, String(v));
+          });
+        }
+
+        // Add one-tap «⚡ العب فوراً» bar at top of Tower Home tab
+        const homeTab = document.getElementById('tab-home');
+        if (homeTab && !document.getElementById('quickPlayBar18')) {
+          const bar = document.createElement('div');
+          bar.id = 'quickPlayBar18';
+          bar.className = 'quick-play-bar18';
+          const preferred = (localStorage.getItem(LAST_MODE_KEY) === 'weekly') ? '🏆 العب الأسبوعية فوراً' : '⚡ العب كسر الرقم فوراً';
+          bar.innerHTML = `<button type="button" class="btn btn-gold quick-play-fab18" onclick="ArenaApp.quickPlayNow18()">${preferred}</button>`;
+          const compBar = homeTab.querySelector('.companion-bar');
+          if (compBar) homeTab.insertBefore(bar, compBar);
+          else homeTab.insertBefore(bar, homeTab.firstChild);
+        }
+
+        // Direct entry into Tower workspace on first sync for returning players
+        if (!directTowerEntered18) {
+          directTowerEntered18 = true;
+          this.enterTowerWorkspace('home');
+        }
+        return res;
+      };
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 19: وضوح قطع اللعبة، تباين الألوان والأشكال، ومنع تداخل أرقام الضرر مع الزعيم
+    // ========================================================================
+    (function extendArenaAppPhase19() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      // 1. Reposition floating damage/combo elements that spawn near the top/boss into the board zone
+      function sanitizeFloatingNodes19() {
+        const nodes = document.querySelectorAll('div, span');
+        nodes.forEach((el) => {
+          if (el.id && (el.id.includes('boss') || el.id.includes('Boss') || el.id.includes('hud') || el.id.includes('Hud'))) return;
+          const st = el.style;
+          if (!st || st.position !== 'fixed' && st.position !== 'absolute') return;
+          const txt = (el.textContent || '').trim();
+          if (!txt || txt.length > 26) return;
+          const isDmgOrCombo = /^[-+]?\d+|×\d+|CRIT|STUN|كومبو|ضرر/i.test(txt);
+          if (isDmgOrCombo) {
+            const topPx = parseFloat(st.top || '0');
+            if (st.top && st.top.includes('%')) {
+              const pct = parseFloat(st.top);
+              if (pct < 45) st.top = '56%';
+            } else if (topPx > 0 && topPx < 250) {
+              st.top = '56%';
+            }
+            st.zIndex = '960';
+            st.pointerEvents = 'none';
+          }
+        });
+      }
+
+      // 2. Canvas visual clarity enhancer for Tower Match board & boss bar
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origEmit19 = TEProto._emit;
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit19.apply(this, arguments);
+          if (ev === 'move' || ev === 'skillUsed' || ev === 'tick') {
+            sanitizeFloatingNodes19();
+          }
+          if (ev === 'tick' && payload && Number(payload.timeLeftSec) <= 10 && Number(payload.timeLeftSec) > 0) {
+            const hudTip = document.getElementById('tm10BossTip');
+            if (hudTip && !hudTip.classList.contains('hidden')) {
+              hudTip.classList.add('urgency-pulse');
+            }
+          }
+          return r;
+        };
+      }
+
+      // 3. Periodically guard against boss-area floating text overlap during active gameplay
+      setInterval(() => {
+        if (document.body.classList.contains('lite-fx')) return;
+        sanitizeFloatingNodes19();
+      }, 350);
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 20: مؤثرات الضربات الحسية (انفجارات موضعية + ليزر + اهتزاز + تباطؤ قاضٍ + نغمات كومبو)
+    // ========================================================================
+    (function extendArenaAppPhase20() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      const JuiceVFX = {
+        canvas: null,
+        ctx: null,
+        particles: [],
+        beams: [],
+        rings: [],
+        rafId: null,
+
+        ensureCanvas() {
+          if (document.body.classList.contains('lite-fx')) return null;
+          if (!this.canvas) {
+            const c = document.createElement('canvas');
+            c.id = 'juiceCanvas20';
+            document.body.appendChild(c);
+            this.canvas = c;
+            this.ctx = c.getContext('2d');
+          }
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          if (this.canvas.width !== Math.floor(w * dpr) || this.canvas.height !== Math.floor(h * dpr)) {
+            this.canvas.width = Math.floor(w * dpr);
+            this.canvas.height = Math.floor(h * dpr);
+            this.canvas.style.width = w + 'px';
+            this.canvas.style.height = h + 'px';
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+          return this.ctx;
+        },
+
+        spawnBurst(x, y, color = '#fde047', count = 18) {
+          if (!this.ensureCanvas()) return;
+          const cx = x || window.innerWidth * 0.5;
+          const cy = y || window.innerHeight * 0.58;
+          this.rings.push({ x: cx, y: cy, r: 8, maxR: 72, color, alpha: 0.9 });
+          for (let i = 0; i < count; i++) {
+            const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+            const spd = 2.5 + Math.random() * 6.5;
+            this.particles.push({
+              x: cx, y: cy,
+              vx: Math.cos(ang) * spd,
+              vy: Math.sin(ang) * spd - 1.5,
+              size: 3 + Math.random() * 4.5,
+              color: i % 3 === 0 ? '#ffffff' : color,
+              alpha: 1,
+              decay: 0.026 + Math.random() * 0.018
+            });
+          }
+          this.startLoop();
+        },
+
+        spawnLaser(y, color = '#38bdf8') {
+          if (!this.ensureCanvas()) return;
+          const ly = y || window.innerHeight * 0.58;
+          this.beams.push({ y: ly, color, alpha: 1, width: 10 });
+          this.startLoop();
+        },
+
+        triggerFinisherSlowMo() {
+          if (document.body.classList.contains('lite-fx')) return;
+          this.spawnBurst(window.innerWidth * 0.5, window.innerHeight * 0.32, '#facc15', 32);
+          document.body.classList.remove('juice20-slowmo');
+          void document.body.offsetWidth;
+          document.body.classList.add('juice20-slowmo');
+          setTimeout(() => document.body.classList.remove('juice20-slowmo'), 380);
+        },
+
+        triggerShake(hard = false) {
+          if (document.body.classList.contains('lite-fx')) return;
+          const cls = hard ? 'juice20-shake-hard' : 'juice20-shake-soft';
+          document.body.classList.remove('juice20-shake-soft', 'juice20-shake-hard');
+          void document.body.offsetWidth;
+          document.body.classList.add(cls);
+          if (navigator.vibrate) navigator.vibrate(hard ? 55 : 18);
+          setTimeout(() => document.body.classList.remove(cls), hard ? 280 : 180);
+        },
+
+        startLoop() {
+          if (this.rafId) return;
+          const step = () => {
+            const ctx = this.ensureCanvas();
+            if (!ctx) { this.rafId = null; return; }
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            ctx.clearRect(0, 0, w, h);
+
+            for (let i = this.rings.length - 1; i >= 0; i--) {
+              const rg = this.rings[i];
+              rg.r += (rg.maxR - rg.r) * 0.22;
+              rg.alpha -= 0.055;
+              if (rg.alpha <= 0.02) { this.rings.splice(i, 1); continue; }
+              ctx.save();
+              ctx.globalAlpha = Math.max(0, rg.alpha);
+              ctx.strokeStyle = rg.color;
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(rg.x, rg.y, rg.r, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+            }
+
+            for (let i = this.beams.length - 1; i >= 0; i--) {
+              const bm = this.beams[i];
+              bm.alpha -= 0.065;
+              if (bm.alpha <= 0.02) { this.beams.splice(i, 1); continue; }
+              ctx.save();
+              ctx.globalAlpha = Math.max(0, bm.alpha);
+              const grad = ctx.createLinearGradient(0, bm.y, w, bm.y);
+              grad.addColorStop(0, 'transparent');
+              grad.addColorStop(0.5, bm.color);
+              grad.addColorStop(1, 'transparent');
+              ctx.fillStyle = grad;
+              ctx.fillRect(0, bm.y - bm.width * 0.5, w, bm.width);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, bm.y - 2, w, 4);
+              ctx.restore();
+            }
+
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+              const pt = this.particles[i];
+              pt.x += pt.vx;
+              pt.y += pt.vy;
+              pt.vy += 0.22;
+              pt.alpha -= pt.decay;
+              if (pt.alpha <= 0.02) { this.particles.splice(i, 1); continue; }
+              ctx.save();
+              ctx.globalAlpha = Math.max(0, pt.alpha);
+              ctx.fillStyle = pt.color;
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+
+            if (this.particles.length > 0 || this.beams.length > 0 || this.rings.length > 0) {
+              this.rafId = requestAnimationFrame(step);
+            } else {
+              ctx.clearRect(0, 0, w, h);
+              this.rafId = null;
+            }
+          };
+          this.rafId = requestAnimationFrame(step);
+        }
+      };
+
+      // Musical pentatonic pitch-shifted combo audio
+      if (typeof MythicFX !== 'undefined') {
+        const PENTA = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+        MythicFX.playCombo = function(combo) {
+          const idx = Math.max(0, Math.min(PENTA.length - 1, Number(combo || 1) - 1));
+          const freq = PENTA[idx];
+          this.tone(freq, 0.15, 'triangle', 0.14, 0);
+          this.tone(freq * 1.5, 0.14, 'sine', 0.08, 0.045);
+        };
+        MythicFX.playLaserZap = function() {
+          this.tone(880, 0.09, 'sawtooth', 0.11, 0);
+          this.tone(440, 0.14, 'triangle', 0.12, 0.05);
+        };
+        MythicFX.playBossFinisher = function() {
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.24, 'triangle', 0.16, i * 0.055));
+        };
+      }
+
+      // Hook into TowerEngine events for rich localized VFX & SFX
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origEmit20 = TEProto._emit;
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit20.apply(this, arguments);
+          const cx = window.innerWidth * 0.5;
+          const cy = window.innerHeight * 0.58;
+
+          if (ev === 'move' && payload) {
+            const combo = Number(payload.totals?.maxCombo || 1);
+            const specials = Number(payload.totals?.specialsTriggered || 0);
+            if (combo >= 2 && typeof MythicFX !== 'undefined' && MythicFX.playCombo) {
+              MythicFX.playCombo(combo);
+            }
+            if (specials > 0 || payload.wildcardSpawned) {
+              JuiceVFX.spawnBurst(cx, cy, payload.wildcardSpawned ? '#e879f9' : '#f97316', 24);
+              JuiceVFX.spawnLaser(cy, '#38bdf8');
+              JuiceVFX.triggerShake(true);
+              if (typeof MythicFX !== 'undefined' && MythicFX.playLaserZap) MythicFX.playLaserZap();
+            } else if (combo >= 3 || payload.isCrit || payload.bossStunned) {
+              JuiceVFX.spawnBurst(cx, cy, payload.bossStunned ? '#fde047' : '#38bdf8', 16);
+              JuiceVFX.triggerShake(false);
+            }
+          } else if (ev === 'skillUsed') {
+            JuiceVFX.spawnLaser(cy, '#fde047');
+            JuiceVFX.spawnBurst(cx, cy, '#38bdf8', 22);
+            JuiceVFX.triggerShake(true);
+            if (typeof MythicFX !== 'undefined' && MythicFX.playLaserZap) MythicFX.playLaserZap();
+          } else if (ev === 'bossDecision') {
+            JuiceVFX.triggerFinisherSlowMo();
+            if (typeof MythicFX !== 'undefined' && MythicFX.playBossFinisher) MythicFX.playBossFinisher();
+          } else if (ev === 'ceilingGuardian') {
+            JuiceVFX.spawnBurst(window.innerWidth * 0.5, window.innerHeight * 0.3, '#f43f5e', 30);
+            JuiceVFX.triggerShake(true);
+          }
+          return r;
+        };
+      }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 21: تلميح أول مطابقة + تدرّج العوائق + تنبيهات القرب من الهدف والرقم القياسي
+    // ========================================================================
+    (function extendArenaAppPhase21() {
+      if (typeof ArenaApp === 'undefined') return;
+
+      function showFirstMoveHint21() {
+        if (localStorage.getItem('moaath_first_match_hint_seen_v21') === '1') return;
+        let el = document.getElementById('firstMoveHint21');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'firstMoveHint21';
+          el.className = 'hint-pulse-banner21';
+          el.textContent = '✨ ابدأ بطابقتك الأولى: اسحب 3 قطع متشابهة أو أكثر لضرب الزعيم!';
+          document.body.appendChild(el);
+        }
+        el.classList.remove('hidden');
+      }
+
+      function hideFirstMoveHint21() {
+        localStorage.setItem('moaath_first_match_hint_seen_v21', '1');
+        const el = document.getElementById('firstMoveHint21');
+        if (el) el.remove();
+      }
+
+      if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+        const TEProto = window.MoaathTowerEngine.TowerEngine.prototype;
+        const origStart21 = TEProto.start;
+        const origEmit21 = TEProto._emit;
+        const origFinish21 = TEProto._finishGame;
+
+        TEProto.start = function(...args) {
+          const r = origStart21.apply(this, args);
+          if (this.floor === 1 && this.totalMoves === 0) showFirstMoveHint21();
+          return r;
+        };
+
+        TEProto._emit = function(ev, payload) {
+          const r = origEmit21.apply(this, arguments);
+          if (ev === 'move') hideFirstMoveHint21();
+          return r;
+        };
+
+        TEProto._finishGame = function(...args) {
+          hideFirstMoveHint21();
+          return origFinish21.apply(this, args);
+        };
+      }
+
+      // Near-miss encouragement nudge inside Result Overlay when close to record or next rank
+      const resOv21 = document.getElementById('resultOverlay');
+      if (resOv21) {
+        const obs21 = new MutationObserver(() => {
+          if (resOv21.classList.contains('hidden')) {
+            document.getElementById('nearMissBanner21')?.remove();
+            return;
+          }
+          if (document.getElementById('nearMissBanner21')) return;
+          const ctx = ArenaApp.lastSessionCtx || {};
+          const curRec = Number(ArenaApp.profile?.records?.tower_match?.currentRecord || 0);
+          const txtEl = document.getElementById('resultText');
+          const lastScoreMatch = txtEl && (txtEl.textContent || '').match(/(\d+)/);
+          const sc = lastScoreMatch ? Number(lastScoreMatch[1]) : 0;
+          if (ctx.mode === 'record' && curRec > 0 && sc > 0 && sc < curRec) {
+            const rem = curRec - sc + 1;
+            if (rem <= Math.max(25, Math.ceil(curRec * 0.15))) {
+              const b = document.createElement('div');
+              b.id = 'nearMissBanner21';
+              b.className = 'near-miss-card21';
+              b.textContent = `🔥 كنت قريباً جداً! متبقي ${rem.toLocaleString()} نقطة فقط لكسر الرقم القياسي — جرّب محاولة أخرى!`;
+              if (txtEl && txtEl.parentElement) txtEl.parentElement.insertBefore(b, txtEl.nextSibling);
+            }
+          }
+        });
+        obs21.observe(resOv21, { attributes: true, attributeFilter: ['class'] });
+      }
+    })();
+
+  
+    // ========================================================================
+    // المرحلة 22 والأخيرة: سجل آخر 10 جولات + بطاقة نصر للمشاركة + دعم فني سريع
+    // ========================================================================
+    (function extendArenaAppPhase22() {
+      if (typeof ArenaApp === 'undefined') return;
+      const RECENT_ROUNDS_KEY = 'moaath_recent_10_rounds_v22';
+
+      function getRecentRounds() {
+        try { return JSON.parse(localStorage.getItem(RECENT_ROUNDS_KEY) || '[]'); } catch (_) { return []; }
+      }
+      function pushRecentRound(entry) {
+        const list = getRecentRounds();
+        list.unshift(entry);
+        try { localStorage.setItem(RECENT_ROUNDS_KEY, JSON.stringify(list.slice(0, 10))); } catch (_) {}
+      }
+
+      // Record completed rounds into local recent-10 log
+      const origApi22 = ArenaApp.api.bind(ArenaApp);
+      ArenaApp.api = async function(path, body = {}) {
+        const res = await origApi22(path, body);
+        if (path === '/session/submit' && res && res.ok) {
+          const ctx = this.lastSessionCtx || {};
+          pushRecentRound({
+            mode: ctx.mode === 'weekly' ? 'الأسبوعية' : (ctx.mode && ctx.mode.includes('pvp') ? 'PvP' : 'كسر الرقم'),
+            score: Number(res.score || 0),
+            rewardPts: Number(res.rewardPts || 0),
+            won: Boolean(res.won),
+            at: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+        return res;
+      };
+
+      // Render Recent 10 Rounds inside Stats Modal
+      const origOpenStats22 = ArenaApp.openStatsModal13 ? ArenaApp.openStatsModal13.bind(ArenaApp) : null;
+      if (origOpenStats22) {
+        ArenaApp.openStatsModal13 = function() {
+          origOpenStats22();
+          const bodyEl = document.getElementById('afmBody');
+          const rounds = getRecentRounds();
+          if (bodyEl && rounds.length > 0 && !document.getElementById('recentRoundsBox22')) {
+            const box = document.createElement('div');
+            box.id = 'recentRoundsBox22';
+            box.style.cssText = 'margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);text-align:right;';
+            box.innerHTML = `<div style="font-size:0.76rem;color:#fde047;font-weight:900;margin-bottom:4px;">🕒 سجل آخر ${rounds.length} جولات</div>` +
+              rounds.map((r) => `<div class="stat-row" style="font-size:0.72rem;"><span>${r.mode} (${r.at})</span><span><b>${r.score}</b> • <b style="color:${r.won ? '#4ade80' : '#cbd5e1'};">${r.won ? '+' + r.rewardPts + ' عملة' : 'محاولة'}</b></span></div>`).join('');
+            bodyEl.appendChild(box);
+          }
+        };
+      }
+
+      // Add WhatsApp Support shortcut button
+      const origSync22 = ArenaApp.syncProfile.bind(ArenaApp);
+      ArenaApp.syncProfile = async function(...args) {
+        const res = await origSync22(...args);
+        if (this.profile && !document.getElementById('waSupportFab22')) {
+          const btn = document.createElement('button');
+          btn.id = 'waSupportFab22';
+          btn.type = 'button';
+          btn.className = 'support-fab22';
+          btn.textContent = '💬 دعم واتساب';
+          btn.onclick = () => {
+            const wa = (this.profile?.economy?.adminWhatsApp) || '963965461504';
+            const ph = this.profile?.phone || '';
+            window.open(`https://wa.me/${wa}?text=${encodeURIComponent(`مرحباً فريق دعم عالم تحديات معاذ، حسابي: ${ph}`)}`, '_blank');
+          };
+          document.body.appendChild(btn);
+        }
+        return res;
       };
     })();
 
