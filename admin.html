@@ -542,7 +542,11 @@
           <label>نص مخصص (اختياري — يُترك فارغاً للنص الافتراضي)</label>
           <input type="text" id="vcCustomText" placeholder="اكتب جملة مخصصة للشخصية..." />
         </div>
-        <button type="button" class="btn btn-gold" id="vcGenBtn">🎙️ توليد وحفظ في السحابة</button>
+        <div id="vcAutoStatus" style="font-size:0.7rem; color:#fde047; margin-bottom:7px;">التوليد التلقائي: يعمل كل ساعة بمعدل 10 أصوات لكل الجمل المقترحة (108 صوت).</div>
+        <div class="grid2">
+          <button type="button" class="btn btn-gold" id="vcGenBtn">🎙️ توليد صوت محدد</button>
+          <button type="button" class="btn btn-green" id="vcBatchBtn">⚡ تشغيل دفعة (10 أصوات)</button>
+        </div>
       </div>
 
       <div class="card" style="border-color:rgba(239,68,68,0.55); background:rgba(127,29,29,0.16);">
@@ -888,6 +892,16 @@
       } catch (e) { showToast(e.message, true); }
     }));
 
+
+    $('vcBatchBtn').addEventListener('click', () => withBtnLoading($('vcBatchBtn'), async () => {
+      try {
+        const r = await api('/admin/voice/auto-batch', {});
+        if ($('vcAutoStatus')) {
+          $('vcAutoStatus').textContent = `تم توليد ${r.generated || 0} صوت • محفوظ سحابياً: ${(r.alreadyCached || 0) + (r.generated || 0)}/${r.totalQueueSize || 108}`;
+        }
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
     $('vcGenBtn').addEventListener('click', () => withBtnLoading($('vcGenBtn'), async () => {
       try {

@@ -1,3 +1,6 @@
 name = "moaath-arena-worker"
 main = "worker/arena_worker.js"
-compatibility_date = "2026-11-01"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["0 * * * *"]
