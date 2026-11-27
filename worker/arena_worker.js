@@ -389,6 +389,22 @@ async function checkOrLockIdempotency(env, key, scope) {
   return { ok: true, key: path };
 }
 
+
+// ============================================================================
+// المرحلة 17: قاعدة التعزيز الديناميكي حسب ارتفاع الجائزة (مع استثناء PvP بالكامل)
+// ============================================================================
+function computeDynamicBoostPct(config, mode, prizePts) {
+  if (!config || config.dynamicBoostEnabled === false) return 0;
+  // استثناء صارم لتحديات PvP الموجودة مسبقاً والجديدة حفظاً للعدالة التنافسية
+  if (mode === 'pvp' || mode === 'pvp_create' || mode === 'pvp_join') return 0;
+  const stepPts = Math.max(10, Number(config.dynamicBoostStepPts || 100));
+  const pctPerStep = Math.max(0, Math.min(50, Number(config.dynamicBoostPctPerStep || 8)));
+  const maxPct = Math.max(0, Math.min(150, Number(config.dynamicBoostMaxPct || 80)));
+  const excess = Math.max(0, Number(prizePts || 0) - 100);
+  const steps = Math.floor(excess / stepPts);
+  return Math.min(maxPct, steps * pctPerStep);
+}
+
 const DAILY_DEAL_POOL = ['tower_bomb', 'tower_row', 'tower_wildcard', 'double_xp', 'streak_shield'];
 
 function getTodayDailyDeal() {
@@ -717,10 +733,19 @@ async function handleAdminDashboard(env, config) {
       cashoutRateSYP: Number(config.cashoutRateSYP || 1),
       usdToSypRate: Number(config.usdToSypRate || 150),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
+      dynamicBoostEnabled: config.dynamicBoostEnabled !== false,
+      dynamicBoostStepPts: Number(config.dynamicBoostStepPts || 100),
+      dynamicBoostPctPerStep: Number(config.dynamicBoostPctPerStep || 8),
+      dynamicBoostMaxPct: Number(config.dynamicBoostMaxPct || 80),
+      recordDynamicBoostPct: computeDynamicBoostPct(config, 'record', Number((records.tower_match && records.tower_match.jackpotPts) || 120)),
       autoRolloverWeekly: config.autoRolloverWeekly !== false,
       autoCashoutEnabled: Boolean(config.autoCashoutEnabled),
       autoCashoutMaxPts: Number(config.autoCashoutMaxPts || 200),
       autoCashoutMinWins: Number(config.autoCashoutMinWins || 3),
+      dynamicBoostEnabled: config.dynamicBoostEnabled !== false,
+      dynamicBoostStepPts: Number(config.dynamicBoostStepPts || 100),
+      dynamicBoostPctPerStep: Number(config.dynamicBoostPctPerStep || 8),
+      dynamicBoostMaxPct: Number(config.dynamicBoostMaxPct || 80),
       minTopupSYP: Number(config.minTopupSYP || 100),
       shamCashCashoutEnabled: Boolean(config.shamCashCashoutEnabled),
       shamCashTopupEnabled: Boolean(config.shamCashTopupEnabled),
@@ -766,6 +791,10 @@ async function handleAdminUpdateConfig(env, body) {
   if (typeof body.autoCashoutEnabled === 'boolean') updates.autoCashoutEnabled = body.autoCashoutEnabled;
   if (body.autoCashoutMaxPts !== undefined) updates.autoCashoutMaxPts = Math.max(100, Math.min(1000, Math.floor(Number(body.autoCashoutMaxPts))));
   if (body.autoCashoutMinWins !== undefined) updates.autoCashoutMinWins = Math.max(0, Math.floor(Number(body.autoCashoutMinWins)));
+  if (typeof body.dynamicBoostEnabled === 'boolean') updates.dynamicBoostEnabled = body.dynamicBoostEnabled;
+  if (body.dynamicBoostStepPts !== undefined) updates.dynamicBoostStepPts = Math.max(10, Math.floor(Number(body.dynamicBoostStepPts)));
+  if (body.dynamicBoostPctPerStep !== undefined) updates.dynamicBoostPctPerStep = Math.max(0, Math.min(50, Number(body.dynamicBoostPctPerStep)));
+  if (body.dynamicBoostMaxPct !== undefined) updates.dynamicBoostMaxPct = Math.max(0, Math.min(150, Number(body.dynamicBoostMaxPct)));
   await fbPatch(env, 'arena_world/config', updates);
   return jsonResponse({ ok: true, message: 'تم حفظ إعدادات عالم التحديات بنجاح.' });
 }
@@ -922,10 +951,19 @@ async function handleProfile(env, player, config = {}) {
       usdToSypRate: Number(config.usdToSypRate || 150),
       coinToUsdRate: Number(config.coinToUsdRate || (1 / Number(config.usdToSypRate || 150))),
       recordEntryCostPts: Number(config.recordEntryCostPts || 10),
+      dynamicBoostEnabled: config.dynamicBoostEnabled !== false,
+      dynamicBoostStepPts: Number(config.dynamicBoostStepPts || 100),
+      dynamicBoostPctPerStep: Number(config.dynamicBoostPctPerStep || 8),
+      dynamicBoostMaxPct: Number(config.dynamicBoostMaxPct || 80),
+      recordDynamicBoostPct: computeDynamicBoostPct(config, 'record', Number((records.tower_match && records.tower_match.jackpotPts) || 120)),
       autoRolloverWeekly: config.autoRolloverWeekly !== false,
       autoCashoutEnabled: Boolean(config.autoCashoutEnabled),
       autoCashoutMaxPts: Number(config.autoCashoutMaxPts || 200),
       autoCashoutMinWins: Number(config.autoCashoutMinWins || 3),
+      dynamicBoostEnabled: config.dynamicBoostEnabled !== false,
+      dynamicBoostStepPts: Number(config.dynamicBoostStepPts || 100),
+      dynamicBoostPctPerStep: Number(config.dynamicBoostPctPerStep || 8),
+      dynamicBoostMaxPct: Number(config.dynamicBoostMaxPct || 80),
       minTopupSYP: Number(config.minTopupSYP || 100),
       shamCashCashoutEnabled: Boolean(config.shamCashCashoutEnabled),
       shamCashTopupEnabled: Boolean(config.shamCashTopupEnabled),
@@ -1131,7 +1169,29 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
     phone: player.phone, gameId, mode: playMode, stakePts: cost, pvpMatchId: pvpMatchId || null, weeklyCycleId,
     characterId: lockedCharId, activeItem, usedPass, seed, startedAt: now, expiresAt: now + 10 * 60 * 1000, consumed: false
   });
-  return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, startedAt: now });
+  let dynamicBoostPct = 0;
+  if (playMode === 'record') {
+    const recNow = await fbGet(env, `arena_world/admin_records/${gameId}`);
+    dynamicBoostPct = computeDynamicBoostPct(config, 'record', Number((recNow && recNow.jackpotPts) || 100));
+  } else if (playMode === 'weekly') {
+    const wtNow = await ensureWeeklyTournament(env, gameId);
+    dynamicBoostPct = computeDynamicBoostPct(config, 'weekly', Number((wtNow && wtNow.poolPts) || 0));
+  }
+  return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, dynamicBoostPct, startedAt: now });
+}
+
+
+// ============================================================================
+// المرحلة 22: التحقق من نزاهة المسار (Move-Digest) + إجماليات الشفافية والاحتفاظ
+// ============================================================================
+async function computeTelemetryDigest(sessionId, score, telemetry) {
+  const moves = Number((telemetry && telemetry.totalMoves) || 0);
+  const floors = Number((telemetry && telemetry.floorsCleared) || 0);
+  const dur = Number((telemetry && telemetry.durationSec) || 0);
+  const snapsLen = Array.isArray(telemetry && telemetry.snapshots) ? telemetry.snapshots.length : 0;
+  const raw = `${sessionId}|${score}|${moves}|${floors}|${dur}|${snapsLen}`;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('moaath_dig_' + raw));
+  return Array.from(new Uint8Array(buf)).slice(0, 6).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function handleSessionSubmit(env, player, { sessionId, score, telemetry }, config) {
@@ -1145,6 +1205,7 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
   await fbPatch(env, `arena_world/sessions/${sessionId}`, { consumed: true, submittedAt: Date.now() });
 
   const check = validateTelemetry(session, score, telemetry);
+  const moveDigest = await computeTelemetryDigest(sessionId, score, telemetry);
   if (!check.valid) {
     if (check.noFreeze) {
       return jsonResponse({ code: check.reason || 'ERR_SESSION_EXPIRED', message: check.message || 'انتهت صلاحية الجلسة بسبب التوقف الطويل، لم يتم تجميد حسابك.' }, 400);
@@ -1381,7 +1442,7 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     await fbPatch(env, `arena_world/players/${player.phone}/games/tower_match`, updTower);
     streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
   }
-  return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, message: outcomeMsg });
+  return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, moveDigest, message: outcomeMsg });
 }
 
 function validateTelemetry(session, score, telemetry) {
