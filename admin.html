@@ -477,16 +477,72 @@
           <span class="switch std-sw"><input type="checkbox" id="evEnabled" /><span class="slider"></span></span>
         </label>
         <div class="field"><label>المناسبة</label><select id="evSelect"></select></div>
+        <div class="field"><label>شرط الفوز (10 خيارات)</label><select id="evKindSelect"></select></div>
         <div class="field"><label>عنوان الحدث</label><input type="text" id="evTitle" /></div>
         <div class="grid2">
           <div class="field"><label>الجائزة الثابتة (عملة)</label><input type="number" id="evReward" value="1000" /></div>
           <div class="field"><label>المدة (ساعات)</label><input type="number" id="evHours" value="168" /></div>
+        </div>
+        <div class="field">
+          <label>صورة الثلث العلوي للحدث (رفع وضغط تلقائي + معاينة فورية)</label>
+          <input type="file" id="evBannerFile" accept="image/*" style="padding:6px; font-size:0.74rem;" />
+          <input type="hidden" id="evBannerData" value="" />
+          <div id="evBannerPreviewBox" style="margin-top:7px; border-radius:12px; overflow:hidden; border:1px solid rgba(56,189,248,0.35); background:#060b16; height:120px; display:flex; align-items:center; justify-content:center;">
+            <img id="evBannerPreviewImg" src="./game_tower.png" alt="معاينة الصورة" style="width:100%; height:100%; object-fit:cover;" />
+          </div>
+          <div id="evBannerMeta" style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">الصورة الافتراضية / الحالية</div>
         </div>
         <div class="field"><label>شروط الفوز</label><textarea id="evRules" rows="2"></textarea></div>
         <div class="grid2">
           <button type="button" class="btn btn-gold" id="evSaveBtn">💾 حفظ وتفعيل</button>
           <button type="button" class="btn btn-green" id="evSettleBtn">🏆 تصفية الحدث</button>
         </div>
+      </div>
+
+      <div class="card">
+        <h4>🎙️ توليد وحفظ أصوات الشخصيات السحابية (Gemini)</h4>
+        <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:7px;">يولّد الصوت مرة واحدة من Gemini API ويحفظه في السحابة ليصل لجميع اللاعبين ويُخزّن على أجهزتهم.</div>
+        <div class="grid2">
+          <div class="field">
+            <label>الشخصية</label>
+            <select id="vcCharSelect">
+              <option value="buddy">بندق الودود (buddy)</option>
+              <option value="lolo">لولو (lolo)</option>
+              <option value="noor">نور (noor)</option>
+              <option value="chef">الشيف (chef)</option>
+              <option value="pastry">الحلواني (pastry)</option>
+              <option value="athlete">الرياضي (athlete)</option>
+              <option value="sheikh">الشيخ (sheikh)</option>
+              <option value="saver">المدخر (saver)</option>
+              <option value="homemaker">رب المنزل (homemaker)</option>
+              <option value="coach_sakhr">الكابتن صخر VIP (coach_sakhr)</option>
+              <option value="grand_chef">الشيف الكبير VIP (grand_chef)</option>
+              <option value="princess_layla">الأميرة ليلى VIP (princess_layla)</option>
+              <option value="butler_farid">السيد فريد VIP (butler_farid)</option>
+              <option value="friend_fadi">فادي VIP (friend_fadi)</option>
+              <option value="anime_zain">زين VIP (anime_zain)</option>
+              <option value="anime_ryu">ريو VIP (anime_ryu)</option>
+              <option value="anime_ritaj">ريتاج VIP (anime_ritaj)</option>
+              <option value="friend_saad">سعد VIP (friend_saad)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>الموقف / الجملة</label>
+            <select id="vcCueSelect">
+              <option value="welcome">ترحيب (welcome)</option>
+              <option value="start">بداية الجولة (start)</option>
+              <option value="win">فوز (win)</option>
+              <option value="lose">خسارة (lose)</option>
+              <option value="shop">شراء من المتجر (shop)</option>
+              <option value="taunt">استفزاز (taunt)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>نص مخصص (اختياري — يُترك فارغاً للنص الافتراضي)</label>
+          <input type="text" id="vcCustomText" placeholder="اكتب جملة مخصصة للشخصية..." />
+        </div>
+        <button type="button" class="btn btn-gold" id="vcGenBtn">🎙️ توليد وحفظ في السحابة</button>
       </div>
 
       <div class="card" style="border-color:rgba(239,68,68,0.55); background:rgba(127,29,29,0.16);">
@@ -832,6 +888,18 @@
       } catch (e) { showToast(e.message, true); }
     }));
 
+
+    $('vcGenBtn').addEventListener('click', () => withBtnLoading($('vcGenBtn'), async () => {
+      try {
+        const r = await api('/admin/voice/generate', {
+          characterId: $('vcCharSelect').value,
+          cue: $('vcCueSelect').value,
+          text: $('vcCustomText').value.trim()
+        });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
+
     $('logoutBtn').addEventListener('click', async () => {
       if (pollIntervalId) clearInterval(pollIntervalId);
       try { await api('/admin/logout', {}); } catch (_) {}
@@ -1158,9 +1226,14 @@
         const ev = (evRes && evRes.event) || {};
         $('evEnabled').checked = Boolean(ev.enabled);
         $('evSelect').innerHTML = OCCASIONS_25.map((o, i) => `<option value="${i+1}" data-kind="${o.kind}" data-name="${esc(o.name)}" ${Number(ev.eventNumber || 1) === i + 1 ? 'selected' : ''}>#${i+1} - ${esc(o.name)}</option>`).join('');
+        $('evKindSelect').innerHTML = WIN_KINDS_10.map((k) => `<option value="${k.id}" ${(ev.kind || 'highest_score') === k.id ? 'selected' : ''}>${esc(k.label)}</option>`).join('');
         $('evTitle').value = ev.title || OCCASIONS_25[0].name;
         $('evReward').value = Number(ev.fixedRewardPts || 1000);
         $('evRules').value = ev.rulesText || 'حقق أعلى إنجاز قبل انتهاء مدة الحدث.';
+        const curBanner = ev.bannerUrl || './game_tower.png';
+        $('evBannerData').value = curBanner;
+        $('evBannerPreviewImg').src = curBanner;
+        $('evBannerMeta').textContent = curBanner.startsWith('data:image') ? `صورة مرفوعة مضغوطة (${Math.round(curBanner.length / 1024)} KB)` : 'صورة المسار الحالية';
 
         $('cfgKill').checked = Boolean(cfg.killSwitch);
         $('cfgShamIn').checked = Boolean(cfg.shamCashTopupEnabled);
@@ -1408,20 +1481,83 @@
       } catch (e) { showToast(e.message, true); }
     }));
 
+    const WIN_KINDS_10 = [
+      { id: 'highest_score', label: '1. أعلى نتيجة في جولة واحدة' },
+      { id: 'cumulative_score', label: '2. أعلى مجموع نقاط تراكمي' },
+      { id: 'pvp_wins', label: '3. أكبر عدد انتصارات PvP' },
+      { id: 'bosses_defeated', label: '4. أكبر عدد زعماء مهزومين' },
+      { id: 'highest_floor', label: '5. أعلى طابق تم الوصول إليه' },
+      { id: 'max_combo', label: '6. أعلى كومبو متتالي' },
+      { id: 'total_floors', label: '7. أكبر عدد طوابق مكتملة تراكمياً' },
+      { id: 'pvp_win_streak', label: '8. أطول سلسلة انتصارات PvP' },
+      { id: 'records_broken', label: '9. أكبر عدد تحطيم للأرقام القياسية' },
+      { id: 'rounds_played', label: '10. أكثر لاعب مشاركة (جولات مكتملة)' }
+    ];
+
+    function compressBannerImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 720;
+            const scale = img.width > maxW ? (maxW / img.width) : 1;
+            const w = Math.max(1, Math.round(img.width * scale));
+            const h = Math.max(1, Math.round(img.height * scale));
+            const cvs = document.createElement('canvas');
+            cvs.width = w; cvs.height = h;
+            const ctx = cvs.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            let quality = 0.78;
+            let dataUrl = cvs.toDataURL('image/jpeg', quality);
+            while (dataUrl.length > 220000 && quality > 0.35) {
+              quality -= 0.1;
+              dataUrl = cvs.toDataURL('image/jpeg', quality);
+            }
+            resolve(dataUrl);
+          };
+          img.onerror = () => reject(new Error('تعذر قراءة الصورة المختارة.'));
+          img.src = ev.target.result;
+        };
+        reader.onerror = () => reject(new Error('تعذر فتح ملف الصورة.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    $('evBannerFile').addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      try {
+        const compressed = await compressBannerImageFile(f);
+        $('evBannerData').value = compressed;
+        $('evBannerPreviewImg').src = compressed;
+        $('evBannerMeta').textContent = `تم الضغط والمعاينة (${Math.round(compressed.length / 1024)} KB) — اضغط حفظ وتفعيل لتثبيتها`;
+        showToast('✅ تم ضغط الصورة وتجهيز المعاينة الفورية.');
+      } catch (err) {
+        showToast(err.message || 'خطأ في معالجة الصورة.', true);
+      }
+    });
+
     $('evSelect').addEventListener('change', () => {
       const opt = $('evSelect').options[$('evSelect').selectedIndex];
-      if (opt) $('evTitle').value = opt.dataset.name || '';
+      if (opt) {
+        $('evTitle').value = opt.dataset.name || '';
+        if (opt.dataset.kind && $('evKindSelect')) $('evKindSelect').value = opt.dataset.kind;
+      }
     });
 
     $('evSaveBtn').addEventListener('click', () => withBtnLoading($('evSaveBtn'), async () => {
       const sel = $('evSelect'), opt = sel.options[sel.selectedIndex];
       const num = Number(sel.value || 1);
       const hrs = Math.max(1, Number($('evHours').value || 168));
+      const chosenKind = ($('evKindSelect') && $('evKindSelect').value) || (opt && opt.dataset.kind) || 'highest_score';
+      const bannerVal = ($('evBannerData') && $('evBannerData').value.trim()) || './game_tower.png';
       try {
         const r = await api('/admin/event/config', {
           enabled: $('evEnabled').checked, eventNumber: num,
           occasionId: OCCASIONS_25[num - 1].id, title: $('evTitle').value.trim(),
-          kind: opt.dataset.kind, fixedRewardPts: Number($('evReward').value || 1000),
+          kind: chosenKind, fixedRewardPts: Number($('evReward').value || 1000),
+          bannerUrl: bannerVal,
           rulesText: $('evRules').value.trim(), endAt: Date.now() + hrs * 3600000
         });
         showToast(r.message);

@@ -1049,7 +1049,7 @@
       font-size: 0.5rem !important;
     }
     .evt-hero-banner24 {
-      width: 100%; height: 150px; object-fit: cover; border-radius: 16px;
+      width: 100%; height: 30vh; min-height: 185px; max-height: 260px; object-fit: cover; border-radius: 16px;
       border: 1.5px solid rgba(250, 204, 21, 0.55); margin-bottom: 10px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.45);
     }
@@ -5212,22 +5212,61 @@
           return this.ctx;
         },
 
-        spawnBurst(x, y, color = '#fde047', count = 18) {
+        getCharElementTheme(charId) {
+          const cid = String(charId || 'buddy');
+          const themes = {
+            coach_sakhr:    { elem: 'fire',      isVip: true,  primary: '#f97316', secondary: '#ef4444', core: '#fef08a', name: 'ناري حارق' },
+            grand_chef:     { elem: 'fire',      isVip: true,  primary: '#fb923c', secondary: '#dc2626', core: '#fde047', name: 'ناري حارق' },
+            princess_layla: { elem: 'frost',     isVip: true,  primary: '#38bdf8', secondary: '#a5f3fc', core: '#ffffff', name: 'جليدي كريستالي' },
+            anime_ritaj:    { elem: 'frost',     isVip: true,  primary: '#7dd3fc', secondary: '#bae6fd', core: '#ffffff', name: 'جليدي كريستالي' },
+            anime_ryu:      { elem: 'shadow',    isVip: true,  primary: '#9333ea', secondary: '#581c87', core: '#f43f5e', name: 'ظلامي' },
+            butler_farid:   { elem: 'shadow',    isVip: true,  primary: '#7e22ce', secondary: '#3b0764', core: '#e879f9', name: 'ظلامي' },
+            anime_zain:     { elem: 'lightning', isVip: true,  primary: '#facc15', secondary: '#38bdf8', core: '#ffffff', name: 'صاعق' },
+            friend_fadi:    { elem: 'lightning', isVip: true,  primary: '#fde047', secondary: '#0ea5e9', core: '#ffffff', name: 'صاعق' },
+            friend_saad:    { elem: 'cosmic',    isVip: true,  primary: '#facc15', secondary: '#c084fc', core: '#ffffff', name: 'كوني ملكي' }
+          };
+          if (themes[cid]) return themes[cid];
+          const basicMap = {
+            buddy:     { elem: 'basic', isVip: false, primary: '#facc15', secondary: '#38bdf8', core: '#ffffff' },
+            lolo:      { elem: 'basic', isVip: false, primary: '#f472b6', secondary: '#fde047', core: '#ffffff' },
+            noor:      { elem: 'basic', isVip: false, primary: '#38bdf8', secondary: '#fde047', core: '#ffffff' },
+            chef:      { elem: 'basic', isVip: false, primary: '#fb923c', secondary: '#facc15', core: '#ffffff' },
+            pastry:    { elem: 'basic', isVip: false, primary: '#fda4af', secondary: '#c084fc', core: '#ffffff' },
+            athlete:   { elem: 'basic', isVip: false, primary: '#4ade80', secondary: '#38bdf8', core: '#ffffff' },
+            sheikh:    { elem: 'basic', isVip: false, primary: '#d4af37', secondary: '#34d399', core: '#ffffff' },
+            saver:     { elem: 'basic', isVip: false, primary: '#22c55e', secondary: '#fde047', core: '#ffffff' },
+            homemaker: { elem: 'basic', isVip: false, primary: '#fbbf24', secondary: '#fb7185', core: '#ffffff' }
+          };
+          return basicMap[cid] || basicMap.buddy;
+        },
+
+        spawnBurst(x, y, color = '#fde047', count = 24) {
           if (!this.ensureCanvas()) return;
+          const activeChar = (window.ArenaApp && ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy';
+          const th = this.getCharElementTheme(activeChar);
+          const c1 = color === '#fde047' ? th.primary : color;
+          const c2 = th.secondary || '#38bdf8';
           const cx = x || window.innerWidth * 0.5;
           const cy = y || window.innerHeight * 0.58;
-          this.rings.push({ x: cx, y: cy, r: 8, maxR: 130, color, alpha: 0.9 });
-          for (let i = 0; i < count; i++) {
-            const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
-            const spd = 2.5 + Math.random() * 6.5;
+          const mult = th.isVip ? 1.35 : 1.15;
+
+          this.rings.push({ x: cx, y: cy, r: 12, maxR: Math.round(185 * mult), color: c1, alpha: 0.95 });
+          if (th.isVip) {
+            this.rings.push({ x: cx, y: cy, r: 6, maxR: Math.round(230 * mult), color: c2, alpha: 0.85 });
+          }
+
+          const total = Math.round(count * mult);
+          for (let i = 0; i < total; i++) {
+            const ang = (Math.PI * 2 * i) / total + (Math.random() - 0.5) * 0.3;
+            const spd = (1.6 + Math.random() * 4.2) * (th.elem === 'lightning' ? 1.25 : 0.85);
             this.particles.push({
               x: cx, y: cy,
               vx: Math.cos(ang) * spd,
-              vy: Math.sin(ang) * spd - 1.5,
-              size: 6 + Math.random() * 6.5,
-              color: i % 3 === 0 ? '#ffffff' : color,
+              vy: Math.sin(ang) * spd - (th.elem === 'fire' ? 1.8 : 0.8),
+              size: (10 + Math.random() * 9) * mult,
+              color: i % 2 === 0 ? c1 : (i % 4 === 0 ? th.core : c2),
               alpha: 1,
-              decay: 0.013 + Math.random() * 0.008
+              decay: 0.0065 + Math.random() * 0.0045
             });
           }
           this.startLoop();
@@ -5235,8 +5274,20 @@
 
         spawnLaser(y, color = '#38bdf8') {
           if (!this.ensureCanvas()) return;
+          const activeChar = (window.ArenaApp && ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy';
+          const th = this.getCharElementTheme(activeChar);
           const ly = y || window.innerHeight * 0.58;
-          this.beams.push({ y: ly, color, alpha: 1, width: 22 });
+          const beamColor = color === '#38bdf8' ? th.primary : color;
+          const beamWidth = th.isVip ? 42 : 30;
+          this.beams.push({
+            y: ly,
+            color: beamColor,
+            secondary: th.secondary,
+            elem: th.elem,
+            isVip: th.isVip,
+            alpha: 1,
+            width: beamWidth
+          });
           this.startLoop();
         },
 
@@ -5271,7 +5322,7 @@
             for (let i = this.rings.length - 1; i >= 0; i--) {
               const rg = this.rings[i];
               rg.r += (rg.maxR - rg.r) * 0.22;
-              rg.alpha -= 0.024;
+              rg.alpha -= 0.012;
               if (rg.alpha <= 0.02) { this.rings.splice(i, 1); continue; }
               ctx.save();
               ctx.globalAlpha = Math.max(0, rg.alpha);
@@ -5285,7 +5336,7 @@
 
             for (let i = this.beams.length - 1; i >= 0; i--) {
               const bm = this.beams[i];
-              bm.alpha -= 0.028;
+              bm.alpha -= 0.014;
               if (bm.alpha <= 0.02) { this.beams.splice(i, 1); continue; }
               ctx.save();
               ctx.globalAlpha = Math.max(0, bm.alpha);
@@ -5701,9 +5752,9 @@
         box.innerHTML = `
           <div style="text-align:right;">
             <img src="${ev.bannerUrl || './game_tower.png'}" class="evt-hero-banner24" alt="${ev.title}" onerror="this.src='./game_tower.png'" />
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
               <h3 style="color:#fde047;margin:0;font-size:1.05rem;">🎪 حدث #${ev.eventNumber}: ${ev.title}</h3>
-              <span class="orient-badge" style="margin:0;">حدث إداري</span>
+              <span class="orient-badge" style="margin:0;">🎯 ${({'highest_score':'أعلى نتيجة','cumulative_score':'مجموع نقاط تراكمي','pvp_wins':'انتصارات PvP','bosses_defeated':'زعماء مهزومون','highest_floor':'أعلى طابق','max_combo':'أعلى كومبو','total_floors':'طوابق مكتملة','pvp_win_streak':'سلسلة انتصارات PvP','records_broken':'كسر أرقام قياسية','rounds_played':'أكثر مشاركة'})[ev.kind] || 'شرط الحدث'}</span>
             </div>
 
             <div class="evt-reward-showcase24">
@@ -5749,7 +5800,7 @@
     })();
 
   
-// المرحلة 25: إظهار زر دخول الإدارة في تبويب ملفي حصراً لجهاز الإدارة الموثق
+// المرحلة 25: إظهار زر دخول الإدارة في تبويب ملفي حصراً لجهاز الإدارة الموثق + تسجيل الخروج
 (function extendArenaAppPhase25() {
   if (typeof ArenaApp === 'undefined') return;
   const origSync25 = ArenaApp.syncProfile.bind(ArenaApp);
@@ -5782,6 +5833,132 @@
       });
     } else if (confirm('هل تريد تسجيل الخروج من الحساب؟')) {
       doLogout();
+    }
+  };
+})();
+
+// ============================================================================
+// محرك الأصوات البشرية السحابي المحفوظ في ذاكرة الجهاز (ArenaVoice + Cache API)
+// يحمّل الصوت مرة واحدة من الخادم/Gemini ويحفظه في Cache Storage للاستخدام السريع
+// ============================================================================
+(function initCloudArenaVoice() {
+  const VOICE_CACHE_NAME = 'moaath-arena-voices-v1';
+  const memUrlMap = new Map();
+  const inflightMap = new Map();
+
+  async function saveBase64ToDeviceCache(cacheKey, mimeType, base64Data) {
+    try {
+      const binStr = atob(base64Data);
+      const len = binStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binStr.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || 'audio/wav' });
+      const blobUrl = URL.createObjectURL(blob);
+      memUrlMap.set(cacheKey, blobUrl);
+
+      if ('caches' in window) {
+        const cache = await caches.open(VOICE_CACHE_NAME);
+        const virtualReq = new Request(`https://arena-voice.local/${encodeURIComponent(cacheKey)}`);
+        await cache.put(virtualReq, new Response(blob, {
+          headers: { 'Content-Type': mimeType || 'audio/wav', 'X-Cached-At': String(Date.now()) }
+        }));
+      }
+      return blobUrl;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function getCachedBlobUrl(cacheKey) {
+    if (memUrlMap.has(cacheKey)) return memUrlMap.get(cacheKey);
+    try {
+      if ('caches' in window) {
+        const cache = await caches.open(VOICE_CACHE_NAME);
+        const virtualReq = new Request(`https://arena-voice.local/${encodeURIComponent(cacheKey)}`);
+        const hit = await cache.match(virtualReq);
+        if (hit) {
+          const blob = await hit.blob();
+          const u = URL.createObjectURL(blob);
+          memUrlMap.set(cacheKey, u);
+          return u;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  async function fetchFromCloudAndCache(characterId, cue, customText = '') {
+    const charKey = String(characterId || 'buddy');
+    const cueKey = String(cue || 'welcome');
+    const cacheKey = `${charKey}__${cueKey}`;
+
+    const cachedUrl = await getCachedBlobUrl(cacheKey);
+    if (cachedUrl) return { url: cachedUrl, text: '' };
+
+    if (inflightMap.has(cacheKey)) return inflightMap.get(cacheKey);
+
+    const p = (async () => {
+      try {
+        const token = (window.ArenaApp && ArenaApp.token) || localStorage.getItem('arena_device_token') || '';
+        const devFp = localStorage.getItem('arena_device_fp') || '';
+        const res = await fetch(`${WORKER_URL}/voice/get`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Device-Id': devFp
+          },
+          body: JSON.stringify({ characterId: charKey, cue: cueKey, text: customText })
+        });
+        if (!res.ok) return null;
+        const data = await res.json().catch(() => null);
+        if (data && data.ok && data.audioBase64) {
+          const u = await saveBase64ToDeviceCache(cacheKey, data.mimeType, data.audioBase64);
+          return { url: u, text: data.text || '' };
+        }
+        return null;
+      } catch (_) {
+        return null;
+      } finally {
+        inflightMap.delete(cacheKey);
+      }
+    })();
+
+    inflightMap.set(cacheKey, p);
+    return p;
+  }
+
+  const prevVoice = window.ArenaVoice || {};
+  window.ArenaVoice = {
+    ...prevVoice,
+    getCharImgUrl: prevVoice.getCharImgUrl || ((cid) => `./assets/chars/${cid || 'buddy'}.jpg`),
+    getShopImgUrl: prevVoice.getShopImgUrl || ((item) => `./assets/shop/${item.id}.png`),
+    prefetchCharacter: async function(characterId) {
+      if (localStorage.getItem('arena_data_saver') === '1') return;
+      const cues = ['welcome', 'start', 'win', 'lose'];
+      for (const c of cues) {
+        await fetchFromCloudAndCache(characterId, c);
+      }
+    },
+    speak: async function(characterId, cue = 'welcome', customText = '') {
+      const charKey = String(characterId || 'buddy');
+      const bubble = document.getElementById('companionBubble');
+      if (typeof MythicFX !== 'undefined' && MythicFX.muted) return;
+      if (localStorage.getItem('arena_data_saver') === '1' && cue !== 'win') return;
+
+      const clip = await fetchFromCloudAndCache(charKey, cue, customText);
+      if (clip && clip.text && bubble) {
+        bubble.textContent = `🎙️ «${clip.text}»`;
+      }
+      if (clip && clip.url) {
+        try {
+          const aud = new Audio(clip.url);
+          aud.volume = 0.92;
+          aud.play().catch(() => {});
+        } catch (_) {}
+      } else if (prevVoice.speak) {
+        prevVoice.speak(charKey, cue);
+      }
     }
   };
 })();
