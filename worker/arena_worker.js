@@ -570,6 +570,8 @@ export default {
             return await handleAdminPlayerResetPass(env, body);
           case '/admin/player/unbind-device':
             return await handleAdminPlayerUnbindDevice(env, body);
+          case '/admin/voice/generate':
+            return await handleAdminVoiceGenerate(env, body);
           case '/admin/game/reset-all':
             return await handleAdminResetAllGameData(env, body);
           default:
@@ -651,6 +653,8 @@ export default {
           return await handleReadNotifications(env, player);
         case '/event/status':
           return await handleEventStatus(env, player);
+        case '/voice/get':
+          return await handleVoiceGet(env, player, body);
         default:
           return jsonResponse({ code: 'ERR_404', message: 'مسار غير موجود' }, 404);
       }
@@ -1482,10 +1486,17 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
     streakUpdate = await runAutomaticTowerStreakForPlayer(env, player);
   }
   const isPvpWinForEvent = (session.mode === 'pvp_join' && won) ? 1 : 0;
+  const brokeRecForEvent = (session.mode === 'record' && won) ? 1 : 0;
   await recordAdminEventProgress(env, player, {
     score: Number(score || 0),
     bossesDefeated: Number((telemetry && telemetry.bossesDefeated) || 0),
-    pvpWin: isPvpWinForEvent
+    pvpWin: isPvpWinForEvent,
+    highestFloor: Number((telemetry && telemetry.highestFloor) || (telemetry && telemetry.floorsCleared) || 0),
+    floorsCleared: Number((telemetry && telemetry.floorsCleared) || 0),
+    maxCombo: Number((telemetry && telemetry.maxCombo) || 1),
+    winStreak: Number(player.winStreak || 0),
+    recordsBroken: brokeRecForEvent,
+    durationSec: Number((telemetry && telemetry.durationSec) || 0)
   });
   return jsonResponse({ ok: true, won, score, rewardPts, xpGain, streakUpdate, moveDigest, message: outcomeMsg });
 }
@@ -2505,17 +2516,49 @@ async function ensureAdminEvent(env) {
   return evObj;
 }
 
-function getEventMetricValue(evObj, entry, scoreDelta, bossesDelta, pvpWinDelta) {
+const EVENT_WIN_KINDS = [
+  'highest_score',
+  'cumulative_score',
+  'pvp_wins',
+  'bosses_defeated',
+  'highest_floor',
+  'max_combo',
+  'total_floors',
+  'pvp_win_streak',
+  'records_broken',
+  'rounds_played'
+];
+
+function getEventMetricValue(evObj, entry, metrics = {}) {
   const cur = Number((entry && entry.metricValue) || 0);
   const kind = (evObj && evObj.kind) || 'highest_score';
-  if (kind === 'highest_score') return Math.max(cur, Number(scoreDelta || 0));
-  if (kind === 'cumulative_score') return cur + Number(scoreDelta || 0);
-  if (kind === 'bosses_defeated') return cur + Number(bossesDelta || 0);
-  if (kind === 'pvp_wins') return cur + Number(pvpWinDelta || 0);
-  return Math.max(cur, Number(scoreDelta || 0));
+  const scoreVal = Number(metrics.score || 0);
+  const bossesVal = Number(metrics.bossesDefeated || 0);
+  const pvpWinVal = Number(metrics.pvpWin || 0);
+  const highestFloorVal = Number(metrics.highestFloor || 0);
+  const floorsClearedVal = Number(metrics.floorsCleared || 0);
+  const maxComboVal = Number(metrics.maxCombo || 1);
+  const winStreakVal = Number(metrics.winStreak || 0);
+  const recordsBrokenVal = Number(metrics.recordsBroken || 0);
+  const durationSecVal = Number(metrics.durationSec || 0);
+
+  if (kind === 'highest_score') return Math.max(cur, scoreVal);
+  if (kind === 'cumulative_score') return cur + scoreVal;
+  if (kind === 'pvp_wins') return cur + pvpWinVal;
+  if (kind === 'bosses_defeated') return cur + bossesVal;
+  if (kind === 'highest_floor') return Math.max(cur, highestFloorVal || floorsClearedVal);
+  if (kind === 'max_combo') return Math.max(cur, maxComboVal);
+  if (kind === 'total_floors') return cur + floorsClearedVal;
+  if (kind === 'pvp_win_streak') return Math.max(cur, winStreakVal);
+  if (kind === 'records_broken') return cur + recordsBrokenVal;
+  if (kind === 'rounds_played') {
+    const validRound = (scoreVal >= 100 || durationSecVal >= 20) ? 1 : 0;
+    return cur + validRound;
+  }
+  return Math.max(cur, scoreVal);
 }
 
-async function recordAdminEventProgress(env, player, { score = 0, bossesDefeated = 0, pvpWin = 0 }) {
+async function recordAdminEventProgress(env, player, metrics = {}) {
   if (!player || player.frozen) return;
   const evObj = await ensureAdminEvent(env);
   if (!evObj.enabled || evObj.settled) return;
@@ -2523,7 +2566,7 @@ async function recordAdminEventProgress(env, player, { score = 0, bossesDefeated
   if (now < Number(evObj.startAt || 0) || now >= Number(evObj.endAt || 0)) return;
 
   const prev = (evObj.entries && evObj.entries[player.phone]) || null;
-  const nextVal = getEventMetricValue(evObj, prev, score, bossesDefeated, pvpWin);
+  const nextVal = getEventMetricValue(evObj, prev, metrics);
   const improved = !prev || nextVal > Number(prev.metricValue || 0);
   await fbPatch(env, `arena_world/admin_event/entries/${player.phone}`, {
     phone: player.phone,
@@ -2605,12 +2648,13 @@ async function handleAdminEventConfig(env, body) {
   const eventNumber = Math.max(1, Math.floor(Number(body.eventNumber !== undefined ? body.eventNumber : (cur.eventNumber || 1))));
   const durationDays = Math.max(1, Math.min(90, Math.floor(Number(body.durationDays !== undefined ? body.durationDays : (cur.durationDays || 7)))));
   const fixedRewardPts = Math.max(0, Math.floor(Number(body.fixedRewardPts !== undefined ? body.fixedRewardPts : (cur.fixedRewardPts || 1000))));
-  const kind = ['highest_score', 'cumulative_score', 'pvp_wins', 'bosses_defeated'].includes(body.kind)
+  const kind = EVENT_WIN_KINDS.includes(body.kind)
     ? body.kind
     : ((matchedOcc && matchedOcc.kind) || cur.kind || 'highest_score');
   const title = String((body.title !== undefined && String(body.title).trim()) ? body.title : ((matchedOcc && matchedOcc.name) || cur.title || 'حدث الإدارة')).trim().slice(0, 100);
   const rulesText = String((body.rulesText !== undefined && String(body.rulesText).trim()) ? body.rulesText : ((matchedOcc && matchedOcc.rules) || cur.rulesText || '')).trim().slice(0, 400);
-  const bannerUrl = String((body.bannerUrl !== undefined && String(body.bannerUrl).trim()) ? body.bannerUrl : (cur.bannerUrl || './game_tower.png')).trim().slice(0, 300);
+  const rawBanner = (body.bannerUrl !== undefined && String(body.bannerUrl).trim()) ? String(body.bannerUrl).trim() : (cur.bannerUrl || './game_tower.png');
+  const bannerUrl = rawBanner.slice(0, 260000);
   const enabled = typeof body.enabled === 'boolean' ? body.enabled : Boolean(cur.enabled);
 
   const ex = buildEventBadgeAsset(eventNumber);
@@ -3156,4 +3200,149 @@ async function handleAdminPlayerUnbindDevice(env, body) {
   await fbPatch(env, `arena_world/players/${phone}`, { deviceToken: '', lastDeviceId: '' });
   await appendAdminAuditLog(env, 'UNBIND_DEVICE', phone, `فك ربط الأجهزة المرتبطة باللاعب ${phone}`);
   return jsonResponse({ ok: true, message: `✅ تم فك ربط أجهزة اللاعب (${phone})؛ يمكنه الآن تسجيل الدخول من جهازه الجديد.` });
+}
+
+
+// ============================================================================
+// نظام الأصوات البشرية للشخصيات عبر Gemini API (توليد مرة واحدة وحفظ سحابي)
+// ============================================================================
+const CHARACTER_VOICE_PERSONAS = {
+  buddy: { voiceName: 'Puck', style: 'ودود ومرح وحماسي بلهجة عربية محببة' },
+  lolo: { voiceName: 'Aoede', style: 'لطيفة ونشيطة ومشجعة' },
+  noor: { voiceName: 'Kore', style: 'واثقة ومشرقة وحماسية' },
+  chef: { voiceName: 'Fenrir', style: 'قوي وحماسي بأسلوب قائد مطبخ' },
+  pastry: { voiceName: 'Leda', style: 'ناعمة ومبهجة وحلوة النبرة' },
+  athlete: { voiceName: 'Puck', style: 'رياضي سريع وحماسي جداً' },
+  sheikh: { voiceName: 'Charon', style: 'وقور وحكيم ومشجع بثبات' },
+  saver: { voiceName: 'Kore', style: 'ذكي وهادئ وماهر في الحساب' },
+  homemaker: { voiceName: 'Aoede', style: 'دافئة ومطمئنة ومشجعة' },
+  coach_sakhr: { voiceName: 'Fenrir', style: 'صخري حازم وناري ومشجع بقوة' },
+  grand_chef: { voiceName: 'Charon', style: 'فخم وواثق بنكهة النصر' },
+  princess_layla: { voiceName: 'Leda', style: 'ملكية رقيقة وجليدية الأناقة' },
+  butler_farid: { voiceName: 'Charon', style: 'راقي ومهذب وواثق' },
+  friend_fadi: { voiceName: 'Puck', style: 'صديق مقرب مرح ومستفز بلطافة' },
+  anime_zain: { voiceName: 'Fenrir', style: 'بطل أنمي كهربائي سريع وحماسي' },
+  anime_ryu: { voiceName: 'Charon', style: 'مقاتل ظل غامض وحاد النبرة' },
+  anime_ritaj: { voiceName: 'Aoede', style: 'بطلة أنمي جليدية مشرقة وحماسية' },
+  friend_saad: { voiceName: 'Fenrir', style: 'قائد أسطوري واثق ومستفز للمنافسين' }
+};
+
+function buildVoiceLineText(characterId, cue, customText = '') {
+  if (customText && String(customText).trim()) return String(customText).trim().slice(0, 160);
+  const map = {
+    welcome: 'أهلاً بك في عالم التحديات! لنصعد إلى القمة معاً!',
+    start: 'انطلق الآن! أرِهم قوة الكومبو في البرج!',
+    win: 'كفو يا بطل! انتصار مستحق ومرتب!',
+    lose: 'ولا يهمك! الجولة القادمة أقوى بإذن الله!',
+    shop: 'اختيار ممتاز! هذه الأداة ستقلب الموازين!',
+    taunt: 'عرشك أصبح تحت الضغط.. هل أنت مستعد للمواجهة؟'
+  };
+  return map[cue] || 'هيا بنا نواصل التحدي!';
+}
+
+async function generateAndStoreVoiceClip(env, characterId, cue, customText = '') {
+  const charKey = String(characterId || 'buddy').replace(/[^a-zA-Z0-9_-]/g, '');
+  const cueKey = String(cue || 'welcome').replace(/[^a-zA-Z0-9_-]/g, '');
+  const cachePath = `arena_world/voice_cache/${charKey}/${cueKey}`;
+
+  const existing = await fbGet(env, cachePath);
+  if (existing && existing.audioBase64) {
+    return { ok: true, cached: true, ...existing };
+  }
+
+  const apiKey = String((env && (env.GEMINI_API_KEY || env.GOOGLE_API_KEY)) || '').trim();
+  if (!apiKey) {
+    return {
+      ok: false,
+      code: 'ERR_NO_GEMINI_KEY',
+      message: 'مفتاح GEMINI_API_KEY غير مضبوط في إعدادات Cloudflare Worker.'
+    };
+  }
+
+  const persona = CHARACTER_VOICE_PERSONAS[charKey] || CHARACTER_VOICE_PERSONAS.buddy;
+  const lineText = buildVoiceLineText(charKey, cueKey, customText);
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const payload = {
+    contents: [{
+      parts: [{
+        text: `انطق الجملة التالية بصوت بشري طبيعي وبنبرة (${persona.style}): "${lineText}"`
+      }]
+    }],
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: persona.voiceName
+          }
+        }
+      }
+    }
+  };
+
+  const gRes = await fetch(geminiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!gRes.ok) {
+    const errTxt = await gRes.text().catch(() => '');
+    return {
+      ok: false,
+      code: `ERR_GEMINI_${gRes.status}`,
+      message: `تعذر توليد الصوت من Gemini API (${gRes.status}). ${errTxt.slice(0, 120)}`
+    };
+  }
+
+  const gData = await gRes.json().catch(() => ({}));
+  const part = (((gData.candidates || [])[0] || {}).content || {}).parts?.[0] || {};
+  const inlineData = part.inlineData || part.inline_data || null;
+  if (!inlineData || !inlineData.data) {
+    return { ok: false, code: 'ERR_NO_AUDIO_DATA', message: 'لم تُرجع استجابة Gemini مقطعاً صوتياً.' };
+  }
+
+  const record = {
+    characterId: charKey,
+    cue: cueKey,
+    text: lineText,
+    mimeType: inlineData.mimeType || inlineData.mime_type || 'audio/wav',
+    audioBase64: inlineData.data,
+    generatedAt: Date.now()
+  };
+
+  await fbPatch(env, cachePath, record);
+  return { ok: true, cached: false, ...record };
+}
+
+async function handleVoiceGet(env, player, body) {
+  const characterId = (body && body.characterId) || (player && player.activeCharacterId) || 'buddy';
+  const cue = (body && body.cue) || 'welcome';
+  const customText = (body && body.text) || '';
+  const res = await generateAndStoreVoiceClip(env, characterId, cue, customText);
+  if (!res.ok) {
+    return jsonResponse({ ok: false, code: res.code || 'ERR_VOICE', message: res.message || 'غير متوفر' }, 200);
+  }
+  return jsonResponse(res, 200);
+}
+
+async function handleAdminVoiceGenerate(env, body) {
+  const characterId = (body && body.characterId) || 'buddy';
+  const cue = (body && body.cue) || 'welcome';
+  const customText = (body && body.text) || '';
+  const res = await generateAndStoreVoiceClip(env, characterId, cue, customText);
+  if (!res.ok) {
+    return jsonResponse({ code: res.code || 'ERR_VOICE', message: res.message || 'فشل توليد الصوت' }, 400);
+  }
+  return jsonResponse({
+    ok: true,
+    cached: res.cached,
+    characterId: res.characterId,
+    cue: res.cue,
+    text: res.text,
+    message: res.cached
+      ? `✅ تم جلب الصوت المحفوظ مسبقاً من السحابة (${res.characterId} - ${res.cue}).`
+      : `✅ تم توليد الصوت من Gemini وحفظه في السحابة لنشره للمستخدمين (${res.characterId} - ${res.cue})!`
+  });
 }
