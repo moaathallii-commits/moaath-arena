@@ -6,28 +6,65 @@
   <meta name="robots" content="noindex, nofollow, noarchive" />
   <title>404 Not Found</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Tahoma, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
     body {
       background: #060b16; color: #e2e8f0; min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 10px 70px;
     }
     .hidden { display: none !important; }
-    #decoyScreen {
-      text-align: center; max-width: 380px; color: #64748b; user-select: none; margin: auto;
-    }
-    #decoyCode {
-      font-size: 4.5rem; font-weight: 900; color: #1e293b; letter-spacing: 4px; cursor: default;
-    }
+    #decoyScreen { text-align: center; max-width: 380px; color: #64748b; user-select: none; margin: auto; }
+    #decoyCode { font-size: 4.5rem; font-weight: 900; color: #1e293b; letter-spacing: 4px; cursor: default; }
     .box {
-      width: 100%; max-width: 620px;
+      width: 100%; max-width: 640px;
       background: linear-gradient(160deg, #0f172a, #070d19);
       border: 1.5px solid rgba(250, 204, 21, 0.45);
-      border-radius: 18px; padding: 14px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.6); margin-top: 8px;
+      border-radius: 18px; padding: 12px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6); margin-top: 4px;
     }
     h2, h3 { color: #fde047; margin-bottom: 10px; }
-    .hdr { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+
+    /* Sticky Top Navigation & Global Smart Search */
+    .sticky-top {
+      position: sticky; top: 0; z-index: 60;
+      background: rgba(11, 18, 34, 0.96);
+      backdrop-filter: blur(10px);
+      padding: 8px 4px 10px;
+      margin: -6px -4px 12px;
+      border-bottom: 1px solid rgba(250, 204, 21, 0.25);
+      border-radius: 12px 12px 0 0;
+    }
+    .hdr { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .smart-search-wrap { position: relative; margin-bottom: 9px; }
+    .smart-search-input {
+      width: 100%; padding: 9px 36px 9px 34px; border-radius: 12px;
+      border: 1.5px solid rgba(56, 189, 248, 0.5); background: #060b16; color: #fff; font-size: 0.82rem;
+    }
+    .smart-search-input:focus { outline: none; border-color: #fde047; box-shadow: 0 0 0 2px rgba(250,204,21,0.18); }
+    .smart-search-ico { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; pointer-events: none; }
+    .smart-search-clear {
+      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+      background: rgba(148,163,184,0.2); border: none; color: #cbd5e1;
+      width: 22px; height: 22px; border-radius: 50%; font-size: 0.72rem; cursor: pointer;
+    }
+    .smart-results {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 120;
+      background: #0b1222; border: 1.5px solid rgba(250, 204, 21, 0.55);
+      border-radius: 12px; max-height: 290px; overflow-y: auto;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.85);
+    }
+    .sr-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      padding: 9px 11px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.76rem; cursor: pointer;
+    }
+    .sr-item:last-child { border-bottom: none; }
+    .sr-item:hover, .sr-item:active { background: rgba(56, 189, 248, 0.14); }
+    .sr-tag {
+      font-size: 0.64rem; padding: 2px 6px; border-radius: 999px; font-weight: 800;
+      background: rgba(250, 204, 21, 0.16); color: #fde047; white-space: nowrap;
+    }
+
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .tab-btn {
       padding: 8px 4px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.25);
       background: #0b1222; color: #cbd5e1; font-size: 0.72rem; font-weight: 800; cursor: pointer;
@@ -37,6 +74,7 @@
     .card h4 { color: #7dd3fc; font-size: 0.84rem; margin-bottom: 8px; }
     .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
     .stat { background: #070c18; border: 1px solid rgba(250,204,21,0.28); border-radius: 10px; padding: 8px; text-align: center; }
     .stat small { display: block; color: #94a3b8; font-size: 0.66rem; }
     .stat strong { color: #4ade80; font-size: 0.9rem; }
@@ -46,19 +84,106 @@
       width: 100%; padding: 8px 9px; border-radius: 9px;
       border: 1px solid rgba(212,175,55,0.4); background: #070c18; color: #fff; font-size: 0.82rem;
     }
-    .check { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; margin: 5px 0; cursor: pointer; }
-    .check input { width: auto; }
+
+    /* Colored Toggle Switches */
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 11px; margin-bottom: 7px;
+      background: rgba(7, 12, 24, 0.75); border: 1px solid rgba(148, 163, 184, 0.18);
+      font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .switch { position: relative; display: inline-block; width: 46px; height: 25px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; background: #16a34a; border-radius: 999px; transition: 0.22s;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.45);
+    }
+    .slider:before {
+      content: ""; position: absolute; height: 19px; width: 19px; left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%; transition: 0.22s;
+    }
+    /* For lock switches: checked = locked (red), unchecked = open (green) */
+    .switch.lock-sw input:checked + .slider { background: #dc2626; }
+    .switch.lock-sw input:checked + .slider:before { transform: translateX(21px); }
+    /* For standard enable switches: unchecked = gray, checked = green */
+    .switch.std-sw .slider { background: #334155; }
+    .switch.std-sw input:checked + .slider { background: #16a34a; }
+    .switch.std-sw input:checked + .slider:before { transform: translateX(21px); }
+    /* For danger switches (killSwitch / freeze): unchecked = gray, checked = red */
+    .switch.danger-sw .slider { background: #334155; }
+    .switch.danger-sw input:checked + .slider { background: #dc2626; }
+    .switch.danger-sw input:checked + .slider:before { transform: translateX(21px); }
+
     .btn { padding: 8px 10px; border-radius: 9px; border: none; font-weight: 900; font-size: 0.78rem; cursor: pointer; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-gold { background: linear-gradient(135deg, #fde047, #d97706); color: #111827; width: 100%; }
     .btn-green { background: #16a34a; color: #fff; }
     .btn-red { background: #dc2626; color: #fff; }
     .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid rgba(250,204,21,0.45); color: #fde047; }
+    .btn-wa { background: #15803d; color: #fff; border: 1px solid #4ade80; }
+    .btn-chip {
+      padding: 6px 4px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.4);
+      background: rgba(56,189,248,0.12); color: #bae6fd; font-size: 0.72rem; font-weight: 800; cursor: pointer;
+    }
+    .btn-chip.neg { border-color: rgba(248,113,113,0.45); background: rgba(239,68,68,0.14); color: #fca5a5; }
+    .btn-chip.active { background: #fde047; color: #111827; border-color: #fef08a; }
+
     .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.74rem; flex-wrap: wrap; }
     .row:first-of-type { border-top: none; }
     .msg { padding: 8px 10px; border-radius: 10px; font-size: 0.76rem; font-weight: 800; margin-bottom: 10px; }
     .msg.ok { background: rgba(34,197,94,0.16); border: 1px solid #22c55e; color: #86efac; }
     .msg.err { background: rgba(239,68,68,0.16); border: 1px solid #ef4444; color: #fca5a5; }
     .ledger-box { max-height: 220px; overflow-y: auto; background: #060b16; border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 8px; margin-top: 8px; }
+
+    /* Player Edit Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(2, 6, 23, 0.86); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center; padding: 12px;
+    }
+    .modal-card {
+      width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      background: linear-gradient(160deg, #0f172a, #070d19);
+      border: 1.5px solid rgba(250, 204, 21, 0.65); border-radius: 18px; padding: 14px;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.85);
+    }
+
+    /* Floating Toast */
+    #toast {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 300;
+      padding: 10px 16px; border-radius: 12px; font-size: 0.78rem; font-weight: 900;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.7); max-width: 92%; text-align: center;
+      transition: opacity 0.25s;
+    }
+    #toast.ok { background: #14532d; border: 1.5px solid #4ade80; color: #dcfce7; }
+    #toast.err { background: #7f1d1d; border: 1.5px solid #f87171; color: #fee2e2; }
+
+    /* Phase 2: Badge Pulse, Subtabs & Copy Pill */
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.55); }
+      50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
+    }
+    .tab-btn.has-pending {
+      border-color: #fde047;
+      animation: badgePulse 2s infinite;
+    }
+    .subtabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
+    .subtab-btn {
+      padding: 7px 6px; border-radius: 9px; border: 1px solid rgba(56,189,248,0.28);
+      background: #070c18; color: #94a3b8; font-size: 0.74rem; font-weight: 800; cursor: pointer;
+    }
+    .subtab-btn.active { background: rgba(56,189,248,0.2); color: #7dd3fc; border-color: #38bdf8; }
+    .copy-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 7px; border: 1px solid rgba(56,189,248,0.45);
+      background: rgba(56,189,248,0.14); color: #7dd3fc; font-size: 0.7rem; font-weight: 800; cursor: pointer;
+    }
+    .status-pill {
+      font-size: 0.66rem; padding: 2px 7px; border-radius: 999px; font-weight: 800;
+    }
+    .status-pill.ok { background: rgba(34,197,94,0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+    .status-pill.rej { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+    .mini-board { background: #060b16; border: 1px solid rgba(255,255,255,0.08); border-radius: 9px; padding: 7px; margin-top: 7px; }
   </style>
 </head>
 <body>
@@ -78,24 +203,34 @@
   </div>
 
   <div id="dashScreen" class="box hidden">
-    <div class="hdr">
-      <h3 style="margin:0; font-size:0.98rem;">🛡️ إدارة عالم التحديات</h3>
-      <div style="display:flex; gap:6px;">
-        <button type="button" class="btn btn-outline" id="refreshBtn">🔄</button>
-        <button type="button" class="btn btn-red" id="logoutBtn">خروج</button>
+    <div class="sticky-top">
+      <div class="hdr">
+        <h3 style="margin:0; font-size:0.98rem;">🛡️ إدارة عالم التحديات</h3>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn btn-outline" id="refreshBtn" title="تحديث">🔄</button>
+          <button type="button" class="btn btn-red" id="logoutBtn">خروج</button>
+        </div>
+      </div>
+
+      <!-- البحث الذكي الشامل -->
+      <div class="smart-search-wrap">
+        <span class="smart-search-ico">🔎</span>
+        <input type="text" id="globalSmartSearch" class="smart-search-input" placeholder="بحث ذكي شامل: لاعب، هاتف، كود إحالة، طلب، أداة، أو إعداد..." autocomplete="off" />
+        <button type="button" id="clearSmartSearch" class="smart-search-clear hidden">✕</button>
+        <div id="smartSearchResults" class="smart-results hidden"></div>
+      </div>
+
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="overview">📊 الملخص</button>
+        <button type="button" class="tab-btn" data-tab="requests">💳 الطلبات (<span id="reqCnt">0</span>)</button>
+        <button type="button" class="tab-btn" data-tab="players">👥 اللاعبون</button>
+        <button type="button" class="tab-btn" data-tab="shop">🛒 المتجر والرسوم</button>
+        <button type="button" class="tab-btn" data-tab="locks">🔒 قفل الألعاب</button>
+        <button type="button" class="tab-btn" data-tab="events">🎪 الأحداث والتصفير</button>
       </div>
     </div>
 
     <div id="dashMsg" class="msg hidden"></div>
-
-    <div class="tabs">
-      <button type="button" class="tab-btn active" data-tab="overview">📊 الملخص</button>
-      <button type="button" class="tab-btn" data-tab="requests">💳 الطلبات (<span id="reqCnt">0</span>)</button>
-      <button type="button" class="tab-btn" data-tab="players">👥 اللاعبون</button>
-      <button type="button" class="tab-btn" data-tab="shop">🛒 المتجر والرسوم</button>
-      <button type="button" class="tab-btn" data-tab="locks">🔒 قفل الألعاب</button>
-      <button type="button" class="tab-btn" data-tab="events">🎪 الأحداث والتصفير</button>
-    </div>
 
     <!-- 1. الملخص -->
     <div id="pane_overview">
@@ -104,51 +239,69 @@
         <div class="stat"><small>المعادل بالليرة / الدولار</small><strong id="stSyp">0</strong></div>
         <div class="stat"><small>عمولات الإحالة</small><strong id="stRef" style="color:#38bdf8;">0</strong></div>
         <div class="stat"><small>التعزيز الديناميكي</small><strong id="stBoost" style="color:#fde047;">0%</strong></div>
+        <div class="stat"><small>عدد اللاعبين المسجلين</small><strong id="stPlayersCnt" style="color:#e2e8f0;">0</strong></div>
+        <div class="stat"><small>العملات المتداولة بالمحافظ</small><strong id="stCirculatingPts" style="color:#fde047;">0</strong></div>
+      </div>
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div>
+          <h4 style="margin:0 0 2px;">💾 نسخة احتياطية فورية (JSON)</h4>
+          <div style="font-size:0.7rem; color:#94a3b8;">تنزيل ملف JSON يضم اللاعبين، الطلبات، الأرقام، والإحصائيات</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="exportBackupBtn" style="white-space:nowrap;">⬇️ تصدير JSON</button>
       </div>
       <div class="card"><h4>🔒 الحسابات المجمدة</h4><div id="frozenBox"></div></div>
-      <div class="card"><h4>🚨 آخر التنبيهات الأمنية</h4><div id="alertsBox"></div></div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+          <h4 style="margin:0;">🚨 آخر التنبيهات الأمنية</h4>
+          <button type="button" class="btn-chip neg" id="clearAlertsBtn">🗑️ مسح التنبيهات</button>
+        </div>
+        <div id="alertsBox"></div>
+      </div>
+
+      <div class="card">
+        <h4>📜 سجل التدقيق الإداري (آخر 30 إجراء)</h4>
+        <div id="auditLogBox" class="ledger-box" style="max-height:190px; margin-top:4px;"></div>
+      </div>
     </div>
 
     <!-- 2. الطلبات -->
     <div id="pane_requests" class="hidden">
-      <div class="card"><h4>📥 طلبات شحن شام كاش المعلقة</h4><div id="topupsBox"></div></div>
-      <div class="card"><h4>📤 طلبات سحب شام كاش المعلقة</h4><div id="cashoutsBox"></div></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#94a3b8; margin-bottom:7px; padding:0 2px;">
+        <span>🔄 تحديث تلقائي كل 30 ثانية</span>
+        <span id="lastPollTime">محدّث الآن</span>
+      </div>
+      <div class="subtabs">
+        <button type="button" class="subtab-btn active" data-reqsub="pending">⏳ الطلبات المعلقة (<span id="subReqPendingCnt">0</span>)</button>
+        <button type="button" class="subtab-btn" data-reqsub="archive">🗂️ أرشيف المعالجة (<span id="subReqArchiveCnt">0</span>)</button>
+      </div>
+      <div id="reqSub_pending">
+        <div class="card"><h4>📥 طلبات شحن شام كاش المعلقة</h4><div id="topupsBox"></div></div>
+        <div class="card"><h4>📤 طلبات سحب شام كاش المعلقة</h4><div id="cashoutsBox"></div></div>
+      </div>
+      <div id="reqSub_archive" class="hidden">
+        <div class="card"><h4>🗂️ آخر 30 طلب شحن وسحب تمت معالجته</h4><div id="archiveRequestsBox"></div></div>
+      </div>
     </div>
 
-    <!-- 3. اللاعبون والسجل المفصل -->
+    <!-- 3. اللاعبون -->
     <div id="pane_players" class="hidden">
       <div class="card">
-        <h4>🔎 البحث عن لاعب وتعديله</h4>
+        <h4>🔎 قائمة اللاعبين والفلترة السريعة</h4>
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <input type="text" id="playerSearchInput" placeholder="رقم الهاتف أو الاسم..." />
+          <input type="text" id="playerSearchInput" placeholder="اكتب للبحث الفوري بالاسم أو الهاتف أو كود الإحالة..." />
           <button type="button" class="btn btn-outline" id="playerSearchBtn">بحث</button>
+        </div>
+        <div class="grid4" style="margin-bottom:8px;" id="playerFilterBar">
+          <button type="button" class="btn-chip active" data-pf="all">الكل</button>
+          <button type="button" class="btn-chip" data-pf="top">أعلى رصيد</button>
+          <button type="button" class="btn-chip" data-pf="frozen">المجمدون</button>
+          <button type="button" class="btn-chip" data-pf="trusted">الموثوقون</button>
         </div>
         <div id="playersListBox"></div>
       </div>
-
-      <div class="card hidden" id="playerEditorCard">
-        <h4>✏️ تعديل اللاعب وسجله المفصل</h4>
-        <div class="grid2">
-          <div class="field"><label>رقم الهاتف</label><input type="text" id="edPhone" disabled /></div>
-          <div class="field"><label>الاسم الظاهر</label><input type="text" id="edName" /></div>
-          <div class="field"><label>الرصيد (عملة)</label><input type="number" id="edPoints" /></div>
-          <div class="field"><label>الخبرة (XP)</label><input type="number" id="edXp" /></div>
-          <div class="field"><label>الانتصارات (Wins)</label><input type="number" id="edWins" /></div>
-          <div class="field"><label>الخسائر / السلسلة</label><div class="grid2"><input type="number" id="edLosses" placeholder="خسائر" /><input type="number" id="edStreak" placeholder="سلسلة" /></div></div>
-        </div>
-        <div class="grid2">
-          <label class="check"><input type="checkbox" id="edFrozen" /> <span>تجميد الحساب</span></label>
-          <label class="check"><input type="checkbox" id="edTrusted" /> <span>حساب موثوق</span></label>
-        </div>
-        <div class="grid2" style="margin-top:6px;">
-          <button type="button" class="btn btn-gold" id="savePlayerBtn">💾 حفظ تعديل اللاعب</button>
-          <button type="button" class="btn btn-outline" id="loadLedgerBtn">📜 عرض السجل المفصل</button>
-        </div>
-        <div id="playerLedgerBox" class="ledger-box hidden"></div>
-      </div>
     </div>
 
-    <!-- 4. التحكم في تسعير الأدوات + رسوم الدخول لكل جولة + حد XP -->
+    <!-- 4. المتجر والرسوم -->
     <div id="pane_shop" class="hidden">
       <div class="card">
         <h4>🎟️ رسوم الدخول لكل جولة (حسب اللعبة)</h4>
@@ -174,10 +327,37 @@
       </div>
 
       <div class="card">
+        <h4>📊 تعديل جماعي لأسعار المتجر أو الإطارات (%)</h4>
+        <div class="grid2">
+          <div class="field">
+            <label>القسم المستهدف</label>
+            <select id="bulkPriceTarget">
+              <option value="shop">🛒 جميع أدوات المتجر</option>
+              <option value="frames">🖼️ جميع الإطارات (15)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>النسبة المئوية (%)</label>
+            <input type="number" id="bulkPricePct" value="10" min="-80" max="200" placeholder="مثال: 10 أو -15" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-gold" id="applyBulkPriceBtn">⚡ تطبيق النسبة المئوية الآن</button>
+      </div>
+
+      <div class="card">
         <h4>⚙️ الإعدادات العامة وشام كاش</h4>
-        <label class="check"><input type="checkbox" id="cfgKill" /> <span style="color:#fca5a5;">وضع الصيانة الطارئ</span></label>
-        <label class="check"><input type="checkbox" id="cfgShamIn" /> <span>تفعيل شحن شام كاش</span></label>
-        <label class="check"><input type="checkbox" id="cfgShamOut" /> <span>تفعيل سحب شام كاش</span></label>
+        <label class="toggle-row">
+          <span style="color:#fca5a5;">وضع الصيانة الطارئ (إغلاق التطبيق)</span>
+          <span class="switch danger-sw"><input type="checkbox" id="cfgKill" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>تفعيل شحن شام كاش</span>
+          <span class="switch std-sw"><input type="checkbox" id="cfgShamIn" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>تفعيل سحب شام كاش</span>
+          <span class="switch std-sw"><input type="checkbox" id="cfgShamOut" /><span class="slider"></span></span>
+        </label>
         <div class="field"><label>معرّف شام كاش الإدارة</label><input type="text" id="cfgShamId" /></div>
         <div class="grid2">
           <div class="field"><label>الحد الأدنى للسحب</label><input type="number" id="cfgMinOut" value="100" /></div>
@@ -189,16 +369,42 @@
       </div>
     </div>
 
-    <!-- 5. قفل الألعاب والمسابقات والتحديات -->
+    <!-- 5. قفل الألعاب والمسابقات -->
     <div id="pane_locks" class="hidden">
       <div class="card">
-        <h4>🔒 قفل أو فتح كل لعبة أو مسابقة</h4>
-        <label class="check"><input type="checkbox" id="lk_tower_match" /> <span>قفل لعبة: برج التحدي اللانهائي</span></label>
-        <label class="check"><input type="checkbox" id="lk_hill_drive" /> <span>قفل لعبة: قيادة التلال 2D</span></label>
-        <label class="check"><input type="checkbox" id="lk_cyber_shooter" /> <span>قفل لعبة: ميجا شوتر 2D</span></label>
-        <label class="check"><input type="checkbox" id="lk_weekly" /> <span>قفل المسابقة الأسبوعية</span></label>
-        <label class="check"><input type="checkbox" id="lk_pvp" /> <span>قفل التحدي المباشر (PvP)</span></label>
-        <label class="check"><input type="checkbox" id="lk_events" /> <span>قفل أحداث التحدي</span></label>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px;">
+          <h4 style="margin:0;">🔒 قفل أو فتح كل لعبة أو مسابقة</h4>
+          <div style="display:flex; gap:5px;">
+            <button type="button" class="btn-chip neg" id="lockAllBtn">قفل الكل</button>
+            <button type="button" class="btn-chip" id="unlockAllBtn">فتح الكل</button>
+          </div>
+        </div>
+        <div style="font-size:0.68rem; color:#94a3b8; margin-bottom:8px;">🟢 أخضر = مفتوح للعب • 🔴 أحمر = مقفل مؤقتاً</div>
+
+        <label class="toggle-row">
+          <span>🏰 برج التحدي اللانهائي</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_tower_match" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>🚗 قيادة التلال 2D</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_hill_drive" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>🔫 ميجا شوتر 2D</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_cyber_shooter" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>🏆 المسابقة الأسبوعية</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_weekly" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>⚔️ التحدي المباشر (PvP)</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_pvp" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row">
+          <span>🎪 أحداث التحدي</span>
+          <span class="switch lock-sw"><input type="checkbox" id="lk_events" /><span class="slider"></span></span>
+        </label>
         <button type="button" class="btn btn-gold" style="margin-top:8px;" id="saveLocksBtn">💾 حفظ حالة القفل</button>
       </div>
 
@@ -212,11 +418,64 @@
       </div>
     </div>
 
-    <!-- 6. الأحداث والتصفير الشامل -->
+    <!-- 6. البطولات والأرقام القياسية والأحداث والتصفير الشامل -->
     <div id="pane_events" class="hidden">
       <div class="card">
+        <h4>🏆 إدارة البطولات الأسبوعية</h4>
+        <div class="field">
+          <label>اختر اللعبة</label>
+          <select id="wkGameSelect">
+            <option value="tower_match">🏰 برج التحدي اللانهائي</option>
+            <option value="hill_drive">🚗 قيادة التلال 2D</option>
+            <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
+          </select>
+        </div>
+        <div class="grid3" style="margin-bottom:8px;">
+          <div class="stat"><small>الوعاء الحالي</small><strong id="wkPoolVal">0</strong></div>
+          <div class="stat"><small>الجولات</small><strong id="wkRoundsVal" style="color:#38bdf8;">0</strong></div>
+          <div class="stat"><small>بذرة القادم</small><strong id="wkNextSeedVal" style="color:#fde047;">0</strong></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>رسم الدخول (عملة)</label><input type="number" id="wkFeeInput" value="10" min="1" /></div>
+          <div class="field"><label>مدة الدورة (أيام)</label><input type="number" id="wkDaysInput" value="7" min="1" max="60" /></div>
+        </div>
+        <label class="toggle-row">
+          <span>بدء دورة جديدة وتصفير الترتيب</span>
+          <span class="switch danger-sw"><input type="checkbox" id="wkResetCycle" /><span class="slider"></span></span>
+        </label>
+        <div class="grid2" style="margin-top:6px;">
+          <button type="button" class="btn btn-gold" id="wkSaveBtn">💾 حفظ البطولة</button>
+          <button type="button" class="btn btn-green" id="wkSettleBtn">🏅 توزيع الجوائز</button>
+        </div>
+        <div id="wkTopPreview" class="mini-board"></div>
+      </div>
+
+      <div class="card">
+        <h4>👑 ضبط وتصفير الأرقام القياسية</h4>
+        <div class="field">
+          <label>اختر اللعبة</label>
+          <select id="recGameSelect">
+            <option value="tower_match">🏰 برج التحدي اللانهائي</option>
+            <option value="hill_drive">🚗 قيادة التلال 2D</option>
+            <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
+          </select>
+        </div>
+        <div style="font-size:0.74rem; color:#cbd5e1; margin-bottom:7px;">
+          حامل الرقم الحالي: <b id="recHolderName" style="color:#fde047;">-</b>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>الرقم القياسي الحالي</label><input type="number" id="recScoreInput" value="250" min="10" /></div>
+          <div class="field"><label>الجائزة الكبرى (عملة)</label><input type="number" id="recJackpotInput" value="120" min="20" /></div>
+        </div>
+        <button type="button" class="btn btn-gold" id="recSaveBtn">🔄 تحديث / تصفير الرقم القياسي</button>
+      </div>
+
+      <div class="card">
         <h4>🎪 إدارة أحداث التحدي (25 مناسبة)</h4>
-        <label class="check"><input type="checkbox" id="evEnabled" /> <span>تفعيل الحدث الإداري</span></label>
+        <label class="toggle-row">
+          <span>تفعيل الحدث الإداري</span>
+          <span class="switch std-sw"><input type="checkbox" id="evEnabled" /><span class="slider"></span></span>
+        </label>
         <div class="field"><label>المناسبة</label><select id="evSelect"></select></div>
         <div class="field"><label>عنوان الحدث</label><input type="text" id="evTitle" /></div>
         <div class="grid2">
@@ -238,6 +497,93 @@
       </div>
     </div>
   </div>
+
+  <!-- نافذة تعديل اللاعب السريعة (Modal) -->
+  <div id="playerModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="hdr" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+        <h4 style="margin:0; color:#fde047; font-size:0.92rem;">✏️ تعديل اللاعب وسجله المفصل</h4>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn btn-wa" id="edWaBtn" style="padding:5px 9px; font-size:0.72rem;">💬 واتساب</button>
+          <button type="button" class="btn btn-outline" id="closePlayerModalBtn" style="padding:5px 9px;">✕</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field"><label>رقم الهاتف</label><input type="text" id="edPhone" disabled /></div>
+        <div class="field"><label>الاسم الظاهر</label><input type="text" id="edName" /></div>
+      </div>
+
+      <div class="field">
+        <label>الرصيد (عملة) — تعديل سريع (+/-)</label>
+        <input type="number" id="edPoints" style="margin-bottom:6px; font-weight:900; color:#4ade80;" />
+        <div class="grid4">
+          <button type="button" class="btn-chip" onclick="adjustPoints(10)">+10</button>
+          <button type="button" class="btn-chip" onclick="adjustPoints(50)">+50</button>
+          <button type="button" class="btn-chip" onclick="adjustPoints(100)">+100</button>
+          <button type="button" class="btn-chip neg" onclick="adjustPoints(-50)">-50</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>سبب تعديل الرصيد (اختياري — يُحفظ في السجل)</label>
+        <input type="text" id="edReason" placeholder="مثال: تعويض، مكافأة، تصحيح..." />
+      </div>
+
+      <div class="grid2">
+        <div class="field"><label>الخبرة (XP)</label><input type="number" id="edXp" /></div>
+        <div class="field"><label>الانتصارات (Wins)</label><input type="number" id="edWins" /></div>
+        <div class="field"><label>الخسائر</label><input type="number" id="edLosses" /></div>
+        <div class="field"><label>السلسلة (Streak)</label><input type="number" id="edStreak" /></div>
+      </div>
+
+      <div class="grid2" style="margin:6px 0;">
+        <label class="toggle-row" style="margin:0;">
+          <span>تجميد الحساب</span>
+          <span class="switch danger-sw"><input type="checkbox" id="edFrozen" /><span class="slider"></span></span>
+        </label>
+        <label class="toggle-row" style="margin:0;">
+          <span>حساب موثوق</span>
+          <span class="switch std-sw"><input type="checkbox" id="edTrusted" /><span class="slider"></span></span>
+        </label>
+      </div>
+
+      <div class="grid2" style="margin-top:8px;">
+        <button type="button" class="btn btn-gold" id="savePlayerBtn">💾 حفظ تعديل اللاعب</button>
+        <button type="button" class="btn btn-outline" id="loadLedgerBtn">🔄 تحديث السجل</button>
+      </div>
+
+      <div class="card" style="margin-top:10px; background:rgba(7,12,24,0.75);">
+        <h4>🎒 إدارة حقيبة اللاعب (منح أو خصم أداة)</h4>
+        <div id="edInventoryBadges" style="font-size:0.72rem; color:#bae6fd; margin-bottom:7px;"></div>
+        <div class="grid2">
+          <div class="field"><label>الأداة</label><select id="invGrantItemSelect"></select></div>
+          <div class="field"><label>الكمية (+/-)</label><input type="number" id="invGrantQty" value="1" /></div>
+        </div>
+        <button type="button" class="btn btn-green" style="width:100%;" id="invGrantBtn">📦 تحديث حقيبة اللاعب</button>
+      </div>
+
+      <div class="card" style="margin-top:8px; background:rgba(7,12,24,0.75);">
+        <h4>🔑 الأمان والجهاز (كلمة المرور وفك الربط)</h4>
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:7px;">
+          <input type="text" id="newPlayerPassInput" placeholder="كلمة مرور جديدة (4 أحرف+)" autocomplete="off" style="margin:0; flex:1;" />
+          <button type="button" class="btn btn-gold" id="resetPlayerPassBtn" style="padding:8px 10px; white-space:nowrap;">تعيين الرمز</button>
+        </div>
+        <button type="button" class="btn btn-outline" id="unbindPlayerDeviceBtn" style="width:100%; border-color:rgba(248,113,113,0.5); color:#fca5a5;">📱 فك ربط جهاز اللاعب (للدخول من جهاز جديد)</button>
+      </div>
+
+      <div class="card" style="margin-top:8px; background:rgba(7,12,24,0.75);">
+        <h4>🔔 إرسال إشعار مباشر للاعب</h4>
+        <div class="field"><input type="text" id="notifTitleInput" placeholder="عنوان الإشعار (مثال: مكافأة إدارية)" /></div>
+        <div class="field"><input type="text" id="notifBodyInput" placeholder="نص الإشعار الذي سيظهر للاعب..." /></div>
+        <button type="button" class="btn btn-outline" style="width:100%;" id="sendNotifBtn">📨 إرسال الإشعار الآن</button>
+      </div>
+
+      <div id="playerLedgerBox" class="ledger-box"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
 
   <script>
     const WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
@@ -270,9 +616,58 @@
       { id: 'occ_25_season_finale', name: 'الحدث الختامي للموسم', kind: 'highest_score' }
     ];
 
+    const SETTINGS_SHORTCUTS = [
+      { label: 'وضع الصيانة الطارئ / شام كاش', tab: 'shop', kw: 'صيانة شام كاش سحب شحن صرف ترحيب' },
+      { label: 'رسوم الدخول لكل جولة', tab: 'shop', kw: 'رسوم جولة برج قيادة شوتر' },
+      { label: 'قفل الألعاب والمسابقات', tab: 'locks', kw: 'قفل فتح لعبة اسبوعية تحدي pvp' },
+      { label: 'إعلان فوري في الشريط العلوي', tab: 'locks', kw: 'اعلان شريط بث تنبيه' },
+      { label: 'إدارة البطولات الأسبوعية', tab: 'events', kw: 'بطولة اسبوعية وعاء جوائز توزيع' },
+      { label: 'ضبط وتصفير الأرقام القياسية', tab: 'events', kw: 'رقم قياسي جائزة كبرى تصفير' },
+      { label: 'الأحداث والتصفير الشامل', tab: 'events', kw: 'حدث مناسبة تصفير مسح reset' },
+      { label: 'الطلبات المعلقة وأرشيف شام كاش', tab: 'requests', kw: 'طلبات ارشيف شحن سحب شام كاش' }
+    ];
+
     let shopCatalogCache = [];
+    let playersCache = [];
+    let topupsCache = [];
+    let cashoutsCache = [];
+    let archiveCache = [];
+    let weeklyCache = {};
+    let recordsCache = {};
+    let activePlayerFilter = 'all';
+    let toastTimer = null;
+    let pollIntervalId = null;
+    let lastKnownPendingCount = null;
+
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function translateLedgerType(t) {
+      const s = String(t || '');
+      const exact = {
+        admin_manual_adjustment: 'تعديل رصيد إداري',
+        entry_record: 'دخول جولة كسر الرقم',
+        entry_weekly: 'دخول المسابقة الأسبوعية',
+        entry_pvp_create: 'إنشاء تحدي PvP',
+        entry_pvp_join: 'قبول تحدي PvP',
+        record_broken: '🏆 جائزة كسر الرقم القياسي',
+        pvp_bounty_win: '⚔️ فوز بتحدي PvP',
+        pvp_defense_win: '🛡️ ربح دفاع عن تحدي PvP',
+        pvp_draw_refund: '↩️ استرداد تعادل PvP',
+        pvp_cancel_refund_50pct: '↩️ استرداد إلغاء PvP (50%)',
+        shamcash_topup_approved: '💳 شحن شام كاش معتمد',
+        cashout_pending_shamcash: '📤 طلب سحب شام كاش',
+        cashout_rejected_refund: '↩️ استرداد سحب مرفوض',
+        referral_bonus_5pct: '🎁 عمولة إحالة (5%)',
+        vip_cashback: '💎 استرداد VIP'
+      };
+      if (exact[s]) return exact[s];
+      if (s.startsWith('shop_buy_')) return '🛒 شراء من المتجر (' + s.replace('shop_buy_', '') + ')';
+      if (s.startsWith('open_crate')) return '🎁 فتح صندوق استفزاز';
+      if (s.startsWith('weekly_prize_')) return '🏆 جائزة البطولة الأسبوعية';
+      if (s.startsWith('admin_event_reward_')) return '🎪 جائزة حدث إداري';
+      return s;
+    }
 
     function getDeviceFp() {
       let fp = localStorage.getItem('arena_device_fp');
@@ -283,14 +678,34 @@
       return fp;
     }
 
+    function showToast(txt, isErr = false) {
+      const el = $('toast');
+      el.textContent = txt;
+      el.className = isErr ? 'err' : 'ok';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+    }
+
+    function showMsg(elId, txt, isErr = false) {
+      if (elId === 'dashMsg') { showToast(txt, isErr); return; }
+      const el = $(elId);
+      el.textContent = txt;
+      el.className = 'msg ' + (isErr ? 'err' : 'ok');
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tabName));
+      ['overview', 'requests', 'players', 'shop', 'locks', 'events'].forEach((t) => {
+        $('pane_' + t).classList.toggle('hidden', t !== tabName);
+      });
+      if (tabName === 'players') renderFilteredPlayers();
+    }
+
     let decoyTaps = 0, decoyTimer = null;
     function revealGate() {
       $('decoyScreen').classList.add('hidden');
-      if (sessionStorage.getItem(TOKEN_KEY)) {
-        loadDashboard();
-      } else {
-        $('gateScreen').classList.remove('hidden');
-      }
+      if (sessionStorage.getItem(TOKEN_KEY)) loadDashboard();
+      else $('gateScreen').classList.remove('hidden');
     }
 
     $('decoyCode').addEventListener('click', () => {
@@ -300,9 +715,7 @@
       else decoyTimer = setTimeout(() => { decoyTaps = 0; }, 2500);
     });
 
-    if (window.location.hash === '#mth-vault' || sessionStorage.getItem(TOKEN_KEY)) {
-      revealGate();
-    }
+    if (window.location.hash === '#mth-vault' || sessionStorage.getItem(TOKEN_KEY)) revealGate();
 
     async function api(path, body = {}) {
       const tok = sessionStorage.getItem(TOKEN_KEY) || '';
@@ -314,13 +727,14 @@
       return data;
     }
 
-    function showMsg(elId, txt, isErr = false) {
-      const el = $(elId);
-      el.textContent = txt;
-      el.className = 'msg ' + (isErr ? 'err' : 'ok');
+    async function withBtnLoading(btn, fn) {
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ جاري التنفيذ...';
+      try { await fn(); } finally { btn.disabled = false; btn.textContent = orig; }
     }
 
-    $('adminLoginBtn').addEventListener('click', async () => {
+    $('adminLoginBtn').addEventListener('click', () => withBtnLoading($('adminLoginBtn'), async () => {
       const pass = $('adminPassInput').value.trim();
       if (!pass) return showMsg('gateMsg', 'أدخل كلمة المرور السرية.', true);
       try {
@@ -329,12 +743,97 @@
         $('adminPassInput').value = '';
         $('gateScreen').classList.add('hidden');
         loadDashboard();
-      } catch (e) {
-        showMsg('gateMsg', e.message, true);
+      } catch (e) { showMsg('gateMsg', e.message, true); }
+    }));
+
+
+    $('applyBulkPriceBtn').addEventListener('click', () => withBtnLoading($('applyBulkPriceBtn'), async () => {
+      const target = $('bulkPriceTarget').value;
+      const percentDelta = Number($('bulkPricePct').value || 0);
+      if (!percentDelta || percentDelta < -80 || percentDelta > 200) {
+        return showToast('أدخل نسبة بين -80 و +200.', true);
       }
-    });
+      if (!confirm(`تطبيق نسبة (${percentDelta > 0 ? '+' : ''}${percentDelta}%) على جميع عناصر القسم المحدد؟`)) return;
+      try {
+        const r = await api('/admin/shop/bulk', { target, percentDelta });
+        showToast(r.message);
+        loadDashboard();
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('invGrantBtn').addEventListener('click', () => withBtnLoading($('invGrantBtn'), async () => {
+      try {
+        const phone = $('edPhone').value.trim();
+        const r = await api('/admin/player/inventory-grant', {
+          phone,
+          itemId: $('invGrantItemSelect').value,
+          deltaQty: Number($('invGrantQty').value || 0)
+        });
+        showToast(r.message);
+        selectPlayerForEdit(phone);
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('sendNotifBtn').addEventListener('click', () => withBtnLoading($('sendNotifBtn'), async () => {
+      try {
+        const phone = $('edPhone').value.trim();
+        const r = await api('/admin/player/notify', {
+          phone,
+          title: $('notifTitleInput').value.trim() || '📢 رسالة من الإدارة',
+          message: $('notifBodyInput').value.trim()
+        });
+        showToast(r.message);
+        $('notifBodyInput').value = '';
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('exportBackupBtn').addEventListener('click', () => withBtnLoading($('exportBackupBtn'), async () => {
+      try {
+        const data = await api('/admin/backup/export', {});
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `moaath-arena-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast('✅ تم تنزيل النسخة الاحتياطية JSON بنجاح.');
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+
+    $('clearAlertsBtn').addEventListener('click', () => withBtnLoading($('clearAlertsBtn'), async () => {
+      if (!confirm('هل تريد مسح جميع التنبيهات الأمنية القديمة؟')) return;
+      try {
+        const r = await api('/admin/alerts/clear', {});
+        showToast(r.message);
+        loadDashboard();
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('resetPlayerPassBtn').addEventListener('click', () => withBtnLoading($('resetPlayerPassBtn'), async () => {
+      try {
+        const phone = $('edPhone').value.trim();
+        const newPassword = $('newPlayerPassInput').value.trim();
+        const r = await api('/admin/player/reset-pass', { phone, newPassword });
+        $('newPlayerPassInput').value = '';
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('unbindPlayerDeviceBtn').addEventListener('click', () => withBtnLoading($('unbindPlayerDeviceBtn'), async () => {
+      try {
+        const phone = $('edPhone').value.trim();
+        if (!confirm(`فك ربط الأجهزة المرتبطة باللاعب (${phone})؟`)) return;
+        const r = await api('/admin/player/unbind-device', { phone });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
     $('logoutBtn').addEventListener('click', async () => {
+      if (pollIntervalId) clearInterval(pollIntervalId);
       try { await api('/admin/logout', {}); } catch (_) {}
       sessionStorage.removeItem(TOKEN_KEY);
       $('dashScreen').classList.add('hidden');
@@ -346,14 +845,108 @@
     $('refreshBtn').addEventListener('click', loadDashboard);
 
     document.querySelectorAll('.tab-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        ['overview', 'requests', 'players', 'shop', 'locks', 'events'].forEach((t) => {
-          $('pane_' + t).classList.toggle('hidden', t !== btn.dataset.tab);
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // ================= البحث الذكي الشامل =================
+    function runGlobalSmartSearch() {
+      const q = $('globalSmartSearch').value.trim().toLowerCase();
+      $('clearSmartSearch').classList.toggle('hidden', !q);
+      const box = $('smartSearchResults');
+      if (!q) { box.classList.add('hidden'); return; }
+
+      const items = [];
+      // 1. Players
+      playersCache.filter((p) =>
+        String(p.phone).toLowerCase().includes(q) ||
+        String(p.displayName || '').toLowerCase().includes(q) ||
+        String(p.refCode || '').toLowerCase().includes(q)
+      ).slice(0, 5).forEach((p) => {
+        items.push({
+          tag: 'لاعب',
+          title: `${p.displayName || 'لاعب'} (${p.phone})`,
+          sub: `رصيد: ${Number(p.points || 0).toLocaleString()} • XP: ${Number(p.xp || 0)}`,
+          action: () => { closeSmartSearch(); selectPlayerForEdit(p.phone); }
         });
-        if (btn.dataset.tab === 'players') searchPlayers();
       });
+
+      // 2. Pending topups & cashouts
+      topupsCache.filter((t) =>
+        String(t.txId).toLowerCase().includes(q) || String(t.phone).includes(q) || String(t.displayName || '').toLowerCase().includes(q)
+      ).slice(0, 3).forEach((t) => {
+        items.push({
+          tag: 'طلب شحن',
+          title: `${t.displayName || t.phone} — ${Number(t.sypAmount || 0).toLocaleString()} ل.س`,
+          sub: t.txId,
+          action: () => { closeSmartSearch(); switchTab('requests'); }
+        });
+      });
+
+      cashoutsCache.filter((c) =>
+        String(c.txId).toLowerCase().includes(q) || String(c.phone).includes(q) || String(c.shamCashId || '').toLowerCase().includes(q)
+      ).slice(0, 3).forEach((c) => {
+        items.push({
+          tag: 'طلب سحب',
+          title: `${c.displayName || c.phone} — ${Number(c.sypAmount || c.pts || 0).toLocaleString()} ل.س`,
+          sub: c.txId,
+          action: () => { closeSmartSearch(); switchTab('requests'); }
+        });
+      });
+
+      // 3. Shop items
+      shopCatalogCache.filter((it) =>
+        String(it.name || '').toLowerCase().includes(q) || String(it.id || '').toLowerCase().includes(q)
+      ).slice(0, 3).forEach((it) => {
+        items.push({
+          tag: 'أداة متجر',
+          title: it.name,
+          sub: `سعر: ${Number(it.price || 0)} • XP: ${Number(it.reqXp || 0)}`,
+          action: () => {
+            closeSmartSearch();
+            switchTab('shop');
+            $('shopItemSelect').value = it.id;
+            fillShopItemForm();
+          }
+        });
+      });
+
+      // 4. Settings shortcuts
+      SETTINGS_SHORTCUTS.filter((s) => s.label.toLowerCase().includes(q) || s.kw.includes(q)).slice(0, 3).forEach((s) => {
+        items.push({
+          tag: 'إعداد',
+          title: s.label,
+          sub: 'انتقال مباشر',
+          action: () => { closeSmartSearch(); switchTab(s.tab); }
+        });
+      });
+
+      if (!items.length) {
+        box.innerHTML = '<div style="padding:10px; text-align:center; font-size:0.75rem; color:#94a3b8;">لا توجد نتائج مطابقة.</div>';
+      } else {
+        box.innerHTML = items.map((it, i) => `
+          <div class="sr-item" data-sr-idx="${i}">
+            <div><b>${esc(it.title)}</b><div style="font-size:0.68rem; color:#94a3b8;">${esc(it.sub)}</div></div>
+            <span class="sr-tag">${esc(it.tag)}</span>
+          </div>
+        `).join('');
+        box.querySelectorAll('.sr-item').forEach((el) => {
+          el.addEventListener('click', () => items[Number(el.dataset.srIdx)].action());
+        });
+      }
+      box.classList.remove('hidden');
+    }
+
+    function closeSmartSearch() {
+      $('smartSearchResults').classList.add('hidden');
+    }
+
+    $('globalSmartSearch').addEventListener('input', runGlobalSmartSearch);
+    $('clearSmartSearch').addEventListener('click', () => {
+      $('globalSmartSearch').value = '';
+      runGlobalSmartSearch();
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.smart-search-wrap')) closeSmartSearch();
     });
 
     function fillShopItemForm() {
@@ -364,41 +957,184 @@
       $('shopItemReqXp').value = Number(it.reqXp || 0);
     }
 
+    window.copyTextQuick = async (txt, label = 'النص') => {
+      if (!txt || txt === '-') return showToast('لا يوجد معرّف لنسخه.', true);
+      try {
+        await navigator.clipboard.writeText(String(txt));
+        showToast(`📋 تم نسخ ${label}: ${txt}`);
+      } catch (_) {
+        const ta = document.createElement('textarea');
+        ta.value = String(txt);
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast(`📋 تم نسخ ${label}`);
+      }
+    };
+
+    function playNewRequestTone() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.36);
+      } catch (_) {}
+    }
+
+    document.querySelectorAll('.subtab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.subtab-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const sub = btn.dataset.reqsub;
+        $('reqSub_pending').classList.toggle('hidden', sub !== 'pending');
+        $('reqSub_archive').classList.toggle('hidden', sub !== 'archive');
+      });
+    });
+
+    function renderRequestsLists(notifyIfIncreased = false) {
+      const totalPending = topupsCache.length + cashoutsCache.length;
+      $('reqCnt').textContent = totalPending;
+      $('subReqPendingCnt').textContent = totalPending;
+      $('subReqArchiveCnt').textContent = archiveCache.length;
+
+      const reqTabBtn = document.querySelector('.tab-btn[data-tab="requests"]');
+      if (reqTabBtn) reqTabBtn.classList.toggle('has-pending', totalPending > 0);
+
+      if (notifyIfIncreased && lastKnownPendingCount !== null && totalPending > lastKnownPendingCount) {
+        playNewRequestTone();
+        showToast(`🔔 وصل طلب جديد! إجمالي الطلبات المعلقة الآن: ${totalPending}`);
+      }
+      lastKnownPendingCount = totalPending;
+
+      $('topupsBox').innerHTML = topupsCache.length
+        ? topupsCache.map((t) => `<div class="row"><div><b>${esc(t.displayName || t.phone)}</b> (${esc(t.phone)})<br><span style="color:#4ade80;">${Number(t.sypAmount || 0).toLocaleString()} ل.س</span> • <small style="color:#94a3b8;">${esc(t.txId)}</small></div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resTopup('${esc(t.txId)}','approve')">قبول</button><button class="btn btn-red" onclick="resTopup('${esc(t.txId)}','reject')">رفض</button></div></div>`).join('')
+        : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات شحن معلقة.</div>';
+
+      $('cashoutsBox').innerHTML = cashoutsCache.length
+        ? cashoutsCache.map((c) => {
+            const sid = String(c.shamCashId || '').trim();
+            const copyBtn = sid ? `<button type="button" class="copy-pill" onclick="copyTextQuick('${esc(sid)}','معرّف شام كاش')">📋 نسخ المعرّف</button>` : '';
+            return `<div class="row"><div style="flex:1;min-width:170px;"><b>${esc(c.displayName || c.phone)}</b> (${esc(c.phone)})<br><span style="color:#38bdf8;">${Number(c.sypAmount || c.pts || 0).toLocaleString()} ل.س</span><div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><code style="color:#fde047;font-size:0.72rem;">${esc(sid || '-')}</code>${copyBtn}</div></div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resCash('${esc(c.txId)}','approve')">اعتماد</button><button class="btn btn-red" onclick="resCash('${esc(c.txId)}','reject')">رفض</button></div></div>`;
+          }).join('')
+        : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات سحب معلقة.</div>';
+
+      $('archiveRequestsBox').innerHTML = archiveCache.length
+        ? archiveCache.map((r) => {
+            const isTopup = r.kind === 'topup';
+            const isOk = r.status === 'approved';
+            const amt = isTopup ? Number(r.sypAmount || 0) : Number(r.sypAmount || r.pts || 0);
+            const dt = r.resolvedAt || r.createdAt ? new Date(Number(r.resolvedAt || r.createdAt)).toLocaleString('ar-SY', { hour12: true }) : '';
+            const sid = r.shamCashId ? ` • <code>${esc(r.shamCashId)}</code>` : '';
+            return `<div class="row"><div><b>${isTopup ? '📥 شحن' : '📤 سحب'}</b> — ${esc(r.displayName || r.phone)} (${esc(r.phone)})<br><span style="color:#fde047;">${amt.toLocaleString()} ل.س</span>${sid}<div style="font-size:0.66rem;color:#94a3b8;">${esc(dt)}</div></div><span class="status-pill ${isOk ? 'ok' : 'rej'}">${isOk ? 'معتمد' : 'مرفوض'}</span></div>`;
+          }).join('')
+        : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد عمليات في الأرشيف بعد.</div>';
+    }
+
+    function fillWeeklyForm() {
+      const gId = $('wkGameSelect').value;
+      const w = weeklyCache[gId] || {};
+      $('wkPoolVal').textContent = Number(w.poolPts || 0).toLocaleString();
+      $('wkRoundsVal').textContent = Number(w.totalRounds || 0).toLocaleString();
+      $('wkNextSeedVal').textContent = Number(w.nextWeeklySeedPts || 0).toLocaleString();
+      $('wkFeeInput').value = Number(w.entryFeePts || 10);
+      $('wkDaysInput').value = Number(w.durationDays || 7);
+      $('wkResetCycle').checked = false;
+      const top = Array.isArray(w.top7) ? w.top7.slice(0, 3) : [];
+      $('wkTopPreview').innerHTML = top.length
+        ? '<div style="font-size:0.7rem;color:#7dd3fc;margin-bottom:4px;">أبرز المتصدرين حالياً:</div>' + top.map((e) => `<div class="row" style="padding:4px 0;"><span>#${e.rank} <b>${esc(e.displayName)}</b></span><span>${Number(e.bestScore || 0).toLocaleString()} نقطة (<b style="color:#4ade80;">${Number(e.prizePts || 0)}</b>)</span></div>`).join('')
+        : '<div style="font-size:0.7rem;color:#94a3b8;">لا يوجد متسابقون في هذه الدورة بعد.</div>';
+    }
+
+    function fillRecordForm() {
+      const gId = $('recGameSelect').value;
+      const r = recordsCache[gId] || {};
+      $('recHolderName').textContent = r.holderName || 'إدارة العالم';
+      $('recScoreInput').value = Number(r.currentRecord || 250);
+      $('recJackpotInput').value = Number(r.jackpotPts || 120);
+    }
+
+    function startRequestsAutoPoll() {
+      if (pollIntervalId) clearInterval(pollIntervalId);
+      pollIntervalId = setInterval(async () => {
+        if (!sessionStorage.getItem(TOKEN_KEY) || document.hidden) return;
+        try {
+          const res = await api('/admin/requests/poll', {});
+          if (res && res.ok) {
+            topupsCache = res.pendingTopups || [];
+            cashoutsCache = res.pendingCashouts || [];
+            archiveCache = res.requestsArchive || [];
+            renderRequestsLists(true);
+            const nowStr = new Date().toLocaleTimeString('ar-SY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if ($('lastPollTime')) $('lastPollTime').textContent = `آخر فحص: ${nowStr}`;
+          }
+        } catch (_) {}
+      }, 30000);
+    }
+
     async function loadDashboard() {
       $('dashScreen').classList.remove('hidden');
-      $('dashMsg').classList.add('hidden');
       try {
-        const dash = await api('/admin/dashboard', {});
+        const [dash, pRes] = await Promise.all([
+          api('/admin/dashboard', {}),
+          api('/admin/players/list', { q: '' }).catch(() => ({ players: [] }))
+        ]);
+        playersCache = Array.isArray(pRes.players) ? pRes.players : [];
         let evRes = null;
         try { evRes = await api('/admin/event/status', {}); } catch (_) {}
+
         const cfg = dash.config || {};
         const pr = dash.adminProfit || {};
-        const topups = dash.pendingTopups || [];
-        const cashouts = dash.pendingCashouts || [];
+        topupsCache = dash.pendingTopups || [];
+        cashoutsCache = dash.pendingCashouts || [];
         const frozen = dash.frozenPlayers || [];
         const alerts = dash.recentAlerts || [];
 
+        archiveCache = dash.requestsArchive || [];
+        weeklyCache = dash.weeklyTournaments || {};
+        recordsCache = dash.records || {};
+
+        const stSum = dash.statsSummary || {};
         $('stPts').textContent = Number(pr.totalPts || 0).toLocaleString() + ' عملة';
         $('stSyp').textContent = `${Number(pr.totalSyp || 0).toLocaleString()} ل.س ($${Number(pr.totalUsd || 0)})`;
         $('stRef').textContent = Number(pr.referralPaidPts || 0).toLocaleString() + ' عملة';
         $('stBoost').textContent = '+' + Number(cfg.recordDynamicBoostPct || 0) + '%';
-        $('reqCnt').textContent = topups.length + cashouts.length;
+        if ($('stPlayersCnt')) $('stPlayersCnt').textContent = Number(stSum.totalPlayersCount || playersCache.length || 0).toLocaleString();
+        if ($('stCirculatingPts')) $('stCirculatingPts').textContent = Number(stSum.totalCirculatingPts || 0).toLocaleString() + ' عملة';
+
+        renderRequestsLists(false);
+        fillWeeklyForm();
+        fillRecordForm();
+        startRequestsAutoPoll();
 
         $('frozenBox').innerHTML = frozen.length
           ? frozen.map((p) => `<div class="row"><span>${esc(p.displayName || p.phone)} (${esc(p.phone)})</span><button class="btn btn-outline" onclick="unfreeze('${esc(p.phone)}')">فك التجميد</button></div>`).join('')
           : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد حسابات مجمدة.</div>';
 
-        $('alertsBox').innerHTML = alerts.slice(0, 6).length
-          ? alerts.slice(0, 6).map((a) => `<div class="row"><strong style="color:#fde047;">${esc(a.reason || 'تنبيه')}</strong><span>${esc(a.phone || '-')}</span></div>`).join('')
+        $('alertsBox').innerHTML = alerts.slice(0, 8).length
+          ? alerts.slice(0, 8).map((a) => {
+              const dt = a.at ? new Date(Number(a.at)).toLocaleString('ar-SY', { hour12: true }) : '';
+              return `<div class="row"><div><strong style="color:#fde047;">${esc(a.reason || 'تنبيه')}</strong><div style="font-size:0.66rem;color:#94a3b8;">${esc(dt)}</div></div><span>${esc(a.phone || '-')}</span></div>`;
+            }).join('')
           : '<div style="color:#94a3b8;font-size:0.75rem;">السجل نظيف.</div>';
 
-        $('topupsBox').innerHTML = topups.length
-          ? topups.map((t) => `<div class="row"><div><b>${esc(t.displayName || t.phone)}</b> (${esc(t.phone)})<br><span style="color:#4ade80;">${Number(t.sypAmount || 0).toLocaleString()} ل.س</span></div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resTopup('${esc(t.txId)}','approve')">قبول</button><button class="btn btn-red" onclick="resTopup('${esc(t.txId)}','reject')">رفض</button></div></div>`).join('')
-          : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات شحن معلقة.</div>';
-
-        $('cashoutsBox').innerHTML = cashouts.length
-          ? cashouts.map((c) => `<div class="row"><div><b>${esc(c.displayName || c.phone)}</b> (${esc(c.phone)})<br><span style="color:#38bdf8;">${Number(c.sypAmount || c.pts || 0).toLocaleString()} ل.س</span> • ${esc(c.shamCashId || '-')}</div><div style="display:flex;gap:4px;"><button class="btn btn-green" onclick="resCash('${esc(c.txId)}','approve')">اعتماد</button><button class="btn btn-red" onclick="resCash('${esc(c.txId)}','reject')">رفض</button></div></div>`).join('')
-          : '<div style="color:#94a3b8;font-size:0.75rem;">لا توجد طلبات سحب معلقة.</div>';
+        const auditList = dash.adminAuditLog || [];
+        if ($('auditLogBox')) {
+          $('auditLogBox').innerHTML = auditList.length
+            ? auditList.map((lg) => {
+                const dt = lg.at ? new Date(Number(lg.at)).toLocaleString('ar-SY', { hour12: true }) : '';
+                return `<div class="row"><div><b style="color:#7dd3fc;">${esc(lg.summary || lg.action || 'إجراء')}</b><div style="font-size:0.66rem;color:#94a3b8;">الهدف: ${esc(lg.target || '-')} • ${esc(dt)}</div></div><span class="sr-tag">${esc(lg.action || 'LOG')}</span></div>`;
+              }).join('')
+            : '<div style="color:#94a3b8;font-size:0.74rem;">لا توجد إجراءات إدارية مسجلة بعد.</div>';
+        }
 
         const fees = cfg.gameEntryFees || {};
         $('feeTower').value = Number(fees.tower_match || cfg.recordEntryCostPts || 10);
@@ -434,6 +1170,8 @@
         $('cfgMinIn').value = Number(cfg.minTopupSYP || 100);
         $('cfgUsd').value = Number(cfg.usdToSypRate || 150);
         $('cfgWelcome').value = Number(cfg.welcomePoints || 0);
+
+        renderFilteredPlayers();
       } catch (e) {
         if (String(e.message).includes('ADMIN_SESSION_EXPIRED') || String(e.message).includes('NO_ADMIN_TOKEN') || String(e.message).includes('DEVICE_MISMATCH')) {
           sessionStorage.removeItem(TOKEN_KEY);
@@ -441,61 +1179,107 @@
           $('gateScreen').classList.remove('hidden');
           showMsg('gateMsg', e.message, true);
         } else {
-          showMsg('dashMsg', e.message, true);
+          showToast(e.message, true);
         }
       }
     }
 
-    async function searchPlayers() {
+    function renderFilteredPlayers() {
+      const q = $('playerSearchInput').value.trim().toLowerCase();
+      let list = playersCache.slice();
+      if (q) {
+        list = list.filter((p) =>
+          String(p.phone).toLowerCase().includes(q) ||
+          String(p.displayName || '').toLowerCase().includes(q) ||
+          String(p.refCode || '').toLowerCase().includes(q)
+        );
+      }
+      if (activePlayerFilter === 'frozen') list = list.filter((p) => p.frozen);
+      if (activePlayerFilter === 'trusted') list = list.filter((p) => p.trusted);
+      if (activePlayerFilter === 'top') list.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+
+      $('playersListBox').innerHTML = list.length
+        ? list.map((p) => `<div class="row"><div><b>${esc(p.displayName || 'لاعب')}</b> (${esc(p.phone)})<br><span style="color:#fde047;">رصيد: ${Number(p.points).toLocaleString()}</span> • <span style="color:#38bdf8;">XP: ${Number(p.xp).toLocaleString()}</span> ${p.frozen ? '<b style="color:#f87171;">[مجمد]</b>' : ''} ${p.trusted ? '<b style="color:#4ade80;">[موثوق]</b>' : ''}</div><button type="button" class="btn btn-outline" onclick="selectPlayerForEdit('${esc(p.phone)}')">تعديل / سجل</button></div>`).join('')
+        : '<div style="color:#94a3b8;font-size:0.75rem;">لا يوجد لاعبون مطابقون.</div>';
+    }
+
+    $('playerSearchInput').addEventListener('input', renderFilteredPlayers);
+    $('playerSearchBtn').addEventListener('click', async () => {
       try {
         const res = await api('/admin/players/list', { q: $('playerSearchInput').value.trim() });
-        const list = res.players || [];
-        $('playersListBox').innerHTML = list.length
-          ? list.map((p) => `<div class="row"><div><b>${esc(p.displayName || 'لاعب')}</b> (${esc(p.phone)})<br><span style="color:#fde047;">رصيد: ${Number(p.points).toLocaleString()}</span> • <span style="color:#38bdf8;">XP: ${Number(p.xp).toLocaleString()}</span> ${p.frozen ? '<b style="color:#f87171;">[مجمد]</b>' : ''}</div><button type="button" class="btn btn-outline" onclick="selectPlayerForEdit('${esc(p.phone)}')">تعديل / سجل</button></div>`).join('')
-          : '<div style="color:#94a3b8;font-size:0.75rem;">لا يوجد لاعبون مطابقون.</div>';
-      } catch (e) {
-        showMsg('dashMsg', e.message, true);
-      }
-    }
+        playersCache = res.players || [];
+        renderFilteredPlayers();
+      } catch (e) { showToast(e.message, true); }
+    });
+
+    $('playerFilterBar').querySelectorAll('.btn-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        $('playerFilterBar').querySelectorAll('.btn-chip').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        activePlayerFilter = btn.dataset.pf;
+        renderFilteredPlayers();
+      });
+    });
+
+    window.adjustPoints = (delta) => {
+      const cur = Number($('edPoints').value || 0);
+      $('edPoints').value = Math.max(0, cur + delta);
+    };
 
     window.selectPlayerForEdit = async (phone) => {
       try {
         const res = await api('/admin/player/ledger', { phone });
         const p = res.player || {};
-        $('playerEditorCard').classList.remove('hidden');
         $('edPhone').value = p.phone || phone;
         $('edName').value = p.displayName || '';
         $('edPoints').value = Number(p.points || 0);
+        $('edReason').value = '';
         $('edXp').value = Number(p.xp || 0);
         $('edWins').value = Number(p.wins || 0);
         $('edLosses').value = Number(p.losses || 0);
         $('edStreak').value = Number(p.winStreak || 0);
         $('edFrozen').checked = Boolean(p.frozen);
         $('edTrusted').checked = Boolean(p.trusted);
+        $('edWaBtn').onclick = () => {
+          const clean = String(p.phone || phone).replace(/^0/, '963');
+          window.open(`https://wa.me/${clean}`, '_blank');
+        };
+        const grantableItems = shopCatalogCache.filter((x) => x.type !== 'cosmetic');
+        $('invGrantItemSelect').innerHTML = grantableItems.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+        const invMap = p.inventory || {};
+        const invKeys = Object.keys(invMap).filter((k) => Number(invMap[k] || 0) > 0);
+        $('edInventoryBadges').innerHTML = invKeys.length
+          ? 'الأدوات الحالية: ' + invKeys.map((k) => `<b>${esc(k)}</b>: ${Number(invMap[k])}`).join(' • ')
+          : 'حقيبة الأدوات فارغة حالياً.';
+        $('newPlayerPassInput').value = '';
+        $('notifTitleInput').value = '';
+        $('notifBodyInput').value = '';
         renderPlayerLedgerBox(res);
-      } catch (e) {
-        showMsg('dashMsg', e.message, true);
-      }
+        $('playerModal').classList.remove('hidden');
+      } catch (e) { showToast(e.message, true); }
     };
+
+    $('closePlayerModalBtn').addEventListener('click', () => $('playerModal').classList.add('hidden'));
+    $('playerModal').addEventListener('click', (e) => { if (e.target === $('playerModal')) $('playerModal').classList.add('hidden'); });
 
     function renderPlayerLedgerBox(res) {
       const p = res.player || {};
       const entries = res.ledger || [];
       const box = $('playerLedgerBox');
-      box.classList.remove('hidden');
       const rowsHtml = entries.length
-        ? entries.map((x) => `<div class="row"><span><b>${esc(x.type)}</b> <small style="color:#94a3b8;">(${esc(x.dayKey)})</small></span><strong style="color:${x.delta >= 0 ? '#4ade80' : '#f87171'};">${x.delta >= 0 ? '+' : ''}${Number(x.delta).toLocaleString()}</strong></div>`).join('')
+        ? entries.map((x) => `<div class="row"><div><b>${esc(translateLedgerType(x.type))}</b> <small style="color:#94a3b8;">(${esc(x.dayKey)})</small>${x.note ? `<div style="font-size:0.68rem;color:#cbd5e1;">ملاحظة: ${esc(x.note)}</div>` : ''}</div><strong style="color:${x.delta >= 0 ? '#4ade80' : '#f87171'};">${x.delta >= 0 ? '+' : ''}${Number(x.delta).toLocaleString()}</strong></div>`).join('')
         : '<div style="color:#94a3b8;font-size:0.74rem;">لا توجد حركات مسجلة في السجل المتدحرج.</div>';
       box.innerHTML = `<div style="font-size:0.74rem; color:#fde047; margin-bottom:6px;">الجولات: <b>${Number(p.totalRoundsPlayed || 0)}</b> • الأرقام المكسورة: <b>${Number(p.recordsBroken || 0)}</b> • المخالفات: <b>${Number(p.antiCheatFlags || 0)}</b> • المدعوون: <b>${Number((p.referralStats && p.referralStats.totalCount) || 0)}</b></div>${rowsHtml}`;
     }
 
-    $('playerSearchBtn').addEventListener('click', searchPlayers);
-    $('savePlayerBtn').addEventListener('click', async () => {
+    $('savePlayerBtn').addEventListener('click', () => withBtnLoading($('savePlayerBtn'), async () => {
       try {
+        const phone = $('edPhone').value.trim();
         const r = await api('/admin/player/update', {
-          phone: $('edPhone').value.trim(),
+          phone,
           displayName: $('edName').value.trim(),
           points: Number($('edPoints').value || 0),
+          adjustReason: $('edReason').value.trim(),
           xp: Number($('edXp').value || 0),
           wins: Number($('edWins').value || 0),
           losses: Number($('edLosses').value || 0),
@@ -503,29 +1287,32 @@
           frozen: $('edFrozen').checked,
           trusted: $('edTrusted').checked
         });
-        showMsg('dashMsg', r.message);
-        searchPlayers();
-        selectPlayerForEdit($('edPhone').value.trim());
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+        showToast(r.message);
+        const listRes = await api('/admin/players/list', { q: '' });
+        playersCache = listRes.players || [];
+        renderFilteredPlayers();
+        selectPlayerForEdit(phone);
+      } catch (e) { showToast(e.message, true); }
+    }));
+
     $('loadLedgerBtn').addEventListener('click', () => {
       if ($('edPhone').value.trim()) selectPlayerForEdit($('edPhone').value.trim());
     });
 
     $('shopItemSelect').addEventListener('change', fillShopItemForm);
-    $('saveShopItemBtn').addEventListener('click', async () => {
+    $('saveShopItemBtn').addEventListener('click', () => withBtnLoading($('saveShopItemBtn'), async () => {
       try {
         const r = await api('/admin/shop/config', {
           itemId: $('shopItemSelect').value,
           price: Number($('shopItemPrice').value || 0),
           reqXp: Number($('shopItemReqXp').value || 0)
         });
-        showMsg('dashMsg', r.message);
+        showToast(r.message);
         loadDashboard();
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+      } catch (e) { showToast(e.message, true); }
+    }));
 
-    $('saveFeesBtn').addEventListener('click', async () => {
+    $('saveFeesBtn').addEventListener('click', () => withBtnLoading($('saveFeesBtn'), async () => {
       try {
         const r = await api('/admin/config', {
           gameEntryFees: {
@@ -534,11 +1321,15 @@
             cyber_shooter: Number($('feeShooter').value || 10)
           }
         });
-        showMsg('dashMsg', r.message);
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
-    $('saveLocksBtn').addEventListener('click', async () => {
+    const LOCK_IDS = ['lk_tower_match', 'lk_hill_drive', 'lk_cyber_shooter', 'lk_weekly', 'lk_pvp', 'lk_events'];
+    $('lockAllBtn').addEventListener('click', () => LOCK_IDS.forEach((id) => { $(id).checked = true; }));
+    $('unlockAllBtn').addEventListener('click', () => LOCK_IDS.forEach((id) => { $(id).checked = false; }));
+
+    $('saveLocksBtn').addEventListener('click', () => withBtnLoading($('saveLocksBtn'), async () => {
       try {
         const r = await api('/admin/config', {
           lockedModes: {
@@ -550,42 +1341,79 @@
             events: $('lk_events').checked
           }
         });
-        showMsg('dashMsg', r.message);
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
-    $('resetAllGameBtn').addEventListener('click', async () => {
+    $('resetAllGameBtn').addEventListener('click', () => withBtnLoading($('resetAllGameBtn'), async () => {
       const code = $('resetConfirmInput').value.trim();
-      if (code !== 'RESET_ALL_ARENA') {
-        return showMsg('dashMsg', 'اكتب RESET_ALL_ARENA أولاً للتأكيد.', true);
-      }
+      if (code !== 'RESET_ALL_ARENA') return showToast('اكتب RESET_ALL_ARENA أولاً للتأكيد.', true);
+      if (!confirm('تحذير نهائي: سيتم تصفير جميع بيانات اللعبة واللاعبين بالكامل. هل أنت متأكد؟')) return;
       try {
         const r = await api('/admin/game/reset-all', { confirmCode: code });
         $('resetConfirmInput').value = '';
-        showMsg('dashMsg', r.message);
+        showToast(r.message);
         loadDashboard();
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+      } catch (e) { showToast(e.message, true); }
+    }));
 
     window.unfreeze = async (phone) => {
-      try { const r = await api('/admin/player/unfreeze', { phone }); showMsg('dashMsg', r.message); loadDashboard(); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
+      try { const r = await api('/admin/player/unfreeze', { phone }); showToast(r.message); loadDashboard(); }
+      catch (e) { showToast(e.message, true); }
     };
     window.resTopup = async (txId, action) => {
-      try { const r = await api('/admin/topup/resolve', { txId, action }); showMsg('dashMsg', r.message); loadDashboard(); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
+      try { const r = await api('/admin/topup/resolve', { txId, action }); showToast(r.message); loadDashboard(); }
+      catch (e) { showToast(e.message, true); }
     };
     window.resCash = async (txId, action) => {
-      try { const r = await api('/admin/cashout/resolve', { txId, action }); showMsg('dashMsg', r.message); loadDashboard(); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
+      try { const r = await api('/admin/cashout/resolve', { txId, action }); showToast(r.message); loadDashboard(); }
+      catch (e) { showToast(e.message, true); }
     };
+
+
+    $('wkGameSelect').addEventListener('change', fillWeeklyForm);
+    $('wkSaveBtn').addEventListener('click', () => withBtnLoading($('wkSaveBtn'), async () => {
+      try {
+        const durDays = Math.max(1, Number($('wkDaysInput').value || 7));
+        const r = await api('/admin/weekly/config', {
+          gameId: $('wkGameSelect').value,
+          entryFeePts: Number($('wkFeeInput').value || 10),
+          durationDays: durDays,
+          resetCycle: $('wkResetCycle').checked
+        });
+        showToast(r.message);
+        loadDashboard();
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('wkSettleBtn').addEventListener('click', () => withBtnLoading($('wkSettleBtn'), async () => {
+      if (!confirm('هل تريد تصفية البطولة الأسبوعية الحالية وتوزيع الجوائز على المتصدرين؟')) return;
+      try {
+        const r = await api('/admin/weekly/settle', { gameId: $('wkGameSelect').value });
+        showToast(r.message);
+        loadDashboard();
+      } catch (e) { showToast(e.message, true); }
+    }));
+
+    $('recGameSelect').addEventListener('change', fillRecordForm);
+    $('recSaveBtn').addEventListener('click', () => withBtnLoading($('recSaveBtn'), async () => {
+      try {
+        const r = await api('/admin/records/reset', {
+          gameId: $('recGameSelect').value,
+          newRecordScore: Number($('recScoreInput').value || 250),
+          newJackpotPts: Number($('recJackpotInput').value || 120)
+        });
+        showToast(r.message);
+        loadDashboard();
+      } catch (e) { showToast(e.message, true); }
+    }));
 
     $('evSelect').addEventListener('change', () => {
       const opt = $('evSelect').options[$('evSelect').selectedIndex];
       if (opt) $('evTitle').value = opt.dataset.name || '';
     });
 
-    $('evSaveBtn').addEventListener('click', async () => {
+    $('evSaveBtn').addEventListener('click', () => withBtnLoading($('evSaveBtn'), async () => {
       const sel = $('evSelect'), opt = sel.options[sel.selectedIndex];
       const num = Number(sel.value || 1);
       const hrs = Math.max(1, Number($('evHours').value || 168));
@@ -596,16 +1424,17 @@
           kind: opt.dataset.kind, fixedRewardPts: Number($('evReward').value || 1000),
           rulesText: $('evRules').value.trim(), endAt: Date.now() + hrs * 3600000
         });
-        showMsg('dashMsg', r.message);
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
-    $('evSettleBtn').addEventListener('click', async () => {
-      try { const r = await api('/admin/event/settle', {}); showMsg('dashMsg', r.message); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+    $('evSettleBtn').addEventListener('click', () => withBtnLoading($('evSettleBtn'), async () => {
+      if (!confirm('هل تريد تصفية الحدث الحالي وتوزيع الجائزة؟')) return;
+      try { const r = await api('/admin/event/settle', {}); showToast(r.message); }
+      catch (e) { showToast(e.message, true); }
+    }));
 
-    $('cfgSaveBtn').addEventListener('click', async () => {
+    $('cfgSaveBtn').addEventListener('click', () => withBtnLoading($('cfgSaveBtn'), async () => {
       try {
         const r = await api('/admin/config', {
           killSwitch: $('cfgKill').checked,
@@ -617,18 +1446,18 @@
           usdToSypRate: Number($('cfgUsd').value || 150),
           welcomePoints: Number($('cfgWelcome').value || 0)
         });
-        showMsg('dashMsg', r.message);
-      } catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+        showToast(r.message);
+      } catch (e) { showToast(e.message, true); }
+    }));
 
-    $('bcSendBtn').addEventListener('click', async () => {
-      try { const r = await api('/admin/broadcast', { text: $('bcText').value.trim(), hours: 24 }); showMsg('dashMsg', r.message); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
-    });
-    $('bcClearBtn').addEventListener('click', async () => {
-      try { const r = await api('/admin/broadcast', { clear: true }); showMsg('dashMsg', r.message); }
-      catch (e) { showMsg('dashMsg', e.message, true); }
-    });
+    $('bcSendBtn').addEventListener('click', () => withBtnLoading($('bcSendBtn'), async () => {
+      try { const r = await api('/admin/broadcast', { text: $('bcText').value.trim(), hours: 24 }); showToast(r.message); }
+      catch (e) { showToast(e.message, true); }
+    }));
+    $('bcClearBtn').addEventListener('click', () => withBtnLoading($('bcClearBtn'), async () => {
+      try { const r = await api('/admin/broadcast', { clear: true }); showToast(r.message); }
+      catch (e) { showToast(e.message, true); }
+    }));
   </script>
 </body>
 </html>
