@@ -290,7 +290,8 @@
         }
       }
 
-      if (this.timeLeftSec <= 5 && this.timeLeftSec > 0) {
+      // Phase 23: Synchronized heartbeat warning strictly when time is truly critical (<= 8s) and not frozen
+      if (this.freezeLeftSec <= 0 && this.timeLeftSec <= 8.0 && this.timeLeftSec > 0) {
         this._emit("timeWarning", { timeLeftSec: this.timeLeftSec });
       }
 
