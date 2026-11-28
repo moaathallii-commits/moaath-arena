@@ -6135,6 +6135,20 @@
 
   window.ArenaGuardian38 = GuardianSystem;
 
+  // فحص دوري خفيف أثناء اللعب للتحقق من بلوغ الرقم المستهدف للحارس المطلق
+  setInterval(() => {
+    if (!GuardianSystem.data || GuardianSystem.active || GuardianSystem.bannerShownForSession) return;
+    const scoreEls = document.querySelectorAll('[id*="score"], [class*="score"]');
+    let maxDomScore = 0;
+    scoreEls.forEach((el) => {
+      if (el.offsetParent === null) return;
+      const num = parseInt(String(el.textContent || '').replace(/[^0-9]/g, ''), 10);
+      if (!Number.isNaN(num) && num > maxDomScore && num < 50000000) maxDomScore = num;
+    });
+    if (maxDomScore > 0) GuardianSystem.awakenIfReached(maxDomScore);
+  }, 600);
+
+
   // ربط بداية الجلسة وتحديث النقاط مع الحارس المطلق
   const origStartSes = ArenaApp.startSession ? ArenaApp.startSession.bind(ArenaApp) : null;
   if (origStartSes) {
@@ -6150,7 +6164,7 @@
     MythicFX.onGameEvent = function(ev, payload) {
       const res = origOnEv(ev, payload);
       if (ev === 'matchCleared' || ev === 'combo' || ev === 'score') {
-        const curScore = Number((payload && (payload.score || payload.totalScore)) || 0);
+        const curScore = Number((payload && (payload.score || payload.totalScore || payload.currentScore || payload.points)) || 0);
         if (curScore > 0) GuardianSystem.awakenIfReached(curScore);
         if (GuardianSystem.active && payload && typeof payload.pointsEarned === 'number' && !payload._guardianHalved) {
           payload._guardianHalved = true;
