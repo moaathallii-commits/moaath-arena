@@ -3340,7 +3340,7 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
   let lastErrTxt = '';
   let inlineData = null;
   let usedKeyName = '';
-  const voiceModels = ['gemini-2.5-flash-preview-tts', 'gemini-2.0-flash-exp'];
+  const voiceModels = ['gemini-2.5-flash-preview-tts'];
 
   outerLoop:
   for (const keyObj of keyCandidates) {
@@ -3583,7 +3583,8 @@ const PROPOSED_CHARACTER_VOICE_LINES = {
   }
 };
 
-const VOICE_AUTO_BATCH_SIZE = 3; // حد آمن لعدد الأصوات المولّدة في الاستدعاء الواحد لتجنب تجاوز subrequests
+const VOICE_AUTO_BATCH_SIZE = 1; // صوت واحد في كل استدعاء لمنع تجاوز حد subrequests في Cloudflare
+const VOICE_AUTO_MAX_SCANS = 6; // حد أقصى لفحص الخانات في الاستدعاء الواحد
 const VOICE_AUTO_INTERVAL_MS = 60 * 60 * 1000; // كل ساعة
 
 function buildProposedVoiceQueue() {
@@ -3623,7 +3624,7 @@ async function runHourlyAutoVoiceBatch(env, force = false) {
   let nextCursor = cursor % qLen;
   let lastError = '';
 
-  while (generatedCount < VOICE_AUTO_BATCH_SIZE && checkedSlots < qLen) {
+  while (generatedCount < VOICE_AUTO_BATCH_SIZE && checkedSlots < Math.min(qLen, VOICE_AUTO_MAX_SCANS)) {
     const item = queue[nextCursor];
     nextCursor = (nextCursor + 1) % qLen;
     checkedSlots++;
