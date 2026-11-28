@@ -40,6 +40,40 @@ const SHOP_PRICES = {
 
 
 
+
+function buildSupremeGuardianInfo(recObj, weeklySummary, playersMap = null) {
+  const recHolder = (recObj && recObj.holderName) || '';
+  const recChar = (recObj && recObj.holderCharacterId) || '';
+  const recScore = Number((recObj && recObj.currentRecord) || 0);
+  const recFrame = (recObj && recObj.holderFrame) || '';
+  const recPhone = (recObj && recObj.holderPhone) || '';
+
+  const wkTop1 = (weeklySummary && Array.isArray(weeklySummary.top7) && weeklySummary.top7[0]) || null;
+  if (recHolder && recHolder !== 'إدارة العالم' && recScore > 0) {
+    const pObj = playersMap && recPhone ? playersMap[recPhone] : null;
+    return {
+      source: 'record',
+      name: recHolder,
+      phone: recPhone,
+      characterId: recChar || (pObj && pObj.activeCharacterId) || 'buddy',
+      activeFrame: recFrame || (pObj && pObj.activeFrame) || '',
+      targetScore: recScore,
+      isVip: VIP_CHARS.includes(recChar || (pObj && pObj.activeCharacterId) || 'buddy')
+    };
+  }
+  if (wkTop1 && Number(wkTop1.bestScore || 0) > 0) {
+    return {
+      source: 'weekly',
+      name: wkTop1.displayName,
+      characterId: wkTop1.characterId || 'buddy',
+      activeFrame: wkTop1.activeFrame || '',
+      targetScore: Number(wkTop1.bestScore || 0),
+      isVip: VIP_CHARS.includes(wkTop1.characterId || 'buddy')
+    };
+  }
+  return null;
+}
+
 function getEffectiveShopItem(itemId, config) {
   const base = SHOP_PRICES[itemId];
   if (!base) return null;
@@ -1020,7 +1054,8 @@ async function handleProfile(env, player, config = {}, request = null) {
       lockedModes: getLockedModesConfig(config)
     },
     shopCatalog: getEffectiveShopCatalog(config),
-    records
+    records,
+    supremeGuardian: buildSupremeGuardianInfo(records.tower_match, null)
   });
 }
 
@@ -1228,7 +1263,10 @@ async function handleSessionStart(env, player, { gameId, mode, stakePts, pvpMatc
     const wtNow = await ensureWeeklyTournament(env, gameId);
     dynamicBoostPct = computeDynamicBoostPct(config, 'weekly', Number((wtNow && wtNow.poolPts) || 0));
   }
-  return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, dynamicBoostPct, startedAt: now });
+  const recForG = playMode === 'record' ? await fbGet(env, `arena_world/admin_records/${gameId}`) : null;
+  const wkForG = playMode === 'weekly' ? (await getAllWeeklySummaries(env, player.phone))[gameId] : null;
+  const supremeGuardian = buildSupremeGuardianInfo(recForG, wkForG);
+  return jsonResponse({ ok: true, sessionId, seed, activeItem, characterId: lockedCharId, dynamicBoostPct, supremeGuardian, startedAt: now });
 }
 
 
@@ -1317,6 +1355,7 @@ async function handleSessionSubmit(env, player, { sessionId, score, telemetry },
         holderName: player.displayName,
         holderPhone: player.phone,
         holderCharacterId: charId,
+        holderFrame: player.activeFrame || '',
         jackpotPts: seededJackpot,
         nextSeedPts: 0
       });
@@ -3301,32 +3340,39 @@ async function generateAndStoreVoiceClip(env, characterId, cue, customText = '')
   let lastErrTxt = '';
   let inlineData = null;
   let usedKeyName = '';
+  const voiceModels = ['gemini-2.5-flash-preview-tts', 'gemini-2.0-flash-exp'];
 
+  outerLoop:
   for (const keyObj of keyCandidates) {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(keyObj.val)}`;
-    const gRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    for (const modelName of voiceModels) {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(keyObj.val)}`;
+      const gRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    if (gRes.ok) {
-      const gData = await gRes.json().catch(() => ({}));
-      const part = (((gData.candidates || [])[0] || {}).content || {}).parts?.[0] || {};
-      const foundAudio = part.inlineData || part.inline_data || null;
-      if (foundAudio && foundAudio.data) {
-        inlineData = foundAudio;
-        usedKeyName = keyObj.name;
-        break;
-      }
-      lastStatus = 200;
-      lastErrTxt = 'استجابة فارغة بدون صوت';
-    } else {
-      lastStatus = gRes.status;
-      lastErrTxt = await gRes.text().catch(() => '');
-      // التبديل التلقائي للمفتاح الاحتياطي عند استنفاد الحصة أو رفض المفتاح أو خطأ الخادم
-      if (![400, 401, 403, 429, 500, 502, 503, 504].includes(gRes.status)) {
-        break;
+      if (gRes.ok) {
+        const gData = await gRes.json().catch(() => ({}));
+        const parts = (((gData.candidates || [])[0] || {}).content || {}).parts || [];
+        const audioPart = parts.find((p) => (p && (p.inlineData || p.inline_data)) && ((p.inlineData && p.inlineData.data) || (p.inline_data && p.inline_data.data)));
+        const foundAudio = audioPart ? (audioPart.inlineData || audioPart.inline_data) : null;
+        if (foundAudio && foundAudio.data) {
+          inlineData = foundAudio;
+          usedKeyName = `${keyObj.name}:${modelName}`;
+          break outerLoop;
+        }
+        lastStatus = 200;
+        lastErrTxt = 'استجابة Gemini لا تحتوي على مقطع صوتي (تأكد من تفعيل خدمة Gemini API في Google AI Studio)';
+      } else {
+        lastStatus = gRes.status;
+        const rawErr = await gRes.text().catch(() => '');
+        try {
+          const parsedErr = JSON.parse(rawErr);
+          lastErrTxt = (parsedErr && parsedErr.error && parsedErr.error.message) || rawErr.slice(0, 140);
+        } catch (_) {
+          lastErrTxt = rawErr.slice(0, 140);
+        }
       }
     }
   }
@@ -3628,6 +3674,8 @@ async function handleAdminVoiceAutoBatch(env) {
   return jsonResponse({
     ok: true,
     ...r,
-    message: `🎙️ تمت معالجة دفعة تلقائية: تم توليد ${r.generated || 0} صوت جديد (المخزّن مسبقاً: ${r.alreadyCached || 0} من أصل ${r.totalQueueSize || 108}).`
+    message: (Number(r.generated || 0) === 0 && r.lastError)
+      ? `⚠️ لم يتم توليد أصوات (${r.lastError})`
+      : `🎙️ تمت معالجة دفعة تلقائية: تم توليد ${r.generated || 0} صوت جديد (المخزّن مسبقاً: ${r.alreadyCached || 0} من أصل ${r.totalQueueSize || 108}).`
   });
 }
