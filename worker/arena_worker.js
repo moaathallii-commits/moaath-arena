@@ -3583,7 +3583,7 @@ const PROPOSED_CHARACTER_VOICE_LINES = {
   }
 };
 
-const VOICE_AUTO_BATCH_SIZE = 10;
+const VOICE_AUTO_BATCH_SIZE = 3; // حد آمن لعدد الأصوات المولّدة في الاستدعاء الواحد لتجنب تجاوز subrequests
 const VOICE_AUTO_INTERVAL_MS = 60 * 60 * 1000; // كل ساعة
 
 function buildProposedVoiceQueue() {
@@ -3676,6 +3676,6 @@ async function handleAdminVoiceAutoBatch(env) {
     ...r,
     message: (Number(r.generated || 0) === 0 && r.lastError)
       ? `⚠️ لم يتم توليد أصوات (${r.lastError})`
-      : `🎙️ تمت معالجة دفعة تلقائية: تم توليد ${r.generated || 0} صوت جديد (المخزّن مسبقاً: ${r.alreadyCached || 0} من أصل ${r.totalQueueSize || 108}).`
+      : `🎙️ تمت معالجة دفعة آمنة: تم توليد ${r.generated || 0} صوت جديد (المخزّن مسبقاً: ${r.alreadyCached || 0} من أصل ${r.totalQueueSize || 108}).`
   });
 }
