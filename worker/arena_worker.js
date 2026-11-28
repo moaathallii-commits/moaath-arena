@@ -22,6 +22,37 @@ const WEEKLY_RANK_SPLITS = [0.40, 0.20, 0.15, 0.05, 0.04, 0.035, 0.025];
 const BASIC_CHARS = ['buddy', 'lolo', 'noor', 'chef', 'pastry', 'athlete', 'sheikh', 'saver', 'homemaker'];
 const VIP_CHARS = ['coach_sakhr', 'grand_chef', 'princess_layla', 'butler_farid', 'friend_fadi', 'anime_zain', 'anime_ryu', 'anime_ritaj', 'friend_saad'];
 
+
+const ALL_CHAR_META = [
+  { id: 'buddy',          name: 'بندق الودود',    tier: 'basic', defaultPrice: 0 },
+  { id: 'lolo',           name: 'لولو',           tier: 'basic', defaultPrice: 0 },
+  { id: 'noor',           name: 'نور',            tier: 'basic', defaultPrice: 0 },
+  { id: 'chef',           name: 'الشيف',          tier: 'basic', defaultPrice: 0 },
+  { id: 'pastry',         name: 'الحلواني',       tier: 'basic', defaultPrice: 0 },
+  { id: 'athlete',        name: 'الرياضي',        tier: 'basic', defaultPrice: 0 },
+  { id: 'sheikh',         name: 'الشيخ',          tier: 'basic', defaultPrice: 0 },
+  { id: 'saver',          name: 'المدخر',         tier: 'basic', defaultPrice: 0 },
+  { id: 'homemaker',      name: 'ربة المنزل',     tier: 'basic', defaultPrice: 0 },
+  { id: 'coach_sakhr',    name: 'كابتن صخر',      tier: 'vip',   defaultPrice: 0 },
+  { id: 'grand_chef',     name: 'الشيف الكبير',   tier: 'vip',   defaultPrice: 0 },
+  { id: 'princess_layla', name: 'الأميرة ليلى',   tier: 'vip',   defaultPrice: 0 },
+  { id: 'butler_farid',   name: 'السيد فريد',     tier: 'vip',   defaultPrice: 0 },
+  { id: 'friend_fadi',    name: 'فادي',           tier: 'vip',   defaultPrice: 0 },
+  { id: 'anime_zain',     name: 'زين',            tier: 'vip',   defaultPrice: 0 },
+  { id: 'anime_ryu',      name: 'ريو',            tier: 'vip',   defaultPrice: 0 },
+  { id: 'anime_ritaj',    name: 'ريتاج',          tier: 'vip',   defaultPrice: 0 },
+  { id: 'friend_saad',    name: 'سعد',            tier: 'vip',   defaultPrice: 0 }
+];
+
+function getEffectiveCharPrices(config) {
+  const ov = (config && config.charPrices) || {};
+  const out = {};
+  for (const c of ALL_CHAR_META) {
+    out[c.id] = ov[c.id] !== undefined ? Math.max(0, Math.floor(Number(ov[c.id]) || 0)) : c.defaultPrice;
+  }
+  return out;
+}
+
 const SHOP_PRICES = {
   shield_1: { price: 25, type: 'tactical', name: 'درع الحماية' },
   fuel_boost: { price: 20, type: 'tactical', name: 'خزان وقود إضافي' },
@@ -596,6 +627,8 @@ export default {
             return await handleAdminPlayerLedger(env, body);
           case '/admin/shop/config':
             return await handleAdminShopConfig(env, body, config);
+          case '/admin/character/price':
+            return await handleAdminCharacterPrice(env, body, config);
           case '/admin/shop/bulk':
             return await handleAdminShopBulk(env, body, config);
           case '/admin/player/notify':
@@ -654,7 +687,9 @@ export default {
         case '/player/profile':
           return await handleProfile(env, player, config, request);
         case '/character/select':
-          return await handleSelectCharacter(env, player, body);
+          return await handleSelectCharacter(env, player, body, config);
+        case '/character/buy':
+          return await handleBuyCharacter(env, player, body, config);
         case '/shop/buy':
           return await handleShopBuy(env, player, body, config);
         case '/cosmetic/equip':
@@ -795,6 +830,7 @@ async function handleAdminDashboard(env, config) {
       broadcast: getActiveBroadcast(config)
     },
     shopCatalog: getEffectiveShopCatalog(config),
+    charPrices: getEffectiveCharPrices(config),
     adminProfit: (() => {
       const totalPts = Number((adminStats && adminStats.totalRevenuePts) || 0);
       const buySyp = Number(config.buyRateSYP || 1);
@@ -1054,19 +1090,62 @@ async function handleProfile(env, player, config = {}, request = null) {
       lockedModes: getLockedModesConfig(config)
     },
     shopCatalog: getEffectiveShopCatalog(config),
+      charPrices: getEffectiveCharPrices(config),
     records,
     supremeGuardian: buildSupremeGuardianInfo(records.tower_match, null)
   });
 }
 
-async function handleSelectCharacter(env, player, { characterId }) {
+async function handleSelectCharacter(env, player, { characterId }, config = {}) {
   if (!BASIC_CHARS.includes(characterId) && !VIP_CHARS.includes(characterId)) return jsonResponse({ code: 'ERR_CHAR', message: 'شخصية غير معروفة.' }, 400);
+  const charPrices = getEffectiveCharPrices(config);
+  const cPrice = Number(charPrices[characterId] || 0);
+  const unlockedMap = (player && player.unlockedChars) || {};
+
   if (VIP_CHARS.includes(characterId)) {
     const unlockedVips = await getPlayerUnlockedVips(env, player.phone);
-    if (!unlockedVips.includes(characterId)) return jsonResponse({ code: 'ERR_VIP_LOCKED', message: 'هذه الشخصية مخصصة لـ VIP، يمكنك فتحها من متجر معاذ.' }, 403);
+    if (!unlockedVips.includes(characterId) && !unlockedMap[characterId]) {
+      const msg = cPrice > 0
+        ? `هذه الشخصية مقفلة حالياً. يمكنك شراؤها بـ ${cPrice} عملة أو فتحها عبر VIP.`
+        : 'هذه الشخصية مخصصة لـ VIP، يمكنك فتحها من متجر معاذ.';
+      return jsonResponse({ code: 'ERR_VIP_LOCKED', message: msg, price: cPrice }, 403);
+    }
+  } else if (cPrice > 0 && !unlockedMap[characterId]) {
+    return jsonResponse({ code: 'ERR_CHAR_LOCKED', message: `هذه الشخصية تتطلب فتحها مقابل ${cPrice} عملة.`, price: cPrice }, 403);
   }
   await fbPatch(env, `arena_world/players/${player.phone}`, { activeCharacterId: characterId });
   return jsonResponse({ ok: true, activeCharacterId: characterId });
+}
+
+async function handleBuyCharacter(env, player, { characterId }, config = {}) {
+  const meta = ALL_CHAR_META.find((c) => c.id === characterId);
+  if (!meta) return jsonResponse({ code: 'ERR_CHAR', message: 'شخصية غير معروفة.' }, 400);
+  const charPrices = getEffectiveCharPrices(config);
+  const price = Number(charPrices[characterId] || 0);
+  if (price <= 0) return jsonResponse({ code: 'ERR_CHAR_NOT_FOR_SALE', message: 'هذه الشخصية غير معروضة للشراء بالعملات حالياً.' }, 400);
+
+  const unlockedChars = { ...(player.unlockedChars || {}) };
+  if (unlockedChars[characterId]) {
+    await fbPatch(env, `arena_world/players/${player.phone}`, { activeCharacterId: characterId });
+    return jsonResponse({ ok: true, message: `تم تفعيل شخصية ${meta.name}!`, activeCharacterId: characterId });
+  }
+  if (Number(player.points || 0) < price) {
+    return jsonResponse({ code: 'ERR_NO_FUNDS', message: `رصيدك غير كافٍ لشراء ${meta.name} (المطلوب ${price} عملة).` }, 400);
+  }
+  const newPts = Math.max(0, Number(player.points || 0) - price);
+  unlockedChars[characterId] = true;
+  await fbPatch(env, `arena_world/players/${player.phone}`, {
+    points: newPts,
+    unlockedChars,
+    activeCharacterId: characterId
+  });
+  return jsonResponse({
+    ok: true,
+    points: newPts,
+    unlockedChars,
+    activeCharacterId: characterId,
+    message: `🎉 تم شراء وتفعيل شخصية (${meta.name}) مقابل ${price} عملة!`
+  });
 }
 
 async function handleEquipCosmetic(env, player, { frameId }) {
@@ -3038,6 +3117,20 @@ async function handleAdminShopConfig(env, body, config) {
   const reqXp = Math.max(0, Math.floor(Number((body && body.reqXp) || 0)));
   await fbPatch(env, `arena_world/config/shopOverrides/${itemId}`, { price, reqXp });
   return jsonResponse({ ok: true, message: `✅ تم تحديث سعر (${price}) وحد XP (${reqXp}) للأداة (${SHOP_PRICES[itemId].name}).` });
+}
+
+async function handleAdminCharacterPrice(env, body, config) {
+  const charId = String((body && body.characterId) || '').trim();
+  const meta = ALL_CHAR_META.find((c) => c.id === charId);
+  if (!meta) return jsonResponse({ code: 'ERR_CHAR', message: 'شخصية غير صالحة.' }, 400);
+  const price = Math.max(0, Math.floor(Number((body && body.price) || 0)));
+  await fbPatch(env, 'arena_world/config/charPrices', { [charId]: price });
+  const priceTxt = price > 0 ? `${price} عملة` : (meta.tier === 'vip' ? 'مقفلة لـ VIP فقط (0)' : 'مجانية (0)');
+  return jsonResponse({
+    ok: true,
+    charPrices: { ...getEffectiveCharPrices(config), [charId]: price },
+    message: `✅ تم تحديد سعر شخصية (${meta.name}) إلى: ${priceTxt}.`
+  });
 }
 
 async function handleAdminResetAllGameData(env, body) {
