@@ -6043,35 +6043,46 @@
       }
     },
 
+    getGuardianPortraitUrl(charId) {
+      const cid = String(charId || 'buddy').replace(/[^a-zA-Z0-9_-]/g, '');
+      return `./assets/guardians/${cid}_evil.jpg`;
+    },
+
+    getFallbackCharUrl(charId) {
+      return (window.ArenaVoice && window.ArenaVoice.getCharImgUrl)
+        ? window.ArenaVoice.getCharImgUrl(charId || 'buddy')
+        : `./assets/chars/${charId || 'buddy'}.jpg`;
+    },
+
     showAwakenOverlay() {
       if (!this.data) return;
-      const sk = this.getElementSkill(this.data.characterId);
-      const imgUrl = (window.ArenaVoice && window.ArenaVoice.getCharImgUrl)
-        ? window.ArenaVoice.getCharImgUrl(this.data.characterId || 'buddy')
-        : './assets/chars/buddy.jpg';
+      const cid = String(this.data.characterId || 'buddy');
+      const sk = this.getElementSkill(cid);
+      const evilUrl = this.getGuardianPortraitUrl(cid);
+      const fallbackUrl = this.getFallbackCharUrl(cid);
 
       const ov = document.createElement('div');
       ov.id = 'supremeGuardianOverlay38';
       ov.style.cssText = `
-        position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;
-        background:radial-gradient(circle at center, rgba(15,23,42,0.78), rgba(2,6,23,0.95));
-        backdrop-filter:blur(4px); animation:fadeIn 0.25s ease;
+        position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:14px;
+        background:radial-gradient(circle at center, rgba(15,23,42,0.82), rgba(2,6,23,0.96));
+        backdrop-filter:blur(5px); animation:fadeIn 0.25s ease;
       `;
       const vipAura = sk.isVip
-        ? `box-shadow:0 0 28px ${sk.color}, 0 0 56px ${sk.color}66; border:2.5px solid ${sk.color};`
-        : `box-shadow:0 0 20px rgba(244,63,94,0.6); border:2px solid #f43f5e;`;
+        ? `box-shadow:0 0 32px ${sk.color}, 0 0 64px ${sk.color}66; border:2.5px solid ${sk.color};`
+        : `box-shadow:0 0 22px rgba(244,63,94,0.65); border:2px solid #f43f5e;`;
 
       ov.innerHTML = `
-        <div style="width:100%;max-width:380px;background:linear-gradient(160deg,#180914,#090d1a);border-radius:20px;padding:16px;text-align:center;${vipAura}">
+        <div style="width:100%;max-width:400px;background:linear-gradient(160deg,#180914,#090d1a);border-radius:20px;padding:14px;text-align:center;${vipAura}">
           <div style="font-size:0.74rem;font-weight:900;color:${sk.color};letter-spacing:0.5px;margin-bottom:6px;">
             ${sk.isVip ? '👑 حضور VIP مهيب • ' + sk.badge : '⚠️ ' + sk.badge}
           </div>
-          <h3 style="color:#fff;margin:0 0 10px;font-size:1.1rem;">الحارس المطلق للبرج استيقظ!</h3>
-          <div style="width:94px;height:94px;margin:0 auto 10px;border-radius:50%;overflow:hidden;border:3px solid ${sk.color};filter:contrast(1.25) saturate(1.35) hue-rotate(${sk.elem === 'fire' ? '-15deg' : (sk.elem === 'frost' ? '15deg' : '0deg')});">
-            <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" />
+          <h3 style="color:#fff;margin:0 0 10px;font-size:1.08rem;">الحارس المطلق للبرج استيقظ!</h3>
+          <div style="width:100%;aspect-ratio:16/9;margin:0 auto 10px;border-radius:14px;overflow:hidden;border:2.5px solid ${sk.color};box-shadow:0 8px 24px rgba(0,0,0,0.65);background:#090d1a;">
+            <img src="${evilUrl}" onerror="this.onerror=null;this.src='${fallbackUrl}';" style="width:100%;height:100%;object-fit:cover;display:block;" />
           </div>
           <div style="font-weight:900;color:#fde047;font-size:0.95rem;">النسخة الشريرة لـ ${this.data.name || 'حامل الرقم'}</div>
-          <div style="font-size:0.76rem;color:#cbd5e1;margin:8px 0 12px;line-height:1.6;">
+          <div style="font-size:0.75rem;color:#cbd5e1;margin:7px 0 12px;line-height:1.6;">
             لقد انتزعت الرقم القياسي بالفعل! يظهر الآن الحارس المطلق بصحة ضخمة ومهارة <b>(${sk.skillName})</b>، ويصبح كسب النقاط <b>50%</b> لكبح تضخم الرقم القياسي.
           </div>
           <button type="button" id="closeGuardianOvBtn38" style="width:100%;padding:10px;border:none;border-radius:12px;font-weight:900;background:linear-gradient(135deg,#fde047,#d97706);color:#111827;cursor:pointer;">
@@ -6082,12 +6093,15 @@
       document.body.appendChild(ov);
       const closeBtn = document.getElementById('closeGuardianOvBtn38');
       if (closeBtn) closeBtn.addEventListener('click', () => ov.remove());
-      setTimeout(() => { if (ov && ov.parentNode) ov.remove(); }, 3400);
+      setTimeout(() => { if (ov && ov.parentNode) ov.remove(); }, 3600);
     },
 
     renderHud() {
       if (!this.active || !this.data) return;
-      const sk = this.getElementSkill(this.data.characterId);
+      const cid = String(this.data.characterId || 'buddy');
+      const sk = this.getElementSkill(cid);
+      const evilUrl = this.getGuardianPortraitUrl(cid);
+      const fallbackUrl = this.getFallbackCharUrl(cid);
       let hud = document.getElementById('supremeGuardianHud38');
       if (!hud) {
         hud = document.createElement('div');
@@ -6095,19 +6109,24 @@
         hud.style.cssText = `
           position:fixed; top:54px; left:50%; transform:translateX(-50%); z-index:950;
           width:92%; max-width:440px; padding:7px 10px; border-radius:12px;
-          background:rgba(15,23,42,0.92); border:1.5px solid ${sk.color};
+          background:rgba(15,23,42,0.93); border:1.5px solid ${sk.color};
           box-shadow:0 6px 20px rgba(0,0,0,0.55); color:#fff; font-size:0.72rem; pointer-events:none;
         `;
         document.body.appendChild(hud);
       }
       const pct = Math.max(0, Math.min(100, Math.round((this.hp / Math.max(1, this.maxHp)) * 100)));
       hud.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">
-          <b style="color:${sk.color};">👑 الحارس: ${this.data.name}</b>
-          <span style="background:rgba(250,204,21,0.18);color:#fde047;padding:1px 7px;border-radius:999px;font-weight:800;">نقاط 50%</span>
-        </div>
-        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${sk.color},#ef4444);transition:width 0.25s;"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="${evilUrl}" onerror="this.onerror=null;this.src='${fallbackUrl}';" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:1.5px solid ${sk.color};flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">
+              <b style="color:${sk.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👑 الحارس: ${this.data.name}</b>
+              <span style="background:rgba(250,204,21,0.18);color:#fde047;padding:1px 7px;border-radius:999px;font-weight:800;flex-shrink:0;">نقاط 50%</span>
+            </div>
+            <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${sk.color},#ef4444);transition:width 0.25s;"></div>
+            </div>
+          </div>
         </div>
       `;
     },
@@ -6175,6 +6194,1044 @@
     };
   }
 })();
+
+
+// ============================================================================
+// المرحلة 41: تحسينات تجربة المستخدم والاحتفاظ (بدون أي عملات حقيقية مجانية - XP وأدوات فقط)
+// 1. المهام اليومية السريعة (3 مهام تمنح XP أو أداة تكتيكية مجانية)
+// 2. شريط التقدم نحو الإطار/المكافأة القادمة (XP Progress)
+// 3. بطاقة المشاركة السريعة لواتساب مع كود الإحالة
+// 4. تثبيت أزرار النوافذ الطويلة (Sticky Footer) + إيقاف مؤقت آمن عند الخروج السريع
+// ============================================================================
+(function initUxRetentionPhase41() {
+  if (typeof ArenaApp === 'undefined') return;
+
+  const STYLE_ID = 'uxPhase41Styles';
+  if (!document.getElementById(STYLE_ID)) {
+    const st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = `
+      .ux41-card {
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(250, 204, 21, 0.25);
+        border-radius: 16px;
+        padding: 12px;
+        margin: 10px 0;
+        color: #f8fafc;
+      }
+      .ux41-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.82rem;
+        font-weight: 900;
+        color: #fde047;
+        margin-bottom: 8px;
+      }
+      .ux41-quest-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 10px;
+        background: rgba(30, 41, 59, 0.72);
+        margin-bottom: 6px;
+        font-size: 0.74rem;
+      }
+      .ux41-quest-row:last-child { margin-bottom: 0; }
+      .ux41-pill {
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 0.68rem;
+        white-space: nowrap;
+      }
+      .ux41-pill-done { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+      .ux41-pill-prog { background: rgba(56,189,248,0.16); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); }
+      .ux41-xp-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .ux41-xp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #38bdf8, #facc15);
+        transition: width 0.35s ease;
+      }
+      .ux41-share-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 9px 12px;
+        border: 1px solid rgba(34, 197, 94, 0.5);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(22,163,74,0.28), rgba(15,23,42,0.9));
+        color: #86efac;
+        font-weight: 900;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+      /* تثبيت أزرار الإغلاق/التأكيد في أسفل النوافذ الطويلة لسهولة الوصول بالإبهام */
+      #arenaModalCard button:last-of-type {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function getTodayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function loadDailyQuestState() {
+    const key = 'moaath_daily_quests_v41_' + getTodayKey();
+    try {
+      const raw = JSON.parse(localStorage.getItem(key) || 'null');
+      if (raw && raw.date === getTodayKey()) return raw;
+    } catch (_) {}
+    return {
+      date: getTodayKey(),
+      rounds: 0,
+      maxCombo: 0,
+      bosses: 0,
+      claimed: {}
+    };
+  }
+
+  function saveDailyQuestState(st) {
+    const key = 'moaath_daily_quests_v41_' + getTodayKey();
+    try { localStorage.setItem(key, JSON.stringify(st)); } catch (_) {}
+  }
+
+  const DAILY_QUESTS_DEF = [
+    { id: 'q_rounds', label: '🎮 أكمل جولتين اليوم', target: 2, field: 'rounds', rewardLabel: '+25 XP فخري' },
+    { id: 'q_combo',  label: '⚡ حقّق كومبو ×3 أو أعلى', target: 3, field: 'maxCombo', rewardLabel: '+35 XP فخري' },
+    { id: 'q_boss',   label: '👑 اهزم زعيماً واحداً في البرج', target: 1, field: 'bosses', rewardLabel: '🏅 وسام صامد اليوم' }
+  ];
+
+  function renderRetentionPanel() {
+    const prof = ArenaApp.profile;
+    if (!prof) return;
+    const anchor = document.querySelector('#lobbyView, .arena-lobby, #mainLobby') || document.querySelector('.game-grid');
+    if (!anchor) return;
+
+    let panel = document.getElementById('uxRetentionPanel41');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'uxRetentionPanel41';
+      panel.className = 'ux41-card';
+      anchor.parentNode.insertBefore(panel, anchor);
+    }
+
+    // 1) حساب التقدم نحو الإطار القادم بالـ XP
+    const curXp = Number(prof.xp || 0);
+    const frames = Array.isArray(prof.framesCatalog) ? prof.framesCatalog : [];
+    const owned = prof.cosmetics || {};
+    const nextFrame = frames
+      .filter((f) => Number(f.reqXp || 0) > curXp && !owned[f.id])
+      .sort((a, b) => Number(a.reqXp) - Number(b.reqXp))[0];
+
+    let xpHtml = '';
+    if (nextFrame) {
+      const req = Math.max(1, Number(nextFrame.reqXp));
+      const rem = Math.max(0, req - curXp);
+      const pct = Math.min(100, Math.round((curXp / req) * 100));
+      xpHtml = `
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.73rem;color:#bae6fd;">
+            <span>🎯 الإطار القادم: <b>${nextFrame.name}</b></span>
+            <span>بقي <b>${rem} XP</b></span>
+          </div>
+          <div class="ux41-xp-bar"><div class="ux41-xp-fill" style="width:${pct}%;"></div></div>
+        </div>
+      `;
+    }
+
+    // 2) المهام اليومية (مكافآت XP وأوسمة غير نقدية فقط)
+    const qState = loadDailyQuestState();
+    const questsHtml = DAILY_QUESTS_DEF.map((q) => {
+      const val = Number(qState[q.field] || 0);
+      const done = val >= q.target;
+      return `
+        <div class="ux41-quest-row">
+          <div>
+            <div style="font-weight:800;color:#f1f5f9;">${q.label}</div>
+            <div style="font-size:0.67rem;color:#94a3b8;">التقدم: ${Math.min(val, q.target)} / ${q.target}</div>
+          </div>
+          <span class="ux41-pill ${done ? 'ux41-pill-done' : 'ux41-pill-prog'}">
+            ${done ? '✅ مكتملة (' + q.rewardLabel + ')' : q.rewardLabel}
+          </span>
+        </div>
+      `;
+    }).join('');
+
+    // 3) مشاركة الإنجاز عبر واتساب مع كود الإحالة
+    const bestRec = Number(prof.personalBestRecord || 0);
+    const refCode = prof.refCode || '';
+    panel.innerHTML = `
+      <div class="ux41-title">
+        <span>🔥 مهامك اليومية وتقدّم الخبرة (XP)</span>
+        <span style="font-size:0.7rem;color:#7dd3fc;">${curXp.toLocaleString()} XP</span>
+      </div>
+      ${xpHtml}
+      ${questsHtml}
+      <button type="button" class="ux41-share-btn" id="ux41ShareWaBtn">
+        📲 شارك نتيجتك (${bestRec.toLocaleString()}) وكود دعوتك (${refCode}) عبر واتساب
+      </button>
+    `;
+
+    const shareBtn = document.getElementById('ux41ShareWaBtn');
+    if (shareBtn) {
+      shareBtn.onclick = () => {
+        const shareUrl = window.location.origin + window.location.pathname + (refCode ? `?ref=${encodeURIComponent(refCode)}` : '');
+        const txt = `🏆 أتحدّاك في عالم تحديات معاذ!
+أعلى نتيجة لي في برج التحدي: ${bestRec.toLocaleString()} نقطة ⚔️
+سجّل بكود دعوتي (${refCode}) وابدأ التحدي الآن:
+${shareUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
+      };
+    }
+  }
+
+  // تحديث تقدم المهام اليومية عند أحداث اللعب ونهاية الجولة
+  if (typeof MythicFX !== 'undefined' && typeof MythicFX.onGameEvent === 'function') {
+    const prevEv = MythicFX.onGameEvent.bind(MythicFX);
+    MythicFX.onGameEvent = function(ev, payload) {
+      const r = prevEv(ev, payload);
+      const qState = loadDailyQuestState();
+      let changed = false;
+      if (ev === 'combo' || ev === 'matchCleared') {
+        const c = Number((payload && payload.combo) || 0);
+        if (c > qState.maxCombo) { qState.maxCombo = c; changed = true; }
+      } else if (ev === 'bossDecision') {
+        qState.bosses = Number(qState.bosses || 0) + 1;
+        changed = true;
+      }
+      if (changed) {
+        saveDailyQuestState(qState);
+        renderRetentionPanel();
+      }
+      return r;
+    };
+  }
+
+  const origSubmit = ArenaApp.submitSession ? ArenaApp.submitSession.bind(ArenaApp) : null;
+  if (origSubmit) {
+    ArenaApp.submitSession = async function(...args) {
+      const res = await origSubmit(...args);
+      const qState = loadDailyQuestState();
+      qState.rounds = Number(qState.rounds || 0) + 1;
+      saveDailyQuestState(qState);
+      setTimeout(renderRetentionPanel, 300);
+      return res;
+    };
+  }
+
+  // إشعار لطيف عند العودة للتطبيق بعد الخروج السريع
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && window.ArenaGuardian38 && window.ArenaGuardian38.active) {
+      if (ArenaApp.toast) ArenaApp.toast('⚔️ عدت إلى المواجهة مع الحارس المطلق!', false);
+    }
+  });
+
+  // تحديث اللوحة بعد تحميل الملف الشخصي
+  const origLoadProf = ArenaApp.loadProfile ? ArenaApp.loadProfile.bind(ArenaApp) : null;
+  if (origLoadProf) {
+    ArenaApp.loadProfile = async function(...args) {
+      const res = await origLoadProf(...args);
+      setTimeout(renderRetentionPanel, 120);
+      return res;
+    };
+  }
+  setTimeout(renderRetentionPanel, 900);
+})();
+
+
+
+// ============================================================================
+// المرحلة 42: الدفعة الثانية من تحسينات السلاسة والرسومات
+// 1. Input Buffering لسحب الأحجار السريع للمحترفين (تخزين الحركة التالية بمرونة أثناء السحب السريع)
+// 2. تأثير Shimmer دوري على بطاقات وإطارات VIP لإبراز ندرتها
+// 3. تدرّج ألوان خلفية البرج كل 5 طوابق لإعطاء إحساس واضح بالصعود
+// ============================================================================
+(function initSmoothnessAndVisualsPhase42() {
+  if (typeof ArenaApp === 'undefined') return;
+
+  const STYLE_ID = 'uxPhase42Styles';
+  if (!document.getElementById(STYLE_ID)) {
+    const st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = `
+      @keyframes vipShimmerSweep42 {
+        0%   { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+        25%  { opacity: 0.45; }
+        60%  { opacity: 0.55; }
+        100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+      }
+      .vip-shimmer-card42 {
+        position: relative;
+        overflow: hidden;
+      }
+      .vip-shimmer-card42::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        width: 48%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+        animation: vipShimmerSweep42 4.2s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .tower-floor-tint42 {
+        transition: background 0.65s ease, box-shadow 0.65s ease;
+      }
+      .input-buffer-flash42 {
+        outline: 2px solid rgba(250, 204, 21, 0.65);
+        outline-offset: -2px;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // 1) تطبيق تأثير Shimmer على بطاقات وإطارات VIP بشكل دوري آمن
+  function applyVipShimmer() {
+    const vipCandidates = document.querySelectorAll(
+      '[data-vip="true"], .vip-card, .vip-char, [class*="vip-badge"], [id*="vip"]'
+    );
+    vipCandidates.forEach((el) => {
+      if (el && el.classList && !el.classList.contains('vip-shimmer-card42')) {
+        el.classList.add('vip-shimmer-card42');
+      }
+    });
+  }
+
+  // 2) تدرّج ألوان خلفية البرج كل 5 طوابق
+  const FLOOR_THEMES_42 = [
+    { name: 'الليل السماوي', bg: 'radial-gradient(circle at top, rgba(30,58,138,0.42), rgba(9,13,26,0.96) 72%)', accent: '#38bdf8' },
+    { name: 'الشفق الذهبي', bg: 'radial-gradient(circle at top, rgba(180,83,9,0.40), rgba(15,12,24,0.96) 72%)', accent: '#facc15' },
+    { name: 'الأفق الزمردي', bg: 'radial-gradient(circle at top, rgba(6,95,70,0.42), rgba(7,16,24,0.96) 72%)', accent: '#34d399' },
+    { name: 'العاصفة القرمزية', bg: 'radial-gradient(circle at top, rgba(153,27,27,0.44), rgba(18,8,16,0.96) 72%)', accent: '#fb7185' },
+    { name: 'العرش المجرّي', bg: 'radial-gradient(circle at top, rgba(88,28,135,0.46), rgba(9,7,22,0.97) 72%)', accent: '#c084fc' }
+  ];
+
+  let lastFloorTier42 = -1;
+  function updateTowerFloorBackdrop(floorNum) {
+    const f = Math.max(1, Number(floorNum || 1));
+    const tierIdx = Math.floor((f - 1) / 5) % FLOOR_THEMES_42.length;
+    if (tierIdx === lastFloorTier42) return;
+    lastFloorTier42 = tierIdx;
+    const th = FLOOR_THEMES_42[tierIdx];
+    const boardTargets = document.querySelectorAll('#towerBoard, .tower-board, #towerStage, .game-stage, #gameArea');
+    boardTargets.forEach((el) => {
+      if (!el || el.offsetParent === null) return;
+      el.classList.add('tower-floor-tint42');
+      el.style.background = th.bg;
+      el.style.boxShadow = `inset 0 0 28px ${th.accent}22`;
+    });
+  }
+
+  // 3) Input Buffering لسحب الأحجار السريع للمحترفين
+  // يلتقط السحب السريع المتتالي ويُمرّر النقطة المبدئية والهدف بسلاسة دون ضياع حركة عند السرعة العالية
+  let bufferedStart = null;
+  let bufferTimer42 = null;
+
+  function installInputBuffer() {
+    document.addEventListener('pointerdown', (e) => {
+      const board = e.target && e.target.closest ? e.target.closest('#towerBoard, .tower-board, canvas') : null;
+      if (!board) return;
+      bufferedStart = {
+        x: e.clientX,
+        y: e.clientY,
+        target: e.target,
+        at: performance.now()
+      };
+      board.classList.add('input-buffer-flash42');
+      clearTimeout(bufferTimer42);
+      bufferTimer42 = setTimeout(() => board.classList.remove('input-buffer-flash42'), 140);
+    }, { passive: true });
+
+    document.addEventListener('pointerup', (e) => {
+      if (!bufferedStart) return;
+      const dt = performance.now() - bufferedStart.at;
+      const dx = e.clientX - bufferedStart.x;
+      const dy = e.clientY - bufferedStart.y;
+      const dist = Math.hypot(dx, dy);
+      // إذا كان السحب سريعاً ومباشراً ضمن نافذة الاستجابة الاحترافية (<= 220ms) ومسافة >= 22px
+      if (dt <= 220 && dist >= 22 && bufferedStart.target && bufferedStart.target !== e.target) {
+        const endTarget = document.elementFromPoint(e.clientX, e.clientY);
+        if (endTarget && endTarget.dispatchEvent) {
+          try {
+            endTarget.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          } catch (_) {}
+        }
+      }
+      bufferedStart = null;
+    }, { passive: true });
+  }
+
+  installInputBuffer();
+
+  // ربط أحداث اللعبة لتحديث خلفية الطابق كل 5 طوابق وتنشيط Shimmer
+  if (typeof MythicFX !== 'undefined' && typeof MythicFX.onGameEvent === 'function') {
+    const prevEv42 = MythicFX.onGameEvent.bind(MythicFX);
+    MythicFX.onGameEvent = function(ev, payload) {
+      const res = prevEv42(ev, payload);
+      const fl = Number((payload && (payload.floor || payload.highestFloor || payload.floorsCleared)) || 0);
+      if (fl > 0) updateTowerFloorBackdrop(fl);
+      applyVipShimmer();
+      return res;
+    };
+  }
+
+  setInterval(() => {
+    applyVipShimmer();
+    const floorEls = document.querySelectorAll('[id*="floor"], [class*="floor"]');
+    floorEls.forEach((el) => {
+      if (el.offsetParent === null) return;
+      const match = String(el.textContent || '').match(/\d+/);
+      if (match) {
+        const n = parseInt(match[0], 10);
+        if (n > 0 && n < 10000) updateTowerFloorBackdrop(n);
+      }
+    });
+  }, 1200);
+
+  setTimeout(applyVipShimmer, 800);
+})();
+
+
+
+// ============================================================================
+// المرحلة 43: الدفعة الثالثة من تحسينات تجربة المستخدم والسلاسة والرسومات
+// 1. التلميح الذكي بعد 4 ثوانٍ من التوقف (يكشف مطابقة حقيقية على الرقعة ويبرزها بوميض واضح)
+// 2. تعزيز زر إعادة الجولة السريعة (بدون إعادة تحميل الصفحة + الاحتفاظ بالوضع والأداة)
+// 3. نظام «رد الاعتبار الآن» في PvP بعد الخسارة لتحدي المنافس مباشرة بنفس القيمة
+// 4. منع اهتزاز الأرقام (tabular-nums) + ظل خارجي للأحجار (Drop Shadow) + حماية حواف الشاشة
+// 5. اهتزاز لمسي متدرج (Haptic Tiers) ووميض حواف التوتر في آخر 10 ثوانٍ
+// ============================================================================
+(function initBatch3Phase43() {
+  if (typeof ArenaApp === 'undefined') return;
+
+  const STYLE_ID = 'uxPhase43Styles';
+  if (!document.getElementById(STYLE_ID)) {
+    const st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = `
+      /* 1) منع اهتزاز الأرقام أفقياً أثناء الزيادة السريعة */
+      [id*="score"], [id*="Score"], [id*="time"], [id*="Time"], [id*="timer"], [id*="Timer"],
+      [id*="floor"], [id*="Floor"], [id*="combo"], [id*="Combo"], [id*="Coins"], [id*="Xp"],
+      .stat-val, .hud-val, .tm-hud-val, .badge-num {
+        font-variant-numeric: tabular-nums !important;
+        font-feature-settings: "tnum" 1 !important;
+      }
+
+      /* 2) ظل خارجي واضح للأحجار واللوحة + هامش أمان يمنع إيماءة الرجوع الخاطئة على أندرويد */
+      .tm-cell, .tm-tile, .tower-tile, .gem-cell, [data-row][data-col] {
+        filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.58));
+        transition: transform 0.14s ease, filter 0.14s ease;
+      }
+      #towerBoard, .tower-board, #tmBoardCanvas, canvas.tm-board-canvas {
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
+        touch-action: none;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: calc(100vw - 18px);
+      }
+
+      /* 3) وميض التلميح الذكي بعد 4 ثوانٍ */
+      @keyframes smartHintGlow43 {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35), 0 0 14px rgba(250, 204, 21, 0.85); transform: scale(1); }
+        50%      { box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.9), 0 0 24px rgba(250, 204, 21, 1); transform: scale(1.07); }
+      }
+      .smart-hint-tile43 {
+        animation: smartHintGlow43 0.95s ease-in-out infinite !important;
+        z-index: 12 !important;
+        border-radius: 10px;
+      }
+      #smartHintCanvasOverlay43 {
+        position: fixed;
+        pointer-events: none;
+        z-index: 940;
+        border: 2.5px solid #fde047;
+        border-radius: 12px;
+        box-shadow: 0 0 18px rgba(250, 204, 21, 0.95), inset 0 0 10px rgba(56, 189, 248, 0.55);
+        animation: smartHintGlow43 0.95s ease-in-out infinite;
+        display: none;
+      }
+      #smartHintToast43 {
+        position: fixed;
+        bottom: 84px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 945;
+        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid rgba(250, 204, 21, 0.65);
+        color: #fef08a;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 800;
+        pointer-events: none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        display: none;
+      }
+
+      /* 4) وميض حواف الشاشة في آخر 10 ثوانٍ */
+      @keyframes urgencyVignette43 {
+        0%, 100% { box-shadow: inset 0 0 28px rgba(239, 68, 68, 0.22); }
+        50%      { box-shadow: inset 0 0 58px rgba(239, 68, 68, 0.58); }
+      }
+      #urgencyEdge43 {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 930;
+        display: none;
+        animation: urgencyVignette43 0.85s ease-in-out infinite;
+      }
+
+      /* 5) زر رد الاعتبار في PvP وزر إعادة الجولة السريعة */
+      #pvpRevengeBtn43 {
+        background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+        border: 1.5px solid rgba(252, 165, 165, 0.65) !important;
+        color: #fff !important;
+        box-shadow: 0 6px 18px rgba(220, 38, 38, 0.42);
+      }
+      .pvp-revenge-banner43 {
+        background: linear-gradient(135deg, rgba(153, 27, 27, 0.35), rgba(15, 23, 42, 0.92));
+        border: 1px solid rgba(248, 113, 113, 0.45);
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // عناصر مساعدة للتلميح الذكي ووميض آخر 10 ثوانٍ
+  let hintBoxEl = document.getElementById('smartHintCanvasOverlay43');
+  if (!hintBoxEl) {
+    hintBoxEl = document.createElement('div');
+    hintBoxEl.id = 'smartHintCanvasOverlay43';
+    document.body.appendChild(hintBoxEl);
+  }
+  let hintToastEl = document.getElementById('smartHintToast43');
+  if (!hintToastEl) {
+    hintToastEl = document.createElement('div');
+    hintToastEl.id = 'smartHintToast43';
+    hintToastEl.textContent = '💡 تلميح ذكي: مطابقة متاحة هنا!';
+    document.body.appendChild(hintToastEl);
+  }
+  let urgencyEl = document.getElementById('urgencyEdge43');
+  if (!urgencyEl) {
+    urgencyEl = document.createElement('div');
+    urgencyEl.id = 'urgencyEdge43';
+    document.body.appendChild(urgencyEl);
+  }
+
+  // ==========================================================================
+  // 1) اهتزاز لمسي متدرج (Haptic Tiers)
+  // ==========================================================================
+  function triggerHaptic43(tier) {
+    if (!navigator.vibrate) return;
+    try {
+      if (tier === 'light') navigator.vibrate(14);
+      else if (tier === 'medium') navigator.vibrate([22, 18, 28]);
+      else if (tier === 'heavy') navigator.vibrate([45, 25, 55, 25, 65]);
+    } catch (_) {}
+  }
+
+  // ==========================================================================
+  // 2) التلميح الذكي بعد 4 ثوانٍ من التوقف (يبحث عن مطابقة حقيقية في الرقعة)
+  // ==========================================================================
+  let activeTowerEngine43 = null;
+  let idleHintTimer43 = null;
+  let gameActive43 = false;
+
+  function clearSmartHint43() {
+    document.querySelectorAll('.smart-hint-tile43').forEach((el) => el.classList.remove('smart-hint-tile43'));
+    if (hintBoxEl) hintBoxEl.style.display = 'none';
+    if (hintToastEl) hintToastEl.style.display = 'none';
+  }
+
+  function extractGridFromEngine(eng) {
+    if (!eng) return null;
+    if (eng.board && Array.isArray(eng.board.grid)) return eng.board.grid;
+    if (Array.isArray(eng.grid)) return eng.grid;
+    if (eng.board && Array.isArray(eng.board.cells)) return eng.board.cells;
+    return null;
+  }
+
+  function getCellType43(cell) {
+    if (cell === null || cell === undefined) return null;
+    if (typeof cell === 'number' || typeof cell === 'string') return String(cell);
+    if (typeof cell === 'object') {
+      if (cell.locked || cell.frozen || cell.empty) return null;
+      return String(cell.type ?? cell.kind ?? cell.color ?? cell.id ?? '');
+    }
+    return null;
+  }
+
+  function hasMatchAt43(grid, rows, cols) {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols - 2; c++) {
+        const t = getCellType43(grid[r][c]);
+        if (t && t === getCellType43(grid[r][c + 1]) && t === getCellType43(grid[r][c + 2])) return true;
+      }
+    }
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows - 2; r++) {
+        const t = getCellType43(grid[r][c]);
+        if (t && t === getCellType43(grid[r + 1][c]) && t === getCellType43(grid[r + 2][c])) return true;
+      }
+    }
+    return false;
+  }
+
+  function findValidSwap43(grid) {
+    if (!Array.isArray(grid) || !grid.length || !Array.isArray(grid[0])) return null;
+    const rows = grid.length;
+    const cols = grid[0].length;
+    const dirs = [[0, 1], [1, 0]];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const t1 = getCellType43(grid[r][c]);
+        if (!t1) continue;
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= rows || nc >= cols) continue;
+          const t2 = getCellType43(grid[nr][nc]);
+          if (!t2 || t1 === t2) continue;
+          // تبديل مؤقت للتحقق
+          const tmp = grid[r][c];
+          grid[r][c] = grid[nr][nc];
+          grid[nr][nc] = tmp;
+          const ok = hasMatchAt43(grid, rows, cols);
+          // إرجاع الحالة فوراً
+          grid[nr][nc] = grid[r][c];
+          grid[r][c] = tmp;
+          if (ok) return { r1: r, c1: c, r2: nr, c2: nc, rows, cols };
+        }
+      }
+    }
+    return null;
+  }
+
+  function showSmartHint43() {
+    if (!gameActive43) return;
+    clearSmartHint43();
+    const grid = extractGridFromEngine(activeTowerEngine43);
+    const move = findValidSwap43(grid);
+    if (!move) return;
+
+    // محاولة تظليل عناصر DOM إن كانت الرقعة مبنية بـ DOM
+    const el1 = document.querySelector(`[data-row="${move.r1}"][data-col="${move.c1}"], [data-r="${move.r1}"][data-c="${move.c1}"]`);
+    const el2 = document.querySelector(`[data-row="${move.r2}"][data-col="${move.c2}"], [data-r="${move.r2}"][data-c="${move.c2}"]`);
+    if (el1 && el2) {
+      el1.classList.add('smart-hint-tile43');
+      el2.classList.add('smart-hint-tile43');
+      hintToastEl.style.display = 'block';
+      return;
+    }
+
+    // وإلا: رسم إطار وميض دقيق فوق الـ Canvas الخاص بالرقعة
+    const boardCanvas = document.querySelector('#towerBoard canvas, #tmBoardCanvas, .tower-board canvas, canvas');
+    if (boardCanvas && boardCanvas.offsetParent !== null) {
+      const rect = boardCanvas.getBoundingClientRect();
+      if (rect.width > 120 && rect.height > 120) {
+        const cellW = rect.width / move.cols;
+        const cellH = rect.height / move.rows;
+        const minC = Math.min(move.c1, move.c2);
+        const minR = Math.min(move.r1, move.r2);
+        const spanC = move.c1 === move.c2 ? 1 : 2;
+        const spanR = move.r1 === move.r2 ? 1 : 2;
+        hintBoxEl.style.left = (rect.left + minC * cellW + 2) + 'px';
+        hintBoxEl.style.top = (rect.top + minR * cellH + 2) + 'px';
+        hintBoxEl.style.width = (spanC * cellW - 4) + 'px';
+        hintBoxEl.style.height = (spanR * cellH - 4) + 'px';
+        hintBoxEl.style.display = 'block';
+        hintToastEl.style.display = 'block';
+      }
+    }
+  }
+
+  function resetIdleHintTimer43() {
+    clearSmartHint43();
+    clearTimeout(idleHintTimer43);
+    if (!gameActive43) return;
+    idleHintTimer43 = setTimeout(showSmartHint43, 4000);
+  }
+
+  // ربط محرك البرج للتلميح الذكي + وميض آخر 10 ثوانٍ + الاهتزاز المتدرج
+  if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+    const TEProto43 = window.MoaathTowerEngine.TowerEngine.prototype;
+    const origStart43 = TEProto43.start;
+    const origEmit43 = TEProto43._emit;
+    const origFinish43 = TEProto43._finishGame;
+
+    TEProto43.start = function(...args) {
+      activeTowerEngine43 = this;
+      gameActive43 = true;
+      urgencyEl.style.display = 'none';
+      const r = origStart43.apply(this, args);
+      resetIdleHintTimer43();
+      return r;
+    };
+
+    TEProto43._emit = function(ev, payload) {
+      const r = origEmit43.apply(this, arguments);
+      if (ev === 'move' || ev === 'matchCleared') {
+        resetIdleHintTimer43();
+        const combo = Number((payload && payload.combo) || 1);
+        if (ev === 'matchCleared') {
+          triggerHaptic43(combo >= 3 ? 'medium' : 'light');
+        }
+      } else if (ev === 'bossDecision' || ev === 'bossDefeated') {
+        triggerHaptic43('heavy');
+      }
+      // وميض الحواف في آخر 10 ثوانٍ
+      const timeLeft = Number(this.timeLeft ?? this.remainingSec ?? (payload && payload.timeLeft) ?? 99);
+      if (gameActive43 && timeLeft > 0 && timeLeft <= 10) {
+        urgencyEl.style.display = 'block';
+      } else {
+        urgencyEl.style.display = 'none';
+      }
+      return r;
+    };
+
+    TEProto43._finishGame = function(...args) {
+      gameActive43 = false;
+      clearTimeout(idleHintTimer43);
+      clearSmartHint43();
+      urgencyEl.style.display = 'none';
+      return origFinish43.apply(this, args);
+    };
+  }
+
+  document.addEventListener('pointerdown', () => {
+    if (gameActive43) resetIdleHintTimer43();
+  }, { passive: true });
+
+  // ==========================================================================
+  // 3) رد الاعتبار السريع في PvP + تعزيز زر إعادة الجولة السريعة
+  // ==========================================================================
+  const PVP_REVENGE_KEY = 'moaath_last_pvp_loss_v43';
+
+  function saveLastPvpLoss43(ctx) {
+    try { localStorage.setItem(PVP_REVENGE_KEY, JSON.stringify({ ...ctx, at: Date.now() })); } catch (_) {}
+  }
+  function loadLastPvpLoss43() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(PVP_REVENGE_KEY) || 'null');
+      if (raw && (Date.now() - Number(raw.at || 0)) < 24 * 60 * 60 * 1000) return raw;
+    } catch (_) {}
+    return null;
+  }
+
+  ArenaApp.triggerPvpRevenge43 = function() {
+    const loss = loadLastPvpLoss43() || ArenaApp.lastSessionCtx || { gameId: 'tower_match', stakePts: 10 };
+    document.getElementById('resultOverlay')?.classList.add('hidden');
+    const stake = Math.max(10, Number(loss.stakePts || 10));
+    const gid = loss.gameId || 'tower_match';
+    if (ArenaApp.toast) ArenaApp.toast(`⚔️ جاري فتح جولة رد الاعتبار (${stake} عملة)...`, false);
+    ArenaApp.startFlow(gid, 'pvp_create', stake);
+  };
+
+  function ensureRevengeButtonInResult() {
+    const resOv = document.getElementById('resultOverlay');
+    if (!resOv) return;
+    let revBtn = document.getElementById('pvpRevengeBtn43');
+    if (!revBtn) {
+      revBtn = document.createElement('button');
+      revBtn.id = 'pvpRevengeBtn43';
+      revBtn.className = 'btn hidden';
+      revBtn.style.maxWidth = '260px';
+      revBtn.textContent = '⚔️ رد الاعتبار الآن (PvP)';
+      revBtn.onclick = () => ArenaApp.triggerPvpRevenge43();
+      const quickBtn = document.getElementById('quickRematchBtn');
+      if (quickBtn && quickBtn.parentNode) {
+        quickBtn.parentNode.insertBefore(revBtn, quickBtn);
+      } else {
+        resOv.appendChild(revBtn);
+      }
+    }
+
+    const ctx = ArenaApp.lastSessionCtx || {};
+    const resTxt = String(document.getElementById('resultText')?.textContent || '');
+    const isPvp = ctx.mode === 'pvp_join' || ctx.mode === 'pvp_create';
+    const isLoss = /خسر|هزيم|لم تفز|أقل|تغلب عليك|فاز المنافس/.test(resTxt);
+
+    if (isPvp && isLoss) {
+      saveLastPvpLoss43({ gameId: ctx.gameId || 'tower_match', stakePts: Number(ctx.stakePts || 10) });
+      revBtn.classList.remove('hidden');
+    } else {
+      revBtn.classList.add('hidden');
+    }
+
+    // تحسين نص زر إعادة الجولة السريعة ليوضح أنه فوري دون إعادة تحميل
+    const qBtn = document.getElementById('quickRematchBtn');
+    if (qBtn) {
+      const modeNames = { record: 'كسر الرقم', weekly: 'الأسبوعية', pvp_create: 'تحدي PvP', pvp_join: 'تحدي PvP' };
+      const mLabel = modeNames[ctx.mode] || 'نفس الوضع';
+      qBtn.textContent = `⚡ إعادة الجولة فوراً (${mLabel})`;
+    }
+  }
+
+  // مراقبة ظهور شاشة النتيجة لتفعيل زر رد الاعتبار وتحديث زر الإعادة الفورية
+  const resOverlayNode = document.getElementById('resultOverlay');
+  if (resOverlayNode) {
+    const resObs43 = new MutationObserver(() => {
+      if (!resOverlayNode.classList.contains('hidden')) {
+        ensureRevengeButtonInResult();
+      }
+    });
+    resObs43.observe(resOverlayNode, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // إظهار شريط «رد الاعتبار السريع» أعلى قائمة PvP إن وُجدت خسارة حديثة
+  const origLoadPvp43 = ArenaApp.loadPvpList ? ArenaApp.loadPvpList.bind(ArenaApp) : null;
+  if (origLoadPvp43) {
+    ArenaApp.loadPvpList = async function(...args) {
+      const r = await origLoadPvp43(...args);
+      const loss = loadLastPvpLoss43();
+      const box = document.getElementById('pvpListContainer');
+      if (loss && box && !document.getElementById('pvpRevengeBanner43')) {
+        const b = document.createElement('div');
+        b.id = 'pvpRevengeBanner43';
+        b.className = 'pvp-revenge-banner43';
+        b.innerHTML = `
+          <div style="font-size:0.74rem;line-height:1.45;">
+            <b style="color:#fca5a5;">🔥 فرصة رد الاعتبار السريع</b><br>
+            <span style="color:#cbd5e1;">أعد نشر تحدٍ بنفس القيمة (${loss.stakePts} عملة) واستعد هيبتك!</span>
+          </div>
+          <button type="button" class="btn" style="width:auto;padding:7px 11px;margin:0;font-size:0.74rem;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;" onclick="ArenaApp.triggerPvpRevenge43()">⚔️ رد الاعتبار</button>
+        `;
+        box.parentNode.insertBefore(b, box);
+      }
+      return r;
+    };
+  }
+})();
+
+
+
+// دعم شراء الشخصيات بالعملات وفق أسعار الإدارة (v44)
+(function initCharBuyV44() {
+  if (typeof ArenaApp === 'undefined') return;
+  ArenaApp.buyCharacter = async function(charId) {
+    const res = await this.api('/character/buy', { characterId: charId });
+    if (res && res.ok) {
+      if (this.toast) this.toast(res.message || '🎉 تم شراء الشخصية بنجاح!', false);
+      if (typeof this.syncProfile === 'function') await this.syncProfile();
+      if (typeof this.renderCharacters === 'function') this.renderCharacters();
+    }
+    return res;
+  };
+})();
+
+
+
+// ============================================================================
+// المرحلة 45: نظام القدرات الخفيفة للمقاتلين (مرة واحدة فقط في الجولة)
+// - صفر نقاط إضافية (0 Score) وصفر وقت إضافي (لا يخل بتوازن المنافسات النقدية)
+// - شروط تفعيل مهارية صعبة نسبياً (كومبو ×6 أو مطابقة خماسية أو بلوغ الطابق 5)
+// - سقف قوة متكافئ تماماً بين المقاتلين الأساسيين ومقاتلي النخبة VIP
+// ============================================================================
+(function initWarriorAbilitiesPhase45() {
+  if (typeof ArenaApp === 'undefined') return;
+
+  const WARRIOR_ABILITIES_45 = {
+    // المقاتلون الأساسيون (9)
+    buddy:          { title: 'ضربة الكشّاف',    trigger: 'كومبو ×6',         effect: 'فك قفل حجرين وتنشيط تلميح فوري (بلا نقاط)',       color: '#f59e0b', kind: 'unlock2' },
+    lolo:           { title: 'نبض الخفّة',      trigger: 'كومبو ×6',         effect: 'إبراز أفضل مطابقة متاحة بوضوح (بلا نقاط)',         color: '#ec4899', kind: 'highlight' },
+    noor:           { title: 'تطهير النور',     trigger: 'مطابقة خماسية',    effect: 'إزالة التجميد عن حجرين مغلقين (بلا نقاط)',         color: '#38bdf8', kind: 'unlock2' },
+    chef:           { title: 'صهر العائق',      trigger: 'كومبو ×6',         effect: 'تنظيف حجرين معاقَين لفتح المسار (بلا نقاط)',       color: '#fb923c', kind: 'unlock2' },
+    pastry:         { title: 'تركيز الخيميائي', trigger: 'بلوغ الطابق 5',    effect: 'تهدئة الضوضاء البصرية وإبراز مطابقة (بلا نقاط)',   color: '#f472b6', kind: 'highlight' },
+    athlete:        { title: 'الوثبة الخاطفة',  trigger: 'كومبو ×6',         effect: 'إعادة ترتيب الأحجار العالقة بسلام (بلا نقاط)',     color: '#34d399', kind: 'shuffle_safe' },
+    sheikh:         { title: 'درع الحكمة',      trigger: 'بلوغ الطابق 5',    effect: 'صد أول تشتيت بصري من الزعيم/الحارس (بلا نقاط)',    color: '#eab308', kind: 'ward' },
+    saver:          { title: 'بصيرة الخزائن',   trigger: 'كومبو ×6',         effect: 'إبراز أقرب مطابقة خماسية/رباعية (بلا نقاط)',       color: '#22c55e', kind: 'highlight' },
+    homemaker:      { title: 'ترتيب الميدان',   trigger: 'مطابقة خماسية',    effect: 'فك قفل حجرين وتنظيم الرؤية (بلا نقاط)',            color: '#fb7185', kind: 'unlock2' },
+
+    // مقاتلو النخبة VIP (9) — نفس السقف المتوازن تماماً مع طابع عنصري بصري
+    coach_sakhr:    { title: 'شرارة الحمم',     trigger: 'كومبو ×6',         effect: '🔥 كسر قفل حجرين بهالة نارية (بلا نقاط)',          color: '#ff5500', kind: 'unlock2' },
+    grand_chef:     { title: 'وهج الأفران',     trigger: 'مطابقة خماسية',    effect: '🔥 إزالة عائقين بصريين بهالة لهب (بلا نقاط)',       color: '#ea580c', kind: 'unlock2' },
+    princess_layla: { title: 'صفاء الجليد',     trigger: 'كومبو ×6',         effect: '❄️ صد أول تشتيت وإبراز مطابقة (بلا نقاط)',          color: '#22d3ee', kind: 'ward' },
+    anime_ritaj:    { title: 'درع البلور',      trigger: 'بلوغ الطابق 5',    effect: '❄️ حماية بصرية ضد ضباب الحارس مرة واحدة (بلا نقاط)', color: '#06b6d4', kind: 'ward' },
+    anime_ryu:      { title: 'بصيرة الظل',      trigger: 'كومبو ×6',         effect: '🌑 إبراز أفضل حركة قاطعة فوراً (بلا نقاط)',         color: '#9333ea', kind: 'highlight' },
+    butler_farid:   { title: 'عباءة الخفاء',    trigger: 'بلوغ الطابق 5',    effect: '🌑 إلغاء تأثير تشتيت الحارس مرة واحدة (بلا نقاط)',  color: '#7c3aed', kind: 'ward' },
+    anime_zain:     { title: 'وميض الصاعقة',    trigger: 'كومبو ×6',         effect: '⚡ كسر قفل حجرين بوميض برق (بلا نقاط)',             color: '#facc15', kind: 'unlock2' },
+    friend_fadi:    { title: 'نبضة العاصفة',    trigger: 'مطابقة خماسية',    effect: '⚡ تنظيف الرؤية وإبراز مطابقة (بلا نقاط)',          color: '#eab308', kind: 'highlight' },
+    friend_saad:    { title: 'بصيرة المجرة',    trigger: 'بلوغ الطابق 5',    effect: '🌌 كسر قفل حجرين وصد التشتيت مرة واحدة (بلا نقاط)', color: '#c084fc', kind: 'ward' }
+  };
+
+  window.ArenaWarriorAbilities45 = {
+    catalog: WARRIOR_ABILITIES_45,
+    usedThisRound: false,
+    activeCharId: 'buddy',
+    wardActive: false,
+
+    reset(charId) {
+      this.usedThisRound = false;
+      this.wardActive = false;
+      this.activeCharId = String(charId || (ArenaApp.profile && ArenaApp.profile.activeCharacterId) || 'buddy');
+      this.renderHud();
+    },
+
+    getAbility(charId) {
+      return WARRIOR_ABILITIES_45[charId || this.activeCharId] || WARRIOR_ABILITIES_45.buddy;
+    },
+
+    renderHud() {
+      let badge = document.getElementById('warriorAbilityHud45');
+      if (!document.getElementById('gameOverlay') || document.getElementById('gameOverlay').classList.contains('hidden')) {
+        // Check if Tower UI is visible
+        const tVisible = document.querySelector('#towerBoard, .tower-board, #tmBoardCanvas');
+        if (!tVisible || tVisible.offsetParent === null) {
+          if (badge) badge.remove();
+          return;
+        }
+      }
+      const ab = this.getAbility();
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'warriorAbilityHud45';
+        badge.style.cssText = `
+          position:fixed; bottom:12px; right:12px; z-index:940;
+          padding:5px 10px; border-radius:10px; font-size:0.68rem; font-weight:800;
+          background:rgba(15,23,42,0.9); border:1px solid ${ab.color};
+          color:#f8fafc; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,0.45);
+        `;
+        document.body.appendChild(badge);
+      }
+      badge.style.borderColor = this.usedThisRound ? 'rgba(148,163,184,0.35)' : ab.color;
+      badge.style.opacity = this.usedThisRound ? '0.62' : '1';
+      badge.innerHTML = this.usedThisRound
+        ? `✅ <span>${ab.title}</span> <small style="color:#94a3b8;">(استُخدمت)</small>`
+        : `⚔️ <span style="color:${ab.color};">${ab.title}</span> <small style="color:#cbd5e1;">(${ab.trigger})</small>`;
+    },
+
+    tryActivate(reason, payload, engineRef) {
+      if (this.usedThisRound) return false;
+      const ab = this.getAbility();
+      const combo = Number((payload && payload.combo) || 0);
+      const cleared = Number((payload && (payload.clearedCount || payload.count || payload.matched)) || 0);
+      const floor = Number((payload && (payload.floor || payload.highestFloor)) || (engineRef && engineRef.floor) || 0);
+
+      let met = false;
+      if (ab.trigger === 'كومبو ×6' && combo >= 6) met = true;
+      else if (ab.trigger === 'مطابقة خماسية' && cleared >= 5) met = true;
+      else if (ab.trigger === 'بلوغ الطابق 5' && floor >= 5) met = true;
+      if (!met) return false;
+
+      this.usedThisRound = true;
+      if (ab.kind === 'ward') this.wardActive = true;
+
+      // تنفيذ التأثير الخفيف المتوازن (0 نقاط، 0 وقت إضافي)
+      if (ab.kind === 'unlock2' && engineRef && engineRef.board && Array.isArray(engineRef.board.grid)) {
+        let unlocked = 0;
+        for (const row of engineRef.board.grid) {
+          for (const cell of row) {
+            if (cell && typeof cell === 'object' && (cell.locked || cell.frozen)) {
+              cell.locked = false;
+              cell.frozen = false;
+              unlocked++;
+              if (unlocked >= 2) break;
+            }
+          }
+          if (unlocked >= 2) break;
+        }
+      }
+
+      if (typeof JuiceVFX !== 'undefined' && JuiceVFX.spawnBurst) {
+        JuiceVFX.spawnBurst(window.innerWidth / 2, window.innerHeight / 2, ab.color, 18);
+      }
+      if (ArenaApp.toast) {
+        ArenaApp.toast(`⚔️ تفعيل قدرة المقاتل (${ab.title}): ${ab.effect}`, false);
+      }
+      this.renderHud();
+      return true;
+    }
+  };
+
+  // ربط بداية الجلسة ومحرك البرج
+  const prevStartSes45 = ArenaApp.startSession ? ArenaApp.startSession.bind(ArenaApp) : null;
+  if (prevStartSes45) {
+    ArenaApp.startSession = async function(...args) {
+      const res = await prevStartSes45(...args);
+      if (res && res.sessionId) {
+        window.ArenaWarriorAbilities45.reset(res.characterId);
+      }
+      return res;
+    };
+  }
+
+  if (window.MoaathTowerEngine && window.MoaathTowerEngine.TowerEngine) {
+    const TEProto45 = window.MoaathTowerEngine.TowerEngine.prototype;
+    const origStart45 = TEProto45.start;
+    const origEmit45 = TEProto45._emit;
+    const origFinish45 = TEProto45._finishGame;
+
+    TEProto45.start = function(...args) {
+      const r = origStart45.apply(this, args);
+      window.ArenaWarriorAbilities45.reset(ArenaApp.profile && ArenaApp.profile.activeCharacterId);
+      return r;
+    };
+    TEProto45._emit = function(ev, payload) {
+      const r = origEmit45.apply(this, arguments);
+      if (ev === 'matchCleared' || ev === 'combo' || ev === 'floorCleared') {
+        window.ArenaWarriorAbilities45.tryActivate(ev, payload, this);
+      }
+      return r;
+    };
+    TEProto45._finishGame = function(...args) {
+      document.getElementById('warriorAbilityHud45')?.remove();
+      return origFinish45.apply(this, args);
+    };
+  }
+
+  // إظهار بطاقة قدرة وسعر كل مقاتل داخل شاشة اختيار الشخصيات
+  const origRenderChars45 = ArenaApp.renderCharacters ? ArenaApp.renderCharacters.bind(ArenaApp) : null;
+  if (origRenderChars45) {
+    ArenaApp.renderCharacters = function(...args) {
+      const res = origRenderChars45(...args);
+      setTimeout(() => {
+        const prices = (ArenaApp.profile && ArenaApp.profile.charPrices) || {};
+        const unlockedMap = (ArenaApp.profile && ArenaApp.profile.unlockedChars) || {};
+        document.querySelectorAll('[data-char-id], [onclick*="selectCharacter"]').forEach((card) => {
+          if (card.querySelector('.char-ab-meta45')) return;
+          let cid = card.getAttribute('data-char-id') || '';
+          if (!cid) {
+            const oc = card.getAttribute('onclick') || '';
+            const m = oc.match(/selectCharacter\(['"]([^'"]+)['"]\)/);
+            if (m) cid = m[1];
+          }
+          if (!cid || !WARRIOR_ABILITIES_45[cid]) return;
+          const ab = WARRIOR_ABILITIES_45[cid];
+          const price = Number(prices[cid] || 0);
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'char-ab-meta45';
+          metaDiv.style.cssText = 'margin-top:6px;padding-top:5px;border-top:1px dashed rgba(148,163,184,0.22);font-size:0.66rem;line-height:1.45;text-align:right;color:#cbd5e1;';
+          metaDiv.innerHTML = `
+            <div style="color:${ab.color};font-weight:900;">⚔️ ${ab.title} <span style="color:#94a3b8;font-weight:600;">(${ab.trigger})</span></div>
+            <div>${ab.effect}</div>
+            ${price > 0 && !unlockedMap[cid] ? `<button type="button" onclick="event.stopPropagation();ArenaApp.buyCharacter('${cid}')" style="margin-top:5px;width:100%;padding:4px 6px;border:none;border-radius:8px;background:linear-gradient(135deg,#fde047,#d97706);color:#0f172a;font-weight:900;font-size:0.68rem;cursor:pointer;">🛒 شراء المقاتل (${price} عملة)</button>` : ''}
+          `;
+          card.appendChild(metaDiv);
+        });
+      }, 60);
+      return res;
+    };
+  }
+})();
+
 </script>
 </body>
 </html>
