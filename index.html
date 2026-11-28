@@ -5325,7 +5325,7 @@
               rg.alpha -= 0.012;
               if (rg.alpha <= 0.02) { this.rings.splice(i, 1); continue; }
               ctx.save();
-              ctx.globalAlpha = Math.max(0, rg.alpha);
+              ctx.globalAlpha = Math.max(0, rg.alpha * 0.65);
               ctx.strokeStyle = rg.color;
               ctx.lineWidth = 3;
               ctx.beginPath();
@@ -5359,7 +5359,7 @@
               pt.alpha -= pt.decay;
               if (pt.alpha <= 0.02) { this.particles.splice(i, 1); continue; }
               ctx.save();
-              ctx.globalAlpha = Math.max(0, pt.alpha);
+              ctx.globalAlpha = Math.max(0, pt.alpha * 0.55);
               ctx.fillStyle = pt.color;
               ctx.beginPath();
               ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
@@ -5961,6 +5961,205 @@
       }
     }
   };
+})();
+
+// تحسينات v38: تنبيه قفل الإدارة اللطيف + الحارس المطلق للبرج (نسخة شريرة، HP ضخم، نقاط 50%، مهارات العناصر وامتيازات VIP)
+(function initSupremeGuardianAndUXv38() {
+  if (typeof ArenaApp === 'undefined') return;
+
+  // 1) تحويل ERR_MODE_LOCKED إلى تنبيه لطيف بدلاً من خطأ تقني
+  const origToast = ArenaApp.toast ? ArenaApp.toast.bind(ArenaApp) : null;
+  if (origToast) {
+    ArenaApp.toast = function(msg, isErr) {
+      const s = String(msg || '');
+      if (s.includes('ERR_MODE_LOCKED') || s.includes('مغلقة مؤقتاً من الإدارة') || s.includes('مغلق مؤقتاً من الإدارة')) {
+        const cleanMsg = s.replace(/ERR_MODE_LOCKED\s*:?\s*/gi, '').trim() || 'هذا القسم مغلق مؤقتاً من الإدارة.';
+        if (typeof ArenaModal !== 'undefined' && ArenaModal.show) {
+          ArenaModal.show({
+            theme: 'gold',
+            icon: '🔒',
+            title: 'مغلق مؤقتاً من الإدارة',
+            bodyHtml: `<div style="text-align:center;line-height:1.7;">${cleanMsg}<br><small style="color:#94a3b8;">سيتم فتحه تلقائياً عند إتاحة الإدارة له.</small></div>`,
+            buttons: [{ text: 'حسناً', cls: 'btn-gold' }]
+          });
+          return;
+        }
+        return origToast('🔒 ' + cleanMsg, false);
+      }
+      return origToast(msg, isErr);
+    };
+  }
+
+  // 2) نظام الحارس المطلق للبرج (Supreme Guardian)
+  const GuardianSystem = {
+    active: false,
+    data: null,
+    hp: 0,
+    maxHp: 0,
+    bannerShownForSession: false,
+
+    resetForSession(sesRes) {
+      this.active = false;
+      this.bannerShownForSession = false;
+      this.data = (sesRes && sesRes.supremeGuardian) || null;
+      this.hp = 0;
+      this.maxHp = 0;
+      this.removeHud();
+    },
+
+    getElementSkill(charId) {
+      const cid = String(charId || 'buddy');
+      if (cid === 'coach_sakhr' || cid === 'grand_chef') {
+        return { elem: 'fire', isVip: true, color: '#ff5500', badge: '🔥 لهب حارق (يحرق صفاً)', skillName: 'حرق اللهب البركاني' };
+      }
+      if (cid === 'princess_layla' || cid === 'anime_ritaj') {
+        return { elem: 'frost', isVip: true, color: '#22d3ee', badge: '❄️ صقيع كريستالي (يجمّد أحجاراً)', skillName: 'تجميد الكريستال' };
+      }
+      if (cid === 'anime_ryu' || cid === 'butler_farid') {
+        return { elem: 'shadow', isVip: true, color: '#9333ea', badge: '🌑 ضباب ظلامي (يُخفي الرؤية)', skillName: 'عباءة الظلام' };
+      }
+      if (cid === 'anime_zain' || cid === 'friend_fadi') {
+        return { elem: 'lightning', isVip: true, color: '#facc15', badge: '⚡ صاعقة (يسحب شحن المهارة)', skillName: 'صاعقة استنزاف الطاقة' };
+      }
+      if (cid === 'friend_saad') {
+        return { elem: 'cosmic', isVip: true, color: '#c084fc', badge: '🌌 عاصفة كونية (تقلب الأعمدة)', skillName: 'عاصفة العرش الكونية' };
+      }
+      return { elem: 'shadow_basic', isVip: false, color: '#f43f5e', badge: '💀 ظل الحارس (تشتيت الكومبو)', skillName: 'ضربة ظل الحارس' };
+    },
+
+    awakenIfReached(currentScore) {
+      if (this.active || this.bannerShownForSession || !this.data) return;
+      const target = Number(this.data.targetScore || 0);
+      if (target > 0 && Number(currentScore || 0) >= target) {
+        this.active = true;
+        this.bannerShownForSession = true;
+        this.maxHp = Math.max(2500, Math.round(target * 4.5));
+        this.hp = this.maxHp;
+        this.showAwakenOverlay();
+        this.renderHud();
+        if (window.ArenaVoice && typeof window.ArenaVoice.speak === 'function') {
+          window.ArenaVoice.speak(this.data.characterId || 'buddy', 'taunt');
+        }
+      }
+    },
+
+    showAwakenOverlay() {
+      if (!this.data) return;
+      const sk = this.getElementSkill(this.data.characterId);
+      const imgUrl = (window.ArenaVoice && window.ArenaVoice.getCharImgUrl)
+        ? window.ArenaVoice.getCharImgUrl(this.data.characterId || 'buddy')
+        : './assets/chars/buddy.jpg';
+
+      const ov = document.createElement('div');
+      ov.id = 'supremeGuardianOverlay38';
+      ov.style.cssText = `
+        position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;
+        background:radial-gradient(circle at center, rgba(15,23,42,0.78), rgba(2,6,23,0.95));
+        backdrop-filter:blur(4px); animation:fadeIn 0.25s ease;
+      `;
+      const vipAura = sk.isVip
+        ? `box-shadow:0 0 28px ${sk.color}, 0 0 56px ${sk.color}66; border:2.5px solid ${sk.color};`
+        : `box-shadow:0 0 20px rgba(244,63,94,0.6); border:2px solid #f43f5e;`;
+
+      ov.innerHTML = `
+        <div style="width:100%;max-width:380px;background:linear-gradient(160deg,#180914,#090d1a);border-radius:20px;padding:16px;text-align:center;${vipAura}">
+          <div style="font-size:0.74rem;font-weight:900;color:${sk.color};letter-spacing:0.5px;margin-bottom:6px;">
+            ${sk.isVip ? '👑 حضور VIP مهيب • ' + sk.badge : '⚠️ ' + sk.badge}
+          </div>
+          <h3 style="color:#fff;margin:0 0 10px;font-size:1.1rem;">الحارس المطلق للبرج استيقظ!</h3>
+          <div style="width:94px;height:94px;margin:0 auto 10px;border-radius:50%;overflow:hidden;border:3px solid ${sk.color};filter:contrast(1.25) saturate(1.35) hue-rotate(${sk.elem === 'fire' ? '-15deg' : (sk.elem === 'frost' ? '15deg' : '0deg')});">
+            <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" />
+          </div>
+          <div style="font-weight:900;color:#fde047;font-size:0.95rem;">النسخة الشريرة لـ ${this.data.name || 'حامل الرقم'}</div>
+          <div style="font-size:0.76rem;color:#cbd5e1;margin:8px 0 12px;line-height:1.6;">
+            لقد انتزعت الرقم القياسي بالفعل! يظهر الآن الحارس المطلق بصحة ضخمة ومهارة <b>(${sk.skillName})</b>، ويصبح كسب النقاط <b>50%</b> لكبح تضخم الرقم القياسي.
+          </div>
+          <button type="button" id="closeGuardianOvBtn38" style="width:100%;padding:10px;border:none;border-radius:12px;font-weight:900;background:linear-gradient(135deg,#fde047,#d97706);color:#111827;cursor:pointer;">
+            ⚔️ واجه الحارس وأكمل الصعود
+          </button>
+        </div>
+      `;
+      document.body.appendChild(ov);
+      const closeBtn = document.getElementById('closeGuardianOvBtn38');
+      if (closeBtn) closeBtn.addEventListener('click', () => ov.remove());
+      setTimeout(() => { if (ov && ov.parentNode) ov.remove(); }, 3400);
+    },
+
+    renderHud() {
+      if (!this.active || !this.data) return;
+      const sk = this.getElementSkill(this.data.characterId);
+      let hud = document.getElementById('supremeGuardianHud38');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'supremeGuardianHud38';
+        hud.style.cssText = `
+          position:fixed; top:54px; left:50%; transform:translateX(-50%); z-index:950;
+          width:92%; max-width:440px; padding:7px 10px; border-radius:12px;
+          background:rgba(15,23,42,0.92); border:1.5px solid ${sk.color};
+          box-shadow:0 6px 20px rgba(0,0,0,0.55); color:#fff; font-size:0.72rem; pointer-events:none;
+        `;
+        document.body.appendChild(hud);
+      }
+      const pct = Math.max(0, Math.min(100, Math.round((this.hp / Math.max(1, this.maxHp)) * 100)));
+      hud.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">
+          <b style="color:${sk.color};">👑 الحارس: ${this.data.name}</b>
+          <span style="background:rgba(250,204,21,0.18);color:#fde047;padding:1px 7px;border-radius:999px;font-weight:800;">نقاط 50%</span>
+        </div>
+        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${sk.color},#ef4444);transition:width 0.25s;"></div>
+        </div>
+      `;
+    },
+
+    removeHud() {
+      const hud = document.getElementById('supremeGuardianHud38');
+      if (hud) hud.remove();
+      const ov = document.getElementById('supremeGuardianOverlay38');
+      if (ov) ov.remove();
+    },
+
+    onScoreEarned(rawDelta, cx, cy) {
+      const delta = Number(rawDelta || 0);
+      if (!this.active || delta <= 0) return delta;
+      this.hp = Math.max(1, this.hp - delta * 6);
+      this.renderHud();
+      const sk = this.getElementSkill(this.data && this.data.characterId);
+      if (typeof JuiceVFX !== 'undefined' && JuiceVFX.spawnBurst) {
+        JuiceVFX.spawnBurst(cx, cy, sk.color, sk.isVip ? 24 : 16);
+      }
+      // كبح كسب النقاط إلى 50% أثناء حضور الحارس المطلق
+      return Math.max(1, Math.round(delta * 0.5));
+    }
+  };
+
+  window.ArenaGuardian38 = GuardianSystem;
+
+  // ربط بداية الجلسة وتحديث النقاط مع الحارس المطلق
+  const origStartSes = ArenaApp.startSession ? ArenaApp.startSession.bind(ArenaApp) : null;
+  if (origStartSes) {
+    ArenaApp.startSession = async function(...args) {
+      const res = await origStartSes(...args);
+      if (res && res.sessionId) GuardianSystem.resetForSession(res);
+      return res;
+    };
+  }
+
+  if (typeof MythicFX !== 'undefined' && typeof MythicFX.onGameEvent === 'function') {
+    const origOnEv = MythicFX.onGameEvent.bind(MythicFX);
+    MythicFX.onGameEvent = function(ev, payload) {
+      const res = origOnEv(ev, payload);
+      if (ev === 'matchCleared' || ev === 'combo' || ev === 'score') {
+        const curScore = Number((payload && (payload.score || payload.totalScore)) || 0);
+        if (curScore > 0) GuardianSystem.awakenIfReached(curScore);
+        if (GuardianSystem.active && payload && typeof payload.pointsEarned === 'number' && !payload._guardianHalved) {
+          payload._guardianHalved = true;
+          payload.pointsEarned = GuardianSystem.onScoreEarned(payload.pointsEarned, payload.x, payload.y);
+        }
+      }
+      return res;
+    };
+  }
 })();
 </script>
 </body>
